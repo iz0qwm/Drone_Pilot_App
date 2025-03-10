@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "594131987535",
+    "project_id": "tutto-sui-droni-community",
+    "storage_bucket": "tutto-sui-droni-community.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:594131987535:android:8cb6a04db7880c95230e3a",
+        "android_client_info": {
+          "package_name": "com.kwos.dronepilotapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "594131987535-86i1usmt7sgoa4u4ooiomgs8t3lhu3jv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kwos.dronepilotapp",
+            "certificate_hash": "26752594dd3cfb07e4d9409287a516690c00fadc"
+          }
+        },
+        {
+          "client_id": "594131987535-44euu3ra4tiojsfnbloa70c8hb8bubg4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCd7BxSBTVXHxc_pCGyq82rhD4X5r6XZ2g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "594131987535-44euu3ra4tiojsfnbloa70c8hb8bubg4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Drone Pilot App</string>
+    <string name="dashboard_activity_label">Dashboard</string> <!-- Aggiungi questa stringa -->
+</resources>
