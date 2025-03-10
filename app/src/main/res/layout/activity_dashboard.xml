@@ -47,6 +47,13 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="Fine volo"/>
+
+        <Switch
+            android:id="@+id/chatToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Disponibile per chat"/>
+
     </LinearLayout>
 
     <FrameLayout

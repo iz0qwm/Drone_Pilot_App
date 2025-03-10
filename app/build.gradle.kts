@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.databinding.runtime)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.analytics)

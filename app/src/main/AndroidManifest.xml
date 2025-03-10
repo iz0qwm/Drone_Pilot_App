@@ -38,6 +38,10 @@
             android:theme="@style/Theme.AppCompat.Light">
         </activity>
 
+        <activity android:name=".ChatActivity">
+            <!-- Puoi aggiungere un'intent-filter se desideri che questa activity possa essere avviata anche da un altro punto, ma in questo caso non è necessario -->
+        </activity>
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />

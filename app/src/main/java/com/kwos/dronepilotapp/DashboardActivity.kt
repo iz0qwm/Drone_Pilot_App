@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,19 +26,28 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var db: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var chatToggle: Switch
+
     private var mapFragment: SupportMapFragment? = null
     private var userName: String? = null  // Ora viene caricato da loadUserName()
     private var droneName: String? = null
     private val TAG = "DashboardActivity"
+    private var pilotsListener: ListenerRegistration? = null
+    private val pilotMarkers = mutableMapOf<String, Marker>()
+
     private lateinit var locationCallback: LocationCallback  // Variabile per il callback della posizione
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +60,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         auth = FirebaseAuth.getInstance()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        chatToggle = findViewById(R.id.chatToggle)
         loadUserName() // Carica il nome del pilota all'avvio
 
         val logoutButton = findViewById<Button>(R.id.logoutButton)
@@ -85,6 +96,28 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
+        // Recupera lo stato della chat da Firestore al login
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        chatToggle.isChecked = document.getBoolean("availableForChat") ?: false
+                    }
+                }
+        }
+        // Ascolta le modifiche del toggle e aggiorna Firestore
+        chatToggle.setOnCheckedChangeListener { _, isChecked ->
+            auth.currentUser?.uid?.let { userId ->
+                db.collection("users").document(userId)
+                    .update("availableForChat", isChecked)
+                    .addOnSuccessListener {
+                        Log.d("ChatToggle", "Stato chat aggiornato: $isChecked")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("ChatToggle", "Errore nell'aggiornamento", e)
+                    }
+            }
+        }
 
         showMap()
     }
@@ -116,10 +149,26 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment!!.getMapAsync(this)
     }
 
+    private fun openChatWithPilot(userId: String) {
+        val intent = Intent(this, ChatActivity::class.java)
+        intent.putExtra("receiverId", userId)  // Assicurati di usare la chiave giusta
+        startActivity(intent)
+    }
+
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.uiSettings.isZoomControlsEnabled = true
         mMap.uiSettings.isMyLocationButtonEnabled = true
+
+        // Imposta il listener per il click sulla stringa
+        mMap.setOnInfoWindowClickListener { marker ->
+            val userId = marker.tag as? String  // Recupera l'ID del pilota
+            if (userId != null) {
+                // Avvia la chat con il pilota usando l'ID
+                openChatWithPilot(userId)
+            }
+        }
+
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
@@ -129,32 +178,61 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+
     private fun loadPilots() {
-        db.collection("piloti")
+        pilotsListener = db.collection("piloti")
             .addSnapshotListener { documents, e ->
                 if (e != null) {
-                    Log.w(TAG, "Errore nel recuperare i dati.", e)
+                    Log.w(TAG, "Errore nel recupero dei dati dei piloti", e)
                     return@addSnapshotListener
                 }
 
-                // Rimuovi i marker esistenti prima di aggiungerne di nuovi
-                mMap.clear()
-
-                if (documents != null) {
-                    for (document in documents) {
-                        val lat = document.get("latitude")?.toString()?.toDoubleOrNull()
-                        val lng = document.get("longitude")?.toString()?.toDoubleOrNull()
+                documents?.let {
+                    for (document in it) {
+                        val userId = document.id
+                        val lat = document.getDouble("latitude")
+                        val lng = document.getDouble("longitude")
                         val name = document.getString("name") ?: "Sconosciuto"
                         val drone = document.getString("drone") ?: "N/D"
+                        val availableForChat = document.getBoolean("availableForChat") ?: false
 
                         if (lat != null && lng != null) {
                             val position = LatLng(lat, lng)
-                            mMap.addMarker(MarkerOptions().position(position).title("$name - $drone"))
+                            val markerOptions = MarkerOptions().position(position).title("$name - $drone")
+
+                            // Cambia il colore del marker in base alla disponibilità per la chat
+                            if (availableForChat) {
+                                Log.d(TAG, "Stato chat aggiornato per $name: $availableForChat")
+                                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                            } else {
+                                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                            }
+
+                            // Aggiungi la descrizione sotto il titolo del marker
+                            markerOptions.snippet("Clicca per aprire la chat con $name")
+
+                            val existingMarker = pilotMarkers[userId]
+                            if (existingMarker == null) {
+                                // Aggiungi il marker con il suo ID come tag
+                                val marker = mMap.addMarker(markerOptions)!!
+                                marker.tag = userId  // Tagging con l'ID del pilota
+                                pilotMarkers[userId] = marker
+                            } else {
+                                existingMarker.position = position
+                                existingMarker.title = "$name - $drone"
+                                existingMarker.setIcon(markerOptions.icon)  // Aggiorna l'icona del marker
+                                existingMarker.snippet = markerOptions.snippet // Aggiorna la descrizione
+                            }
+                        } else {
+                            pilotMarkers[userId]?.remove()
+                            pilotMarkers.remove(userId)
                         }
                     }
                 }
             }
     }
+
+
 
 
     private fun startFlight(userName: String, droneName: String) {
@@ -265,5 +343,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        pilotsListener?.remove()
     }
 }
