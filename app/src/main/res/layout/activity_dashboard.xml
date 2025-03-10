@@ -32,6 +32,12 @@
         android:layout_height="wrap_content"
         android:text="Inizia volo" />
 
+    <Button
+        android:id="@+id/stopFlightButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fine volo" />
+
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="match_parent"
