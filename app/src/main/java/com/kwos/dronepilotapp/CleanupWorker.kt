@@ -18,12 +18,12 @@ class CleanupWorker(context: Context, workerParams: WorkerParameters) :
         val db = FirebaseFirestore.getInstance()
         val oneHourAgo = System.currentTimeMillis() - 3600000  // Un'ora fa
 
-        db.collection("pilots")
+        db.collection("piloti")
             .whereLessThan("timestamp", oneHourAgo)
             .get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
-                    db.collection("pilots").document(document.id).delete()
+                    db.collection("piloti").document(document.id).delete()
                 }
                 Log.d("DronePilotApp", "Posizioni vecchie rimosse")
             }

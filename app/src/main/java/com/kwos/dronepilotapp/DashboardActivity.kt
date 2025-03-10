@@ -250,7 +250,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     val userPosition = LatLng(location.latitude, location.longitude)
                     mMap.addMarker(MarkerOptions().position(userPosition).title("$userName - $droneName"))
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userPosition, 15f))
+                    //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userPosition, 15f))
                 }
             }
         }
