@@ -29,12 +29,15 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var receiverId: String
     private lateinit var chattingWithText: TextView // TextView per il nome del pilota
 
+    private var userName: String? = null
+    private val TAG = "DronePilotApp"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
         supportActionBar?.hide()
 
-        Log.d("ChatActivity", "Activity started")
+        Log.d(TAG, "Sessione chat attivata")
 
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
@@ -46,9 +49,9 @@ class ChatActivity : AppCompatActivity() {
         // Recupera il nome del pilota con cui stai chattando
         db.collection("users").document(receiverId).get()
             .addOnSuccessListener { document ->
-                val name = document.getString("name") // Assicurati che il nome sia nel campo "name"
-                if (name != null) {
-                    chattingWithText.text = "Stai chattando con: $name"
+                userName = document.getString("fullName")
+                if (userName != null) {
+                    chattingWithText.text = "Stai chattando con: $userName"
                 }
             }
 

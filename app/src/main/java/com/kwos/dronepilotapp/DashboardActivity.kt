@@ -153,7 +153,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         userName = document.getString("fullName") // Salva il nome per riutilizzarlo
-                        findViewById<TextView>(R.id.welcomeTextView).text = "Benvenuto, $userName!"
+                        findViewById<TextView>(R.id.welcomeTextView).text = "Benvenuto/a, $userName!"
                     }
                 }
                 .addOnFailureListener {
