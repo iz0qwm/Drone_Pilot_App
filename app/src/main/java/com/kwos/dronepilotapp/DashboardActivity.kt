@@ -52,15 +52,17 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var auth: FirebaseAuth
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var chatToggle: Switch
+    private lateinit var locationCallback: LocationCallback  // Variabile per il callback della posizione
 
     private var mapFragment: SupportMapFragment? = null
     private var userName: String? = null  // Ora viene caricato da loadUserName()
     private var droneName: String? = null
     private val TAG = "DronePilotApp"
     private var pilotsListener: ListenerRegistration? = null
+    private var usersListener: ListenerRegistration? = null
     private val pilotMarkers = mutableMapOf<String, Marker>()
 
-    private lateinit var locationCallback: LocationCallback  // Variabile per il callback della posizione
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,6 +86,14 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapContainer = findViewById<FrameLayout>(R.id.mapContainer)
 
         mapContainer.visibility = View.VISIBLE
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                for (location in locationResult.locations) {
+                    Log.d(TAG, "📍 Nuova posizione ricevuta: ${location.latitude}, ${location.longitude}")
+                }
+            }
+        }
 
         logoutButton.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
@@ -189,6 +199,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         } else {
             mMap.isMyLocationEnabled = true
             loadPilots()
+            listenForChatAvailability()
         }
     }
 
@@ -204,73 +215,64 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 documents?.documentChanges?.forEach { change ->
                     val userId = change.document.id
 
-                    db.collection("users").document(userId).get().addOnSuccessListener { userDoc ->
-                        val inVolo = userDoc.getBoolean("inVolo") ?: false
+                    val lat = change.document.getDouble("latitude")
+                    val lng = change.document.getDouble("longitude")
+                    val name = change.document.getString("name") ?: "Sconosciuto"
+                    val drone = change.document.getString("drone") ?: "N/D"
 
-                        if (!inVolo) {
-                            // Il pilota ha terminato il volo, quindi rimuoviamo il marker
-                            pilotMarkers[userId]?.remove()
-                            pilotMarkers.remove(userId)
-                            return@addOnSuccessListener
+                    if (lat != null && lng != null) {
+                        val position = LatLng(lat, lng)
+
+                        val markerOptions = MarkerOptions().position(position).title("$name - $drone")
+
+                        // Recuperiamo il marker se già esiste
+                        val existingMarker = pilotMarkers[userId]
+                        if (existingMarker == null) {
+                            val marker = mMap.addMarker(markerOptions)!!
+                            marker.tag = userId
+                            pilotMarkers[userId] = marker
+                        } else {
+                            existingMarker.position = position
+                            existingMarker.title = "$name - $drone"
                         }
+                    } else {
+                        pilotMarkers[userId]?.remove()
+                        pilotMarkers.remove(userId)
+                    }
+                }
+            }
+    }
 
-                        when (change.type) {
-                            DocumentChange.Type.REMOVED -> {
-                                Log.d(TAG, "📍 Rimozione del marker per $userId")
-                                pilotMarkers[userId]?.remove()
-                                pilotMarkers.remove(userId)
-                            }
+    private fun listenForChatAvailability() {
+        usersListener = db.collection("users")
+            .addSnapshotListener { documents, e ->
+                if (e != null) {
+                    Log.w(TAG, "Errore nel recupero dello stato chat", e)
+                    return@addSnapshotListener
+                }
 
-                            DocumentChange.Type.ADDED, DocumentChange.Type.MODIFIED -> {
-                                val lat = change.document.getDouble("latitude")
-                                val lng = change.document.getDouble("longitude")
-                                val name = change.document.getString("name") ?: "Sconosciuto"
-                                val drone = change.document.getString("drone") ?: "N/D"
-                                val availableForChat = change.document.getBoolean("availableForChat") ?: false
+                documents?.forEach { doc ->
+                    val userId = doc.id
+                    val availableForChat = doc.getBoolean("availableForChat") ?: false
 
-                                Log.d(TAG, "👤 Pilota $name aggiornato: lat=$lat, lng=$lng, disponibile per chat=$availableForChat")
+                    Log.d(TAG, "🔄 Stato chat aggiornato per $userId: $availableForChat")
 
-                                if (lat != null && lng != null) {
-                                    val position = LatLng(lat, lng)
-                                    val markerOptions = MarkerOptions().position(position).title("$name - $drone")
-
-                                    // Cambia il colore del marker in base alla disponibilità per la chat
-                                    val markerIcon = if (availableForChat) {
-                                        Log.d(TAG, "Stato chat aggiornato per $name: disponibile")
-                                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-                                    } else {
-                                        Log.d(TAG, "Stato chat aggiornato per $name: non disponibile")
-                                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-                                    }
-                                    markerOptions.icon(markerIcon)
-
-                                    // Testo nello snippet
-                                    val snippetText = if (availableForChat) {
-                                        "✅ Disponibile per chat - Clicca per aprire la chat con $name"
-                                    } else {
-                                        "❌ Non disponibile per chat"
-                                    }
-                                    markerOptions.snippet(snippetText)
-
-                                    val existingMarker = pilotMarkers[userId]
-                                    if (existingMarker == null) {
-                                        // Crea un nuovo marker
-                                        val marker = mMap.addMarker(markerOptions)!!
-                                        marker.tag = userId  // Salviamo l'ID del pilota nel marker
-                                        pilotMarkers[userId] = marker
-                                    } else {
-                                        // Aggiorna la posizione, l'icona e lo snippet del marker esistente
-                                        existingMarker.position = position
-                                        existingMarker.title = "$name - $drone"
-                                        existingMarker.setIcon(markerIcon)
-                                        existingMarker.snippet = snippetText  // 🛑 FORZIAMO L'AGGIORNAMENTO DELLO SNIPPET
-                                    }
-                                } else {
-                                    pilotMarkers[userId]?.remove()
-                                    pilotMarkers.remove(userId)
-                                }
-                            }
+                    // Recuperiamo il marker e aggiorniamo l'icona e lo snippet
+                    val existingMarker = pilotMarkers[userId]
+                    if (existingMarker != null) {
+                        val markerIcon = if (availableForChat) {
+                            BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+                        } else {
+                            BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
                         }
+                        existingMarker.setIcon(markerIcon)
+
+                        val snippetText = if (availableForChat) {
+                            "✅ Disponibile per chat - Clicca per aprire la chat"
+                        } else {
+                            "❌ Non disponibile per chat"
+                        }
+                        existingMarker.snippet = snippetText
                     }
                 }
             }
@@ -325,6 +327,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val db = FirebaseFirestore.getInstance()
         val cleanedUserName = userName.trim()  // Rimuove spazi e uniforma il confronto
         val userId = auth.currentUser?.uid ?: return
+
+        if (::locationCallback.isInitialized) {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+        } else {
+            Log.w(TAG, "⚠️ locationCallback non è inizializzato, impossibile rimuovere aggiornamenti")
+        }
 
         // Interrompi gli aggiornamenti della posizione
         Log.d(TAG, "🛑 Fermo gli aggiornamenti sulla posizione per: '$cleanedUserName'")
@@ -476,7 +484,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onDestroy() {
         super.onDestroy()
+        usersListener?.remove()
+        usersListener = null
         pilotsListener?.remove()
+        pilotsListener = null
     }
 
 
