@@ -12,11 +12,7 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.WorkManager
-import java.util.concurrent.TimeUnit
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -27,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         supportActionBar?.hide()
-        scheduleCleanupWorker()
+
 
 
         auth = FirebaseAuth.getInstance()
@@ -80,17 +76,7 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun scheduleCleanupWorker() {
-        val workRequest = PeriodicWorkRequestBuilder<CleanupWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
-            .build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "cleanupWorker",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
-    }
 
     private fun registerUser(email: String, password: String, fullName: String) {
         auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->

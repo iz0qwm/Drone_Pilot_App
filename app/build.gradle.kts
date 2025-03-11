@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.databinding.runtime)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.analytics)
