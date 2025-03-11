@@ -56,7 +56,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private var mapFragment: SupportMapFragment? = null
     private var userName: String? = null  // Ora viene caricato da loadUserName()
     private var droneName: String? = null
-    private val TAG = "DashboardActivity"
+    private val TAG = "DronePilotApp"
     private var pilotsListener: ListenerRegistration? = null
     private val pilotMarkers = mutableMapOf<String, Marker>()
 
@@ -103,7 +103,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         stopFlightButton.setOnClickListener {
             val currentUserName = userName ?: ""  // Evita il nullable
             if (currentUserName.isNotEmpty()) {
-                Log.d("DronePilotApp", "Tentativo di eliminare il volo per $currentUserName")
+                Log.d(TAG, "Tentativo di eliminare il volo per $currentUserName")
                 stopFlight(currentUserName)
             } else {
                 Toast.makeText(this, "Non posso fermare un volo inesistente", Toast.LENGTH_SHORT).show()
@@ -125,10 +125,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 db.collection("users").document(userId)
                     .update("availableForChat", isChecked)
                     .addOnSuccessListener {
-                        Log.d("ChatToggle", "Stato chat aggiornato: $isChecked")
+                        Log.d(TAG, "Stato chat aggiornato: $isChecked")
                     }
                     .addOnFailureListener { e ->
-                        Log.e("ChatToggle", "Errore nell'aggiornamento", e)
+                        Log.e(TAG, "Errore nell'aggiornamento dello stato chat", e)
                     }
             }
         }
@@ -147,7 +147,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
                 .addOnFailureListener {
-                    Log.e("Dashboard", "Errore nel recupero del nome", it)
+                    Log.e(TAG, "Errore nel recupero del nome dal database", it)
                 }
         }
     }
@@ -296,10 +296,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 db.collection("users").document(userId)
                     .update("inVolo", true)
                     .addOnSuccessListener {
-                        Log.d("DronePilotApp", "🚀 Impostato 'inVolo' su true per $userId")
+                        Log.d(TAG, "🚀 Impostato 'inVolo' su true per $userId")
                     }
                     .addOnFailureListener {
-                        Log.w("DronePilotApp", "⚠️ Errore nell'impostare 'inVolo' su true", it)
+                        Log.w(TAG, "⚠️ Errore nell'impostare 'inVolo' su true", it)
                     }
 
                 val position = hashMapOf(
@@ -313,7 +313,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 val userPosition = LatLng(location.latitude, location.longitude)
                 mMap.addMarker(MarkerOptions().position(userPosition).title("$userName - $droneName"))
-                Log.d("DronePilotApp", "✅ Attivato il volo per: $userId - $userName - $droneName")
+                Log.d(TAG, "✅ Attivato il volo per: $userId - $userName - $droneName")
 
                 startLocationUpdates(userId, userName, droneName)
             }
@@ -327,19 +327,19 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val userId = auth.currentUser?.uid ?: return
 
         // Interrompi gli aggiornamenti della posizione
-        Log.d("DronePilotApp", "🛑 Fermo gli aggiornamenti sulla posizione per: '$cleanedUserName'")
+        Log.d(TAG, "🛑 Fermo gli aggiornamenti sulla posizione per: '$cleanedUserName'")
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
-        Log.d("DronePilotApp", "🔍 Sto cercando il volo per: '$cleanedUserName'")
+        Log.d(TAG, "🔍 Sto cercando il volo per: '$cleanedUserName'")
 
         // Imposta "inVolo: false" nella raccolta users
         db.collection("users").document(userId)
             .update("inVolo", false)
             .addOnSuccessListener {
-                Log.d("DronePilotApp", "🛑 Impostato 'inVolo' su false per $userId")
+                Log.d(TAG, "🛑 Impostato 'inVolo' su false per $userId")
             }
             .addOnFailureListener {
-                Log.w("DronePilotApp", "⚠️ Errore nell'impostare 'inVolo' su false", it)
+                Log.w(TAG, "⚠️ Errore nell'impostare 'inVolo' su false", it)
             }
 
         db.collection("piloti")
@@ -347,35 +347,35 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             .get()
             .addOnSuccessListener { documents ->
                 if (documents.isEmpty) {
-                    Log.d("DronePilotApp", "❌ Nessun documento trovato per il nome: $cleanedUserName")
+                    Log.d(TAG, "❌ Nessun documento trovato per il nome: $cleanedUserName")
                     Toast.makeText(this, "Nessuna posizione trovata per $cleanedUserName", Toast.LENGTH_SHORT).show()
                 } else {
                     for (document in documents) {
-                        Log.d("DronePilotApp", "✅ Trovato documento: ${document.id} - ${document.data}")
+                        Log.d(TAG, "✅ Trovato documento: ${document.id} - ${document.data}")
 
                         db.collection("piloti").document(document.id).delete()
                             .addOnSuccessListener {
                                 val userId = document.id
                                 val marker = pilotMarkers[userId]
-                                Log.d("DronePilotApp", "🗑️ Posizione rimossa con successo per $cleanedUserName")
+                                Log.d(TAG, "🗑️ Posizione rimossa con successo per $cleanedUserName")
                                 Toast.makeText(this, "Volo terminato con successo", Toast.LENGTH_SHORT).show()
-                                Log.d("DronePilotApp", "🚩 Rimuovendo marker per l'utente: $userId")
+                                Log.d(TAG, "🚩 Rimuovendo marker per l'utente: $userId")
                                 if (marker != null) {
                                     marker.remove()
                                     pilotMarkers.remove(userId)
                                     Log.d(TAG, "Marker rimosso per $userId")
                                 }
-                                Log.d("DronePilotApp", "🔄 Verifica marker esistenti: ${pilotMarkers.keys}")
+                                Log.d(TAG, "🔄 Verifica marker esistenti: ${pilotMarkers.keys}")
 
                             }
                             .addOnFailureListener { e ->
-                                Log.e("DronePilotApp", "❌ Errore nella rimozione della posizione", e)
+                                Log.e(TAG, "❌ Errore nella rimozione della posizione", e)
                             }
                     }
                 }
             }
             .addOnFailureListener { e ->
-                Log.e("DronePilotApp", "❌ Errore nel recupero del documento", e)
+                Log.e(TAG, "❌ Errore nel recupero del documento", e)
             }
     }
 
@@ -461,7 +461,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         for (userId in userIdsToRemove) {
             pilotMarkers[userId]?.remove()  // Rimuovi il marker dalla mappa
             pilotMarkers.remove(userId)  // Rimuovi l'ID dalla mappa dei piloti
-            Log.d("DronePilotApp", "Marker rimosso per il pilota $userId.")
+            Log.d(TAG, "Marker rimosso per il pilota $userId.")
         }
     }
 
