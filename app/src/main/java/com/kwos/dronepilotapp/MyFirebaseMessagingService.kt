@@ -51,17 +51,31 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // Controlla se il messaggio contiene dati extra
         if (remoteMessage.data.isNotEmpty()) {
             val senderId = remoteMessage.data["senderId"] ?: "Sconosciuto"
-            val receiverId = remoteMessage.data["receiverId"] ?: "Sconosciuto"
             val message = remoteMessage.data["message"] ?: "Hai un nuovo messaggio"
 
-            // Mostra una notifica personalizzata o esegui azioni basate sui dati
-            Log.d(TAG, "Messaggio da $senderId: $message")
+            // Recupera il nome completo da Firestore
+            val db = FirebaseFirestore.getInstance()
+            db.collection("users").document(senderId).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val fullName = document.getString("fullName") ?: "Sconosciuto"
 
-            // Mostra la notifica personalizzata
-            showNotification("Messaggio da $senderId", message)
+                        // Mostra la notifica con il nome
+                        showNotification("Messaggio da $fullName", message)
 
-            // Puoi anche gestire i dati in base alle tue necessità, ad esempio
-            // navigare verso una schermata di chat o aggiornare l'UI
+                        // Invia un broadcast con il nome al posto del senderId
+                        val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE")
+                        intent.putExtra("message", message)
+                        intent.putExtra("title", "Messaggio da $fullName")
+                        intent.putExtra("senderId", senderId)
+                        sendBroadcast(intent)
+                    } else {
+                        Log.w(TAG, "Utente non trovato")
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Errore nel recupero del nome utente", e)
+                }
         }
 
 

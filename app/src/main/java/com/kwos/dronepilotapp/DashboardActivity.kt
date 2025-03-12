@@ -212,13 +212,32 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun showNewMessageInDashboard(title: String, message: String, senderId: String) {
         // Usa il binding per accedere alle viste
         binding.newMessageContainer.visibility = View.VISIBLE
-        binding.newMessageText.text = message
+
+        // Recupera il nome completo da Firestore
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(senderId).get()
+            .addOnSuccessListener { document ->
+                val fullName = document.getString("fullName") ?: "Utente sconosciuto"
+
+                // Imposta il testo con il nome e il messaggio insieme
+                binding.newMessageText.text = "Nuovo messaggio da $fullName:\n$message"
+
+                // Imposta anche il contentDescription per l'accessibilità
+                binding.newMessageContainer.contentDescription = "Nuovo messaggio da $fullName"
+            }
+            .addOnFailureListener {
+                // Se il recupero del nome fallisce, mostra solo il messaggio
+                binding.newMessageText.text = "Nuovo messaggio:\n$message"
+                binding.newMessageContainer.contentDescription = "Nuovo messaggio da utente sconosciuto"
+            }
 
         // Imposta un'azione di clic sull'icona per aprire la chat con il mittente
         binding.newMessageIcon.setOnClickListener {
             openChatWithPilot(senderId)  // Passa il senderId per aprire la chat con il mittente
         }
     }
+
+
 
     private fun loadUserName() {
         val userId = auth.currentUser?.uid
