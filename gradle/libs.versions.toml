@@ -4,6 +4,7 @@ appcompat = "1.7.0"
 databindingRuntime = "8.9.0"
 firebaseAuth = "23.2.0"
 firebaseBom = "33.10.0"
+firebaseMessaging = "24.1.0"
 firebaseStorage = "21.0.1"
 kotlin = "2.0.0"
 coreKtx = "1.15.0"
@@ -38,6 +39,7 @@ firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "f
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
 firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseStorage" }
 google-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

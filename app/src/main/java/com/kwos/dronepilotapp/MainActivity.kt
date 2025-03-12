@@ -11,13 +11,18 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
+
+
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
 
+    private val TAG = "DronePilotApp"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +72,17 @@ class MainActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
+                    // Login riuscito, procedi con l'ottenimento del token FCM
+                    FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
+                        if (tokenTask.isSuccessful) {
+                            val token = tokenTask.result
+                            Log.d(TAG, "Nuovo Token FCM: $token")
+                            saveTokenToServer(token) // Salva il token nel database
+                        } else {
+                            Log.e(TAG, "Errore nel recuperare il token FCM")
+                        }
+                    }
+
                     Toast.makeText(this, "Login riuscito!", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, DashboardActivity::class.java))
                     finish()
@@ -76,6 +92,27 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    private fun saveTokenToServer(token: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId != null) {
+            val db = FirebaseFirestore.getInstance()
+            val userDocRef = db.collection("users").document(userId)
+
+            // Log per vedere se l'utente è effettivamente autenticato
+            Log.d(TAG, "Utente autenticato: $userId")
+
+            // Aggiungi il token alla lista esistente di token
+            userDocRef.update("fcmTokens", FieldValue.arrayUnion(token))
+                .addOnSuccessListener {
+                    Log.d(TAG, "Token FCM aggiunto nel database per l'utente $userId")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e(TAG, "Errore aggiornando il token FCM", exception)
+                }
+        } else {
+            Log.e(TAG, "Errore: nessun utente autenticato")
+        }
+    }
 
 
     private fun registerUser(email: String, password: String, fullName: String) {

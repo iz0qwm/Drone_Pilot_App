@@ -1,16 +1,20 @@
 package com.kwos.dronepilotapp
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import android.util.Log
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.Gson
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.functions.FirebaseFunctions
 
 data class ChatMessage(
     val senderId: String = "",
@@ -24,10 +28,11 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var messageInput: EditText
     private lateinit var sendButton: Button
-    private lateinit var messagesListView: RecyclerView // Assicurati che sia RecyclerView
+    private lateinit var messagesListView: RecyclerView
     private lateinit var messagesAdapter: ChatAdapter
     private lateinit var receiverId: String
-    private lateinit var chattingWithText: TextView // TextView per il nome del pilota
+    private lateinit var chattingWithText: TextView
+    private val functions = FirebaseFunctions.getInstance()
 
     private var userName: String? = null
     private val TAG = "DronePilotApp"
@@ -43,29 +48,30 @@ class ChatActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         receiverId = intent.getStringExtra("receiverId") ?: ""
 
-        // Recupera la TextView per il nome del pilota
         chattingWithText = findViewById(R.id.chattingWithText)
-
-        // Recupera il nome del pilota con cui stai chattando
-        db.collection("users").document(receiverId).get()
-            .addOnSuccessListener { document ->
-                userName = document.getString("fullName")
-                if (userName != null) {
-                    chattingWithText.text = "Stai chattando con: $userName"
-                }
-            }
-
         messageInput = findViewById(R.id.messageInput)
         sendButton = findViewById(R.id.sendButton)
-        messagesListView = findViewById(R.id.messagesListView) // RecyclerView
+        messagesListView = findViewById(R.id.messagesListView)
         messagesAdapter = ChatAdapter(this, mutableListOf())
 
-        // Imposta il LinearLayoutManager per il RecyclerView
         messagesListView.layoutManager = LinearLayoutManager(this)
         messagesListView.adapter = messagesAdapter
 
         sendButton.setOnClickListener { sendMessage() }
+
+        loadReceiverName()
         listenForMessages()
+        clearNewMessageStatus() // Segna i messaggi come "letti"
+
+    }
+
+    private fun loadReceiverName() {
+        db.collection("users").document(receiverId).get()
+            .addOnSuccessListener { document ->
+                userName = document.getString("fullName")
+                chattingWithText.text = userName?.let { "Stai chattando con: $it" } ?: "Utente sconosciuto"
+            }
+            .addOnFailureListener { Log.e(TAG, "Errore nel recupero del nome del pilota", it) }
     }
 
     private fun sendMessage() {
@@ -76,7 +82,11 @@ class ChatActivity : AppCompatActivity() {
         val message = ChatMessage(senderId, receiverId, messageText)
         db.collection("chats")
             .add(message)
-            .addOnSuccessListener { messageInput.text.clear() }
+            .addOnSuccessListener {
+                messageInput.text.clear()
+                sendPushNotification(messageText)
+            }
+            .addOnFailureListener { Log.e(TAG, "Errore nell'invio del messaggio", it) }
     }
 
     private fun listenForMessages() {
@@ -94,4 +104,83 @@ class ChatActivity : AppCompatActivity() {
                 }
             }
     }
+
+    private fun sendPushNotification(message: String) {
+        val senderId = auth.currentUser?.uid
+        if (senderId.isNullOrEmpty()) {
+            Log.e(TAG, "Errore: UID del mittente non disponibile.")
+            return
+        }
+
+        val receiverId = this.receiverId
+        if (receiverId.isNullOrEmpty()) {
+            Log.e(TAG, "Errore: receiverId mancante.")
+            return
+        }
+
+        if (message.isEmpty()) {
+            Log.e(TAG, "Errore: il messaggio è vuoto.")
+            return
+        }
+
+        // Log per il debug
+        Log.d(TAG, "Invio notifica - receiverId: $receiverId, senderId: $senderId, message: $message")
+
+        // Recupera il FCM token del destinatario
+        fetchFCMTokenAndSendNotification(receiverId, message, senderId)
+    }
+
+    private fun fetchFCMTokenAndSendNotification(receiverId: String, message: String, senderId: String) {
+        val receiverRef = db.collection("users").document(receiverId)
+
+        receiverRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                // Recupera l'array di token FCM (se esiste)
+                val tokens = document.get("fcmTokens") as? List<String>
+                Log.d(TAG, "FCM Tokens del receiver: $tokens")
+
+                if (tokens != null && tokens.isNotEmpty()) {
+                    // Invia la notifica a ciascun token nell'array
+                    tokens.forEach { token ->
+                        sendNotificationToReceiver(token, message, senderId)
+                        Log.d(TAG, "Invio dopo token - token: $token, senderId: $senderId, message: $message")
+                    }
+                } else {
+                    Log.e(TAG, "Errore: il destinatario non ha token FCM salvati.")
+                }
+            } else {
+                Log.e(TAG, "Errore: Destinatario non trovato.")
+            }
+        }
+    }
+
+
+
+    private fun sendNotificationToReceiver(token: String, message: String, senderId: String) {
+        val data = hashMapOf(
+            "senderId" to senderId,
+            "receiverId" to receiverId,
+            "message" to message,
+            "receiverFcmToken" to token // 🔹 Aggiunto il token FCM del destinatario!
+        )
+
+        try {
+            functions.getHttpsCallable("sendChatNotification").call(data)
+                .addOnSuccessListener {
+                    Log.d(TAG, "Notifica push inviata con successo: ${it.data}")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e(TAG, "Errore nell'invio della notifica push: ${exception.message}", exception)
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Eccezione durante l'invio della notifica push: ${e.message}", e)
+        }
+    }
+
+
+    private fun clearNewMessageStatus() {
+        val prefs = getSharedPreferences("ChatPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("hasNewMessage", false).apply()
+    }
+
 }

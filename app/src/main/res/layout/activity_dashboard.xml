@@ -62,4 +62,33 @@
         android:layout_height="325dp"
         android:visibility="visible" />
 
+    <LinearLayout
+        android:id="@+id/new_message_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_marginTop="10dp"
+        android:layout_gravity="center_horizontal">
+
+        <ImageView
+            android:id="@+id/new_message_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_mail"
+            android:contentDescription="Nuovo messaggio" />
+
+        <TextView
+            android:id="@+id/new_message_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hai posta!"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingStart="8dp" />
+    </LinearLayout>
+
+
+
 </LinearLayout>

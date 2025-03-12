@@ -37,7 +37,9 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
+
 }
 
 dependencies {
@@ -56,11 +58,15 @@ dependencies {
     implementation(libs.androidx.databinding.runtime)
     implementation(libs.androidx.lifecycle.livedata.ktx)
 
+    implementation("com.google.code.gson:gson:2.10.1")
+
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage)
+    implementation(libs.firebase.messaging)
+    implementation("com.google.firebase:firebase-functions-ktx:21.1.1")
 
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)

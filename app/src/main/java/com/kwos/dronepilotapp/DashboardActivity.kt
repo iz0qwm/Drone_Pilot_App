@@ -3,6 +3,9 @@ package com.kwos.dronepilotapp
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.Context
+import android.os.Build
+
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
@@ -13,6 +16,9 @@ import android.widget.FrameLayout
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+
 
 import androidx.lifecycle.Observer
 import androidx.appcompat.app.AppCompatActivity
@@ -45,6 +51,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.DocumentChange
 import java.util.concurrent.TimeUnit
 
+import com.kwos.dronepilotapp.databinding.ActivityDashboardBinding
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -53,6 +60,9 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var chatToggle: Switch
     private lateinit var locationCallback: LocationCallback  // Variabile per il callback della posizione
+    private lateinit var binding: ActivityDashboardBinding
+    // Dichiarazione del receiver come variabile membro
+    private lateinit var messageReceiver: BroadcastReceiver
 
     private var mapFragment: SupportMapFragment? = null
     private var userName: String? = null  // Ora viene caricato da loadUserName()
@@ -70,6 +80,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         supportActionBar?.hide()
 
         CleanupWorker()
+        checkForNewMessages()
 
         db = FirebaseFirestore.getInstance()
 
@@ -78,6 +89,33 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         chatToggle = findViewById(R.id.chatToggle)
         loadUserName() // Carica il nome del pilota all'avvio
+
+        binding = ActivityDashboardBinding.inflate(layoutInflater)
+        // Imposta il layout
+        setContentView(binding.root)
+
+        // Inizializza il BroadcastReceiver
+        messageReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                // Controlla se l'intent contiene il messaggio
+                val message = intent.getStringExtra("message")
+                val title = intent.getStringExtra("title")
+                val senderId = intent.getStringExtra("senderId")
+                if (message != null && title != null && senderId != null) {
+                    showNewMessageInDashboard(title, message, senderId)
+                }
+            }
+        }
+
+        // Registra il receiver per ricevere il broadcast
+        val filter = IntentFilter("com.kwos.dronepilotapp.NEW_MESSAGE")
+        // Per Android 12 e versioni successive, registriamo dinamicamente il receiver in modo sicuro
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            registerReceiver(messageReceiver, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(messageReceiver, filter)
+        }
+
 
         val logoutButton = findViewById<Button>(R.id.logoutButton)
         val startFlightButton = findViewById<Button>(R.id.startFlightButton)
@@ -95,11 +133,35 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        logoutButton.setOnClickListener {
-            FirebaseAuth.getInstance().signOut()
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+        // Verifica e richiedi permesso per notifiche su Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
         }
+
+        logoutButton.setOnClickListener {
+            // Ottieni l'ID dell'utente attualmente autenticato
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            Log.d(TAG, "User ID al momento del logout: $userId")
+
+            if (userId != null) {
+                // L'utente è autenticato, rimuovi i token FCM dal database
+                MyFirebaseMessagingService().removeTokensOnLogout(userId)
+
+                // Ora effettua il logout
+                FirebaseAuth.getInstance().signOut()
+                Log.d(TAG, "Utente disconnesso: $userId")
+            } else {
+                Log.d(TAG, "Utente non autenticato al momento del logout.")
+            }
+
+            // Vai alla MainActivity o a una schermata di login
+            startActivity(Intent(this, MainActivity::class.java))
+            finish() // Termina l'attività corrente
+        }
+
+
 
         startFlightButton.setOnClickListener {
             droneName = droneField.text.toString()
@@ -144,6 +206,18 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         showMap()
+    }
+
+
+    private fun showNewMessageInDashboard(title: String, message: String, senderId: String) {
+        // Usa il binding per accedere alle viste
+        binding.newMessageContainer.visibility = View.VISIBLE
+        binding.newMessageText.text = message
+
+        // Imposta un'azione di clic sull'icona per aprire la chat con il mittente
+        binding.newMessageIcon.setOnClickListener {
+            openChatWithPilot(senderId)  // Passa il senderId per aprire la chat con il mittente
+        }
     }
 
     private fun loadUserName() {
@@ -473,6 +547,19 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun checkForNewMessages() {
+        val prefs = getSharedPreferences("ChatPrefs", Context.MODE_PRIVATE)
+        val hasNewMessage = prefs.getBoolean("hasNewMessage", false)
+
+        val newMessageContainer = findViewById<View>(R.id.new_message_container)
+
+        if (hasNewMessage) {
+            newMessageContainer.visibility = View.VISIBLE
+        } else {
+            newMessageContainer.visibility = View.GONE
+        }
+    }
+
     override fun onStop() {
         super.onStop()
         // Ferma gli aggiornamenti della posizione quando l'attività è in stop
@@ -481,6 +568,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        checkForNewMessages() // Controlla se ci sono nuovi messaggi
+    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -488,6 +579,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         usersListener = null
         pilotsListener?.remove()
         pilotsListener = null
+        // Unregister the receiver when the activity is destroyed
+        unregisterReceiver(messageReceiver)
     }
 
 
