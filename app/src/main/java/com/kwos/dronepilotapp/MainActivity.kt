@@ -16,8 +16,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 
 
-
-
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
@@ -142,4 +140,5 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 }

@@ -76,24 +76,39 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_dashboard)
-        supportActionBar?.hide()
 
-        CleanupWorker()
-        checkForNewMessages()
-
-        db = FirebaseFirestore.getInstance()
-
-        auth = FirebaseAuth.getInstance()
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        chatToggle = findViewById(R.id.chatToggle)
-        loadUserName() // Carica il nome del pilota all'avvio
-
+        //BINDING ??
         binding = ActivityDashboardBinding.inflate(layoutInflater)
         // Imposta il layout
         setContentView(binding.root)
 
+        //setContentView(R.layout.activity_dashboard)
+        supportActionBar?.hide()
+
+        //Esecuzione funzioni automatiche
+        CleanupWorker()
+        checkForNewMessages()
+
+        // altre variabili
+        db = FirebaseFirestore.getInstance()
+        auth = FirebaseAuth.getInstance()
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+
+        // Ora possiamo usare direttamente il binding per accedere agli elementi della UI
+        chatToggle = binding.chatToggle  // <-- IMPORTANTE: Prendilo dal binding!
+        // Log per confermare
+        logDebug(TAG, "✅ chatToggle inizializzato: ${chatToggle != null}")
+        //chatToggle = findViewById(R.id.chatToggle)
+
+
+        //Partenza utente
+        loadUserName() // Carica il nome del pilota all'avvio
+
+
+
+        // INIZIO BROADCAST RECEIVER
+        //Questo serve per ricevere i messaggi provenienti dalla Chat
         // Inizializza il BroadcastReceiver
         messageReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -106,7 +121,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         }
-
         // Registra il receiver per ricevere il broadcast
         val filter = IntentFilter("com.kwos.dronepilotapp.NEW_MESSAGE")
         // Per Android 12 e versioni successive, registriamo dinamicamente il receiver in modo sicuro
@@ -115,54 +129,42 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         } else {
             registerReceiver(messageReceiver, filter)
         }
-
-
-        val logoutButton = findViewById<Button>(R.id.logoutButton)
-        val startFlightButton = findViewById<Button>(R.id.startFlightButton)
-        val stopFlightButton = findViewById<Button>(R.id.stopFlightButton)
-        val droneField = findViewById<EditText>(R.id.droneField)
-        val mapContainer = findViewById<FrameLayout>(R.id.mapContainer)
-
-        mapContainer.visibility = View.VISIBLE
-
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                for (location in locationResult.locations) {
-                    Log.d(TAG, "📍 Nuova posizione ricevuta: ${location.latitude}, ${location.longitude}")
-                }
-            }
-        }
-
         // Verifica e richiedi permesso per notifiche su Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
             }
         }
+        // FINE BROADCAST RECEIVER
 
-        logoutButton.setOnClickListener {
-            // Ottieni l'ID dell'utente attualmente autenticato
-            val userId = FirebaseAuth.getInstance().currentUser?.uid
-            Log.d(TAG, "User ID al momento del logout: $userId")
 
-            if (userId != null) {
-                // L'utente è autenticato, rimuovi i token FCM dal database
-                MyFirebaseMessagingService().removeTokensOnLogout(userId)
+        //definizione variabili
+        val logoutButton = findViewById<Button>(R.id.logoutButton)
+        val startFlightButton = findViewById<Button>(R.id.startFlightButton)
+        val stopFlightButton = findViewById<Button>(R.id.stopFlightButton)
+        val droneField = findViewById<EditText>(R.id.droneField)
+        val mapContainer = findViewById<FrameLayout>(R.id.mapContainer)
 
-                // Ora effettua il logout
-                FirebaseAuth.getInstance().signOut()
-                Log.d(TAG, "Utente disconnesso: $userId")
-            } else {
-                Log.d(TAG, "Utente non autenticato al momento del logout.")
+        //Partenza della mappa
+        mapContainer.visibility = View.VISIBLE
+
+        //Aggiorna le posizioni
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                for (location in locationResult.locations) {
+                    logDebug(TAG, "📍 Nuova posizione ricevuta: ${location.latitude}, ${location.longitude}")
+                }
             }
-
-            // Vai alla MainActivity o a una schermata di login
-            startActivity(Intent(this, MainActivity::class.java))
-            finish() // Termina l'attività corrente
         }
 
 
+        // Controlla l'esecuzione del Logout
+        logoutButton.setOnClickListener {
+            logout()
+        }
 
+
+        // Tasto Start Flight
         startFlightButton.setOnClickListener {
             droneName = droneField.text.toString()
             if (!userName.isNullOrEmpty() && !droneName.isNullOrEmpty()) {
@@ -172,17 +174,18 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
+        //Tasto Stop Flight
         stopFlightButton.setOnClickListener {
             val currentUserName = userName ?: ""  // Evita il nullable
             if (currentUserName.isNotEmpty()) {
-                Log.d(TAG, "Tentativo di eliminare il volo per $currentUserName")
+                logDebug(TAG, "Tentativo di eliminare il volo per $currentUserName")
                 stopFlight(currentUserName)
             } else {
                 Toast.makeText(this, "Non posso fermare un volo inesistente", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Recupera lo stato della chat da Firestore al login
+        // Recupera lo stato della disponibilità alla chat da Firestore al login
         auth.currentUser?.uid?.let { userId ->
             db.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
@@ -191,24 +194,34 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
         }
-        // Ascolta le modifiche del toggle e aggiorna Firestore
+
+
+        // Ora il listener funzionerà sempre
         chatToggle.setOnCheckedChangeListener { _, isChecked ->
-            auth.currentUser?.uid?.let { userId ->
-                db.collection("users").document(userId)
-                    .update("availableForChat", isChecked)
-                    .addOnSuccessListener {
-                        Log.d(TAG, "Stato chat aggiornato: $isChecked")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e(TAG, "Errore nell'aggiornamento dello stato chat", e)
-                    }
+            val userId = auth.currentUser?.uid
+            if (userId == null) {
+                logError(TAG, "❌ chatToggle ERRORE: L'utente non è autenticato, impossibile aggiornare Firestore")
+                return@setOnCheckedChangeListener
             }
+
+            db.collection("users").document(userId)
+                .update("availableForChat", isChecked)
+                .addOnSuccessListener {
+                    logDebug(TAG, "✅ chatToggle: Stato chat aggiornato: $isChecked")
+                }
+                .addOnFailureListener { e ->
+                    logError(TAG, "❌ chatToggle: Errore nell'aggiornamento dello stato chat", e)
+                }
         }
 
         showMap()
+
     }
 
 
+    /// INIZIO FUNZIONI
+
+    // Mostra messaggi dopo averli recuperati dal Broadcast
     private fun showNewMessageInDashboard(title: String, message: String, senderId: String) {
         // Usa il binding per accedere alle viste
         binding.newMessageContainer.visibility = View.VISIBLE
@@ -238,7 +251,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-
+    //Carica il nome utente e gli dice Benvenuto
     private fun loadUserName() {
         val userId = auth.currentUser?.uid
         if (userId != null) {
@@ -250,11 +263,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
                 .addOnFailureListener {
-                    Log.e(TAG, "Errore nel recupero del nome dal database", it)
+                    logError(TAG, "Errore nel recupero del nome dal database", it)
                 }
         }
     }
 
+    //Mostra la Mappa
     private fun showMap() {
         mapFragment = supportFragmentManager.findFragmentById(R.id.mapContainer) as? SupportMapFragment
         if (mapFragment == null) {
@@ -266,6 +280,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment!!.getMapAsync(this)
     }
 
+    //Fa aprire la Chat con il mittente (receiver) se si clicca sul messaggio ricevuto
     private fun openChatWithPilot(userId: String) {
         val intent = Intent(this, ChatActivity::class.java)
         intent.putExtra("receiverId", userId)  // Assicurati di usare la chiave giusta
@@ -293,15 +308,18 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             mMap.isMyLocationEnabled = true
             loadPilots()
             listenForChatAvailability()
+            logDebug(TAG, "📡 Chat Listener per chat attivato")
         }
     }
 
 
     private fun loadPilots() {
+        pilotsListener?.remove()  // Rimuove il vecchio listener se già esiste
         pilotsListener = db.collection("piloti")
+            .whereEqualTo("inVolo", true)  // Carica solo chi è ancora in volo
             .addSnapshotListener { documents, e ->
                 if (e != null) {
-                    Log.w(TAG, "Errore nel recupero dei dati dei piloti", e)
+                    logWarning(TAG, "Errore nel recupero dei dati dei piloti", e)
                     return@addSnapshotListener
                 }
 
@@ -327,6 +345,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                         } else {
                             existingMarker.position = position
                             existingMarker.title = "$name - $drone"
+                            // Aggiorna l'icona per mantenere la coerenza con lo stato della chat
+                            existingMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
                         }
                     } else {
                         pilotMarkers[userId]?.remove()
@@ -337,18 +357,29 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun listenForChatAvailability() {
+        logDebug(TAG, "🟢 Chat: Inizializzazione listener per stato chat")
+
         usersListener = db.collection("users")
             .addSnapshotListener { documents, e ->
                 if (e != null) {
-                    Log.w(TAG, "Errore nel recupero dello stato chat", e)
+                    logWarning(TAG, "❌ Chat: Errore nel recupero dello stato chat", e)
                     return@addSnapshotListener
                 }
+
+                if (documents == null || documents.isEmpty) {
+                    logWarning(TAG, "⚠️ Chat: Nessun aggiornamento ricevuto da Firestore")
+                    return@addSnapshotListener
+                }
+
+                logDebug(TAG, "📡 Chat: Aggiornamento ricevuto da Firestore")
 
                 documents?.forEach { doc ->
                     val userId = doc.id
                     val availableForChat = doc.getBoolean("availableForChat") ?: false
 
-                    Log.d(TAG, "🔄 Stato chat aggiornato per $userId: $availableForChat")
+                    //Da rimuovere questo log quando gli utenti saranno tanti
+                    //RIMUOVERE
+                    logDebug(TAG, "🔄 Chat: Stato aggiornato per $userId: $availableForChat")
 
                     // Recuperiamo il marker e aggiorniamo l'icona e lo snippet
                     val existingMarker = pilotMarkers[userId]
@@ -366,6 +397,9 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                             "❌ Non disponibile per chat"
                         }
                         existingMarker.snippet = snippetText
+                        logDebug(TAG, "✅ Chat: Marker aggiornato per $userId")
+                    } else {
+                        logWarning(TAG, "⚠️ Chat: Marker non trovato per $userId, impossibile aggiornare lo stato chat")
                     }
                 }
             }
@@ -391,10 +425,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 db.collection("users").document(userId)
                     .update("inVolo", true)
                     .addOnSuccessListener {
-                        Log.d(TAG, "🚀 Impostato 'inVolo' su true per $userId")
+                        logDebug(TAG, "🚀 Impostato 'inVolo' su true per $userId")
                     }
                     .addOnFailureListener {
-                        Log.w(TAG, "⚠️ Errore nell'impostare 'inVolo' su true", it)
+                        logWarning(TAG, "⚠️ Errore nell'impostare 'inVolo' su true", it)
                     }
 
                 val position = hashMapOf(
@@ -406,9 +440,19 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 )
                 db.collection("piloti").document(userId).set(position)
 
+                val existingMarker = pilotMarkers[userId]
+                existingMarker?.remove()  // Rimuove il marker vecchio prima di crearne uno nuovo
+
                 val userPosition = LatLng(location.latitude, location.longitude)
-                mMap.addMarker(MarkerOptions().position(userPosition).title("$userName - $droneName"))
-                Log.d(TAG, "✅ Attivato il volo per: $userId - $userName - $droneName")
+                val marker = mMap.addMarker(MarkerOptions()
+                    .position(userPosition)
+                    .title("$userName - $droneName")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))  // Inizialmente rosso
+                )!!
+
+                pilotMarkers[userId] = marker  // Salva il marker
+
+                logDebug(TAG, "✅ startFlight: Attivato il volo per: $userId - $userName - $droneName")
 
                 startLocationUpdates(userId, userName, droneName)
             }
@@ -417,6 +461,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     private fun stopFlight(userName: String) {
+        pilotsListener?.remove()
+        pilotsListener = null
+        logDebug(TAG, "🛑 stopFlight: Listener LoadPiloti Firestore rimosso")
+
         val db = FirebaseFirestore.getInstance()
         val cleanedUserName = userName.trim()  // Rimuove spazi e uniforma il confronto
         val userId = auth.currentUser?.uid ?: return
@@ -424,23 +472,32 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         } else {
-            Log.w(TAG, "⚠️ locationCallback non è inizializzato, impossibile rimuovere aggiornamenti")
+            logWarning(TAG, "⚠️ stopFlight: locationCallback non è inizializzato, impossibile rimuovere aggiornamenti")
         }
 
         // Interrompi gli aggiornamenti della posizione
-        Log.d(TAG, "🛑 Fermo gli aggiornamenti sulla posizione per: '$cleanedUserName'")
+        logDebug(TAG, "🛑 stopFlight: Fermo gli aggiornamenti sulla posizione per: '$cleanedUserName'")
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
-        Log.d(TAG, "🔍 Sto cercando il volo per: '$cleanedUserName'")
+        logDebug(TAG, "🔍 stopFlight: Sto cercando il volo per: '$cleanedUserName'")
 
         // Imposta "inVolo: false" nella raccolta users
         db.collection("users").document(userId)
             .update("inVolo", false)
             .addOnSuccessListener {
-                Log.d(TAG, "🛑 Impostato 'inVolo' su false per $userId")
+                logDebug(TAG, "🛑 stopFlight: Impostato 'inVolo' su false per $userId")
             }
             .addOnFailureListener {
-                Log.w(TAG, "⚠️ Errore nell'impostare 'inVolo' su false", it)
+                logWarning(TAG, "⚠️ stopFlight: Errore nell'impostare 'inVolo' su false", it)
+            }
+        // Imposta "availabeForChat: false" nella raccolta users
+        db.collection("users").document(userId)
+            .update("availableForChat", false)
+            .addOnSuccessListener {
+                logDebug(TAG, "🛑 stopFlight: Impostato 'availableForChat' su false per $userId")
+            }
+            .addOnFailureListener {
+                logWarning(TAG, "⚠️ stopFlight: Errore nell'impostare 'availableForChat' su false", it)
             }
 
         db.collection("piloti")
@@ -448,35 +505,35 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             .get()
             .addOnSuccessListener { documents ->
                 if (documents.isEmpty) {
-                    Log.d(TAG, "❌ Nessun documento trovato per il nome: $cleanedUserName")
-                    Toast.makeText(this, "Nessuna posizione trovata per $cleanedUserName", Toast.LENGTH_SHORT).show()
+                    logDebug(TAG, "❌ stopFlight: Nessun documento trovato per il nome: $cleanedUserName")
+                    Toast.makeText(this, "stopFlight: Nessuna posizione trovata per $cleanedUserName", Toast.LENGTH_SHORT).show()
                 } else {
                     for (document in documents) {
-                        Log.d(TAG, "✅ Trovato documento: ${document.id} - ${document.data}")
+                        logDebug(TAG, "✅ stopFlight: Trovato documento: ${document.id} - ${document.data}")
 
                         db.collection("piloti").document(document.id).delete()
                             .addOnSuccessListener {
                                 val userId = document.id
                                 val marker = pilotMarkers[userId]
-                                Log.d(TAG, "🗑️ Posizione rimossa con successo per $cleanedUserName")
+                                logDebug(TAG, "🗑️ stopFlight: Posizione rimossa con successo per $cleanedUserName")
                                 Toast.makeText(this, "Volo terminato con successo", Toast.LENGTH_SHORT).show()
-                                Log.d(TAG, "🚩 Rimuovendo marker per l'utente: $userId")
+                                logDebug(TAG, "🚩 stopFlight: Rimuovendo marker per l'utente: $userId")
                                 if (marker != null) {
                                     marker.remove()
                                     pilotMarkers.remove(userId)
-                                    Log.d(TAG, "Marker rimosso per $userId")
+                                    logDebug(TAG, "stopFlight: Marker rimosso per $userId")
                                 }
-                                Log.d(TAG, "🔄 Verifica marker esistenti: ${pilotMarkers.keys}")
+                                logDebug(TAG, "🔄 stopFlight: Verifica marker esistenti: ${pilotMarkers.keys}")
 
                             }
                             .addOnFailureListener { e ->
-                                Log.e(TAG, "❌ Errore nella rimozione della posizione", e)
+                                logError(TAG, "❌ stopFlight: Errore nella rimozione della posizione", e)
                             }
                     }
                 }
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "❌ Errore nel recupero del documento", e)
+                logError(TAG, "❌ stopFlight: Errore nel recupero del documento", e)
             }
     }
 
@@ -562,7 +619,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         for (userId in userIdsToRemove) {
             pilotMarkers[userId]?.remove()  // Rimuovi il marker dalla mappa
             pilotMarkers.remove(userId)  // Rimuovi l'ID dalla mappa dei piloti
-            Log.d(TAG, "Marker rimosso per il pilota $userId.")
+            logDebug(TAG, "Marker rimosso per il pilota $userId.")
         }
     }
 
@@ -577,6 +634,25 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         } else {
             newMessageContainer.visibility = View.GONE
         }
+    }
+
+    private fun logout() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId != null) {
+            // Interrompe il volo e rimuove i marker
+            stopFlight(userId)
+
+            // Rimuove i token FCM dal database
+            MyFirebaseMessagingService().removeTokensOnLogout(userId)
+        }
+
+        // Effettua il logout da Firebase
+        FirebaseAuth.getInstance().signOut()
+        logDebug(TAG, "Utente disconnesso: $userId")
+
+        // Torna alla schermata di login
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 
     override fun onStop() {
