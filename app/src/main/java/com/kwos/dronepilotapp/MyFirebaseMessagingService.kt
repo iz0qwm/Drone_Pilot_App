@@ -147,37 +147,38 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     // Quando un utente si disconnette, rimuovi tutti i suoi token
-    fun removeTokensOnLogout(userId: String) {
+    fun removeTokensOnLogout(userId: String, onComplete: () -> Unit) {
         val db = FirebaseFirestore.getInstance()
         val userDocRef = db.collection("users").document(userId)
 
-        // Aggiungi un log per verificare l'inizio della rimozione
-        Log.d(TAG, "Sto rimuovendo i token FCM per l'utente $userId")
+        Log.d(TAG, "removeToken: Sto rimuovendo i token FCM per l'utente $userId")
 
-        // Verifica se i token sono un array. Se lo sono, usa arrayRemove
         userDocRef.get().addOnSuccessListener { document ->
             if (document.exists()) {
-                val tokens = document.get("fcmTokens") as? List<String> // Assicurati che il campo sia "fcmTokens"
-                if (tokens != null && tokens.isNotEmpty()) {
-                    // Rimuovi ogni singolo token
-                    tokens.forEach { token ->
-                        userDocRef.update("fcmTokens", FieldValue.arrayRemove(token))
-                            .addOnSuccessListener {
-                                Log.d(TAG, "Token FCM rimosso dal database per l'utente $userId: $token")
-                            }
-                            .addOnFailureListener { exception ->
-                                Log.e(TAG, "Errore rimuovendo il token FCM per l'utente $userId", exception)
-                            }
-                    }
+                val tokens = document.get("fcmTokens") as? List<String>
+                if (!tokens.isNullOrEmpty()) {
+                    userDocRef.update("fcmTokens", FieldValue.delete())
+                        .addOnSuccessListener {
+                            Log.d(TAG, "removeToken: Token FCM rimossi con successo per $userId")
+                            onComplete() // Chiamata di callback per continuare il logout
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e(TAG, "❌ Errore nella rimozione dei token FCM", exception)
+                            onComplete() // Anche in caso di errore, continua il logout
+                        }
                 } else {
-                    Log.d(TAG, "Nessun token FCM trovato per l'utente $userId")
+                    Log.d(TAG, "removeToken: Nessun token FCM trovato per $userId")
+                    onComplete()
                 }
             } else {
-                Log.d(TAG, "Il documento dell'utente non esiste")
+                Log.d(TAG, "removeToken: Documento utente non esistente")
+                onComplete()
             }
         }.addOnFailureListener { exception ->
-            Log.e(TAG, "Errore nel recupero del documento utente: $userId", exception)
+            Log.e(TAG, "❌ removeToke: Errore nel recupero del documento utente", exception)
+            onComplete()
         }
     }
+
 
 }

@@ -638,22 +638,40 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun logout() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
+        logDebug(TAG, "logout: tasto premuto da $userId.")
         if (userId != null) {
             // Interrompe il volo e rimuove i marker
             stopFlight(userId)
+            logDebug(TAG, "logout: stopflight eseguito per $userId.")
 
             // Rimuove i token FCM dal database
-            MyFirebaseMessagingService().removeTokensOnLogout(userId)
+            logDebug(TAG, "logout: FCM Token rimossi per $userId.")
+            MyFirebaseMessagingService().removeTokensOnLogout(userId) {
+                // Rimuove i listener Firestore attivi (se presenti)
+                usersListener?.remove()  // Rimuovi il listener per la chat o altre operazioni di Firestore
+                usersListener = null
+                pilotsListener?.remove()
+                pilotsListener = null
+                logDebug(TAG, "logout: Rimuovo i listener per $userId.")
+                // Fa il logout
+                FirebaseAuth.getInstance().signOut()
+                logDebug(TAG, "logout: Utente disconnesso: $userId")
+                // Torna alla schermata di login
+                logDebug(TAG, "logout: Ricarico la schermata iniziale")
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+        } else {
+            // Effettua il logout da Firebase (deve essere fatto dopo aver completato tutte le operazioni)
+            logDebug(TAG, "logout: Utente disconnesso: $userId")
+            FirebaseAuth.getInstance().signOut()
+            // Torna alla schermata di login
+            logDebug(TAG, "logout: Ricarico la schermata iniziale")
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
         }
-
-        // Effettua il logout da Firebase
-        FirebaseAuth.getInstance().signOut()
-        logDebug(TAG, "Utente disconnesso: $userId")
-
-        // Torna alla schermata di login
-        startActivity(Intent(this, MainActivity::class.java))
-        finish()
     }
+
 
     override fun onStop() {
         super.onStop()

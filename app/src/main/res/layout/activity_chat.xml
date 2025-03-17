@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#e7e1d3"
     android:padding="10dp">
 
     <!-- Aggiungi questa TextView in cima per il nome del pilota -->

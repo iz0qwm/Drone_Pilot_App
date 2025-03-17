@@ -14,6 +14,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
+import android.text.method.LinkMovementMethod
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.text.HtmlCompat
 
 
 class MainActivity : AppCompatActivity() {
@@ -27,7 +31,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         supportActionBar?.hide()
 
+        //Carica il logo
+        val logoImage: ImageView = findViewById(R.id.logoImage)
+        logoImage.setImageResource(R.drawable.logo)
 
+        //Descrizione sulla pagina iniziale
+        val descriptionTextView: TextView = findViewById(R.id.descriptionText)
+        descriptionTextView.text = HtmlCompat.fromHtml(getString(R.string.description_text), HtmlCompat.FROM_HTML_MODE_LEGACY)
+        descriptionTextView.movementMethod = LinkMovementMethod.getInstance() // Abilita link cliccabili se presenti
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()

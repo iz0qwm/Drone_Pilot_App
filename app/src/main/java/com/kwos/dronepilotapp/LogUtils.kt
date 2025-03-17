@@ -14,8 +14,13 @@ fun logError(tag: String, message: String, throwable: Throwable? = null) {
     }
 }
 
-fun logWarning(tag: String, message: String) {
+fun logWarning(tag: String, message: String, throwable: Throwable? = null) {
     if (LogConfig.DEBUG_MODE) {
-        Log.w(tag, message)
+        if (throwable != null) {
+            Log.w(tag, message, throwable)
+        } else {
+            Log.w(tag, message)
+        }
     }
 }
+

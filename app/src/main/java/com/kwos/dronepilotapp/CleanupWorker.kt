@@ -6,14 +6,35 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.firebase.firestore.FirebaseFirestore
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.SetOptions
 
 class CleanupWorker(context: Context, workerParams: WorkerParameters) :
     Worker(context, workerParams) {
 
+    private val TAG = "DronePilotApp"
     private val db = FirebaseFirestore.getInstance()
 
     override fun doWork(): Result {
-        cleanOldLocations()
+        val auth = FirebaseAuth.getInstance()
+
+        auth.signInWithEmailAndPassword("admin@dronepilotapp.com", "SuperSicura123!")
+            .addOnSuccessListener {
+                val adminData = mapOf("admin" to true)
+                db.collection("users").document("admin@dronepilotapp.com")
+                    .set(adminData, SetOptions.merge()) // 🔥 Assicura che il campo venga aggiornato
+                    .addOnSuccessListener {
+                        logDebug(TAG, "CleanupWorker: Admin impostato correttamente!")
+                        cleanOldLocations() // 🔥 Ora puoi eseguire la pulizia
+                    }
+                    .addOnFailureListener { e ->
+                        logDebug(TAG, "CleanupWorker: Errore nell'impostare admin")
+                    }
+            }
+            .addOnFailureListener { e ->
+                logError(TAG, "CleanupWorker: Errore nell'autenticazione", e)
+            }
+
         return Result.success()
     }
 

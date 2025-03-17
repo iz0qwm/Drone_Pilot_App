@@ -1,4 +1,14 @@
 <resources>
     <string name="app_name">Drone Pilot App</string>
-    <string name="dashboard_activity_label">Dashboard</string> <!-- Aggiungi questa stringa -->
+    <string name="dashboard_activity_label">Dashboard</string>
+    <string name="description_text"><![CDATA[
+        Questa è la App della Community <b>Tutto sui droni by Raffaello</b>.<br/><br/>
+        Dopo la registrazione potrai <b>attivare la tua posizione</b>,
+        <b>vedere altri piloti sulla mappa</b> e <b>chattare con loro</b> se avranno dato l\'autorizzazione.<br/><br/>
+        Se sei già registrato, entra solo con <b><font color=\'#FF5733\'>email e password</font></b>,
+        non sarà più necessario inserire il <i>nome</i>, che invece è <i>obbligatorio per la prima registrazione</i>.
+        <br/><br/>Per maggiori informazioni <b>iscriviti</b> al gruppo <b>Telegram: tuttosuidroni</b>
+        <br/><br/>Copyright<br/><i>@2025 Raffaello Di Martino KWOS</i>
+    ]]></string>
 </resources>
+

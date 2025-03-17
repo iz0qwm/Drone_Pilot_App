@@ -1,19 +1,20 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#e7e1d3"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/titleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Community Tutto sui droni by Raffaello"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="@color/blue"
-        android:layout_gravity="center"
-        android:paddingBottom="16dp"/>
+    <ImageView
+        android:id="@+id/logoImage"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/logo" />
 
     <EditText
         android:id="@+id/fullNameField"
@@ -54,9 +55,10 @@
         android:id="@+id/descriptionText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Dopo la registrazione potrai attivare la tua posizione e vedere altri piloti sulla mappa. Se se già registrato entra solo con email e password, non è più necessario inserire il nome."
+        android:text="@string/description_text"
         android:textSize="14sp"
         android:textColor="@color/gray"
         android:paddingTop="8dp"/>
 
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>
