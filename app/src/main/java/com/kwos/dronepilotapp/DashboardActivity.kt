@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.Context
 import android.os.Build
+import android.location.Location
 
 import android.os.Bundle
 import android.os.Looper
@@ -16,6 +17,7 @@ import android.widget.FrameLayout
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ImageView
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
 
@@ -50,6 +52,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.DocumentChange
 import java.util.concurrent.TimeUnit
+import com.squareup.picasso.Picasso
+
 
 import com.kwos.dronepilotapp.databinding.ActivityDashboardBinding
 
@@ -71,6 +75,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private var pilotsListener: ListenerRegistration? = null
     private var usersListener: ListenerRegistration? = null
     private val pilotMarkers = mutableMapOf<String, Marker>()
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001
 
 
 
@@ -124,11 +129,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Registra il receiver per ricevere il broadcast
         val filter = IntentFilter("com.kwos.dronepilotapp.NEW_MESSAGE")
         // Per Android 12 e versioni successive, registriamo dinamicamente il receiver in modo sicuro
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        //    registerReceiver(messageReceiver, filter, Context.RECEIVER_EXPORTED)
+        //} else {
             registerReceiver(messageReceiver, filter, Context.RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(messageReceiver, filter)
-        }
+        //}
         // Verifica e richiedi permesso per notifiche su Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -144,6 +149,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val stopFlightButton = findViewById<Button>(R.id.stopFlightButton)
         val droneField = findViewById<EditText>(R.id.droneField)
         val mapContainer = findViewById<FrameLayout>(R.id.mapContainer)
+        val weatherInfoText = findViewById<TextView>(R.id.weather_info_text)
+        val weatherMeteogram = findViewById<ImageView>(R.id.weather_meteogram)
 
         //Partenza della mappa
         mapContainer.visibility = View.VISIBLE
@@ -157,6 +164,31 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            location?.let {
+                val userLat = it.latitude
+                val userLon = it.longitude
+
+                // Ottiene i dati meteo
+                MeteoManager.getMeteoData(userLat, userLon) { meteo ->
+                    runOnUiThread {
+                        if (meteo != null) {
+                            val weatherText = "Temperatura Min: ${meteo.temperature_min}° - Max: ${meteo.temperature_max}°\n" +
+                                    "Vento: ${meteo.wind_speedmax} Km/h - ${meteo.wind_speedmean} Km/h - ${meteo.wind_speedmin} Km/h\n " +
+                                    "Umidità: ${meteo.humidity}%"
+                            weatherInfoText.text = weatherText
+                        } else {
+                            weatherInfoText.text = "Dati meteo non disponibili"
+                        }
+                    }
+                }
+
+                // Carica l'immagine del meteogramma
+                val meteogramUrl = MeteoManager.getMeteogramImageUrl(userLat, userLon)
+                Picasso.get().load(meteogramUrl).into(weatherMeteogram)
+            }
+        }
 
         // Controlla l'esecuzione del Logout
         logoutButton.setOnClickListener {
@@ -579,8 +611,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        // Avvia gli aggiornamenti della posizione
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+        } else {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+        }
+
     }
 
     private fun observeCleanupWorker(workRequest: PeriodicWorkRequest) {

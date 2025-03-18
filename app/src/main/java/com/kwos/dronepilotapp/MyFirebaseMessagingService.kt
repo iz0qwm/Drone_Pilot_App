@@ -36,7 +36,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             showNotification(title, body)
 
             // Crea un Intent per inviare un broadcast
-            val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE")
+            //val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE")
+            val intent = Intent(this, MyFirebaseMessagingService::class.java)
+            intent.action = "com.kwos.dronepilotapp.NEW_MESSAGE"
+            sendBroadcast(intent)
+
             intent.putExtra("message", title)
             intent.putExtra("title", body)
 
@@ -64,7 +68,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         showNotification("Messaggio da $fullName", message)
 
                         // Invia un broadcast con il nome al posto del senderId
-                        val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE")
+                        //val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE")
+                        val intent = Intent(this, MyFirebaseMessagingService::class.java)
+                        intent.action = "com.kwos.dronepilotapp.NEW_MESSAGE"
+                        sendBroadcast(intent)
                         intent.putExtra("message", message)
                         intent.putExtra("title", "Messaggio da $fullName")
                         intent.putExtra("senderId", senderId)

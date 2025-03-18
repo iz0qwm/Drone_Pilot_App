@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.kwos.dronepilotapp"
-        minSdk = 24
+        minSdk = 27
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -78,6 +78,9 @@ dependencies {
     implementation(libs.play.services.tasks)
     //implementation(libs.play.services.location.v1800)
     implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.squareup.picasso:picasso:2.8")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
