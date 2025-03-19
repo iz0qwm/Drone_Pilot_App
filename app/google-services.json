@@ -22,13 +22,21 @@
           }
         },
         {
+          "client_id": "594131987535-n9bpuulacip6o8fhcvngavembknuhl71.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kwos.dronepilotapp",
+            "certificate_hash": "a13f83b30a802f612b1f5873dbc8ae1fc6809969"
+          }
+        },
+        {
           "client_id": "594131987535-44euu3ra4tiojsfnbloa70c8hb8bubg4.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCd7BxSBTVXHxc_pCGyq82rhD4X5r6XZ2g"
+          "current_key": "AIzaSyBWoaE0fsJ_02WzUBQ1255KagzHIYgsEHo"
         }
       ],
       "services": {

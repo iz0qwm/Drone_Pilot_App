@@ -18,7 +18,12 @@ import android.text.method.LinkMovementMethod
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.text.HtmlCompat
-
+import com.google.firebase.appcheck.appCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.Firebase
+import com.google.firebase.initialize
+import com.google.firebase.appcheck.FirebaseAppCheck
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -42,6 +47,27 @@ class MainActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
+
+        // AppCheck iniziata
+        FirebaseAppCheck.getInstance().setTokenAutoRefreshEnabled(true)
+        // Inizializza Firebase
+        try {
+            Firebase.initialize(context = this)
+            logDebug(TAG, "Firebase inizializzato con successo")
+        } catch (e: Exception) {
+            logError(TAG, "Errore nell'inizializzazione di Firebase", e)
+        }
+        // AppCheck su PlayStore (con SHA256)
+        //Firebase.appCheck.installAppCheckProviderFactory(
+        //    PlayIntegrityAppCheckProviderFactory.getInstance(),
+        //)
+        //AppCheck di debug con Token letto da Logcat: I FirebaseAppCheck: Debug token: YOUR_DEBUG_TOKEN_HERE
+        // E inserito su Firebase AppCheck --> Gestisci i token di debug
+        Firebase.appCheck.installAppCheckProviderFactory(
+            DebugAppCheckProviderFactory.getInstance(),
+        )
+
+
 
         val emailField = findViewById<EditText>(R.id.emailField)
         val passwordField = findViewById<EditText>(R.id.passwordField)

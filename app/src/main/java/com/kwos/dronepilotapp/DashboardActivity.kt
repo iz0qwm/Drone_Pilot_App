@@ -672,7 +672,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         if (hasNewMessage) {
             newMessageContainer.visibility = View.VISIBLE
         } else {
-            newMessageContainer.visibility = View.GONE
+            newMessageContainer.visibility = View.VISIBLE
         }
     }
 
