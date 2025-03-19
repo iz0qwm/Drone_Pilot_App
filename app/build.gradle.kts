@@ -19,6 +19,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -85,6 +89,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.squareup.picasso:picasso:2.8")
     implementation(files("libs/PhotoView-2.3.0.jar"))
+    implementation("org.json:json:20210307")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

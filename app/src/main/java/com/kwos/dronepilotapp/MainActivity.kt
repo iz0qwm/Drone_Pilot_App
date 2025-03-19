@@ -24,6 +24,26 @@ import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.Firebase
 import com.google.firebase.initialize
 import com.google.firebase.appcheck.FirebaseAppCheck
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import android.app.Activity
+import android.app.AlertDialog
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
+import android.net.Uri
+import android.os.Environment
+import okhttp3.*
+import java.io.File
+import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.json.JSONArray
+
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -67,7 +87,8 @@ class MainActivity : AppCompatActivity() {
             DebugAppCheckProviderFactory.getInstance(),
         )
 
-
+        //controllo gli aggiornamenti su Github
+        checkForUpdate(this)
 
         val emailField = findViewById<EditText>(R.id.emailField)
         val passwordField = findViewById<EditText>(R.id.passwordField)
@@ -134,18 +155,18 @@ class MainActivity : AppCompatActivity() {
             val userDocRef = db.collection("users").document(userId)
 
             // Log per vedere se l'utente è effettivamente autenticato
-            Log.d(TAG, "Utente autenticato: $userId")
+            logDebug(TAG, "Utente autenticato: $userId")
 
             // Aggiungi il token alla lista esistente di token
             userDocRef.update("fcmTokens", FieldValue.arrayUnion(token))
                 .addOnSuccessListener {
-                    Log.d(TAG, "Token FCM aggiunto nel database per l'utente $userId")
+                    logDebug(TAG, "Token FCM aggiunto nel database per l'utente $userId")
                 }
                 .addOnFailureListener { exception ->
-                    Log.e(TAG, "Errore aggiornando il token FCM", exception)
+                    logError(TAG, "Errore aggiornando il token FCM", exception)
                 }
         } else {
-            Log.e(TAG, "Errore: nessun utente autenticato")
+            logError(TAG, "Errore: nessun utente autenticato")
         }
     }
 
@@ -178,4 +199,68 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+}
+
+fun checkForUpdate(context: Context) {
+    val TAG = "DronePilotApp"
+    val url = "https://api.github.com/repos/iz0qwm/Drone_Pilot_App/releases"
+    val token = "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"
+
+    CoroutineScope(Dispatchers.IO).launch {
+        logDebug(TAG, "UpdateCheck: Checking update from URL: $url")
+
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "token $token")  // <-- Aggiunto l'header per l'autenticazione
+            .addHeader("Accept", "application/vnd.github.v3+json")
+            .addHeader("X-GitHub-Api-Version", "2022-11-28")
+            .build()
+
+        try {
+            val response = client.newCall(request).execute()
+
+            if (!response.isSuccessful) {
+                logError(TAG, "UpdateCheck: Request failed: ${response.code} - ${response.message}")
+                return@launch
+            }
+
+            val responseBody = response.body?.string()
+            logDebug(TAG, "UpdateCheck: Response JSON: $responseBody")
+
+            if (responseBody != null) {
+                val jsonArray = JSONArray(responseBody)
+                val latestRelease = jsonArray.getJSONObject(0) // Accedi al primo rilascio dell'array
+                val latestVersion = latestRelease.optString("tag_name", "unknown")
+                logDebug(TAG, "UpdateCheck: Latest version: $latestVersion")
+
+                val currentVersion = BuildConfig.VERSION_NAME
+                logDebug(TAG, "UpdateCheck: Current version: $currentVersion")
+
+                if (latestVersion != "unknown" && latestVersion != currentVersion) {
+                    logDebug(TAG, "UpdateCheck: New version available: $latestVersion")
+                    val assets = latestRelease.getJSONArray("assets")
+                    val downloadUrl = assets.getJSONObject(0).getString("browser_download_url")
+                    // Aggiungi qui la logica per notificare l'utente o avviare il download
+                    (context as Activity).runOnUiThread {
+                        AlertDialog.Builder(context)
+                            .setTitle("Nuovo aggiornamento disponibile")
+                            .setMessage("Scaricare la versione $latestVersion?")
+                            .setPositiveButton("Scarica") { _, _ ->
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl))
+                                context.startActivity(intent)
+                            }
+                            .setNegativeButton("Annulla", null)
+                            .show()
+                    }
+                } else {
+                    logDebug(TAG, "UpdateCheck: App is up to date.")
+                }
+            } else {
+                logError(TAG, "UpdateCheck: Response body is null")
+            }
+        } catch (e: Exception) {
+            logError(TAG, "UpdateCheck: Error checking update: ${e.message}", e)
+        }
+    }
 }
