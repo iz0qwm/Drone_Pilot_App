@@ -98,23 +98,14 @@
         android:layout_marginTop="10dp"
         android:gravity="center">
 
-        <!-- Riga con informazioni meteo -->
-        <TextView
-            android:id="@+id/weather_info_text"
+
+        <!-- Pulsante per aprire le previsioni meteo -->
+        <Button
+            android:id="@+id/weather_forecast_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Temp. Min: --° - Max: --° - Vento: -- Km/h - Umidità: --%"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:padding="8dp"
-            android:gravity="center"/>
-
-        <!-- Immagine Meteogramma -->
-        <ImageView
-            android:id="@+id/weather_meteogram"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:scaleType="fitCenter"/>
+            android:text="Previsioni Meteo"
+            android:padding="8dp"/>
     </LinearLayout>
 
 

@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         val loginButton = findViewById<Button>(R.id.loginButton)
         val registerButton = findViewById<Button>(R.id.registerButton)
 
+
         val googleApiAvailability = GoogleApiAvailability.getInstance()
         val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
         if (resultCode != ConnectionResult.SUCCESS) {
@@ -72,7 +73,6 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Compila tutti i campi", Toast.LENGTH_SHORT).show()
             }
         }
-
 
 
     }

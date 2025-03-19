@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#e7e1d3"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/weather_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Previsioni Meteo"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="10dp"/>
+
+    <TextView
+        android:id="@+id/weather_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Località"
+        android:textSize="18sp"
+        android:textStyle="italic"
+        android:layout_below="@+id/weather_title"
+        android:layout_centerHorizontal="true"
+        android:paddingBottom="10dp"/>
+
+    <TextView
+        android:id="@+id/weather_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Caricamento dati meteo..."
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:padding="8dp"
+        android:gravity="center"/>
+
+    <com.github.chrisbanes.photoview.PhotoView
+        android:id="@+id/weather_meteogramOne_general"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="Meteogramma"/>
+
+    <com.github.chrisbanes.photoview.PhotoView
+        android:id="@+id/weather_meteogram_general"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="Meteogramma"/>
+
+    <Button
+        android:id="@+id/close_weather_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Chiudi"
+        android:layout_marginTop="16dp"/>
+</LinearLayout>

@@ -149,8 +149,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val stopFlightButton = findViewById<Button>(R.id.stopFlightButton)
         val droneField = findViewById<EditText>(R.id.droneField)
         val mapContainer = findViewById<FrameLayout>(R.id.mapContainer)
-        val weatherInfoText = findViewById<TextView>(R.id.weather_info_text)
-        val weatherMeteogram = findViewById<ImageView>(R.id.weather_meteogram)
+        //val weatherInfoText = findViewById<TextView>(R.id.weather_info_text)
+        val weatherButton: Button = findViewById(R.id.weather_forecast_button)
 
         //Partenza della mappa
         mapContainer.visibility = View.VISIBLE
@@ -164,31 +164,35 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
+        weatherButton.setOnClickListener {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                location?.let {
+                    val userLat = it.latitude
+                    val userLon = it.longitude
 
-        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-            location?.let {
-                val userLat = it.latitude
-                val userLon = it.longitude
+                    val intent = Intent(this, WeatherForecastActivity::class.java)
+                    intent.putExtra("LATITUDE", userLat) // Inserisci la latitudine reale
+                    intent.putExtra("LONGITUDE", userLon) // Inserisci la longitudine reale
+                    startActivity(intent)
 
-                // Ottiene i dati meteo
-                MeteoManager.getMeteoData(userLat, userLon) { meteo ->
-                    runOnUiThread {
-                        if (meteo != null) {
-                            val weatherText = "Temperatura Min: ${meteo.temperature_min}° - Max: ${meteo.temperature_max}°\n" +
-                                    "Vento: ${meteo.wind_speedmax} Km/h - ${meteo.wind_speedmean} Km/h - ${meteo.wind_speedmin} Km/h\n " +
-                                    "Umidità: ${meteo.humidity}%"
-                            weatherInfoText.text = weatherText
-                        } else {
-                            weatherInfoText.text = "Dati meteo non disponibili"
-                        }
-                    }
+                    // Ottiene i dati meteo
+                    //MeteoManager.getMeteoData(userLat, userLon) { meteo ->
+                    //    runOnUiThread {
+                    //        if (meteo != null) {
+                    //            val weatherText = "Temperatura Min: ${meteo.temperature_min}° - Max: ${meteo.temperature_max}°\n" +
+                    //                    "Vento: ${meteo.wind_speedmax} Km/h - ${meteo.wind_speedmean} Km/h - ${meteo.wind_speedmin} Km/h\n " +
+                    //                    "Umidità: ${meteo.humidity}%"
+                    //            weatherInfoText.text = weatherText
+                    //        } else {
+                    //            weatherInfoText.text = "Dati meteo non disponibili"
+                    //        }
+                    //    }
+                    //}
                 }
-
-                // Carica l'immagine del meteogramma
-                val meteogramUrl = MeteoManager.getMeteogramImageUrl(userLat, userLon)
-                Picasso.get().load(meteogramUrl).into(weatherMeteogram)
             }
         }
+
+
 
         // Controlla l'esecuzione del Logout
         logoutButton.setOnClickListener {

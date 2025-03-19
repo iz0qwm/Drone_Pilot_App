@@ -42,6 +42,14 @@
             <!-- Puoi aggiungere un'intent-filter se desideri che questa activity possa essere avviata anche da un altro punto, ma in questo caso non è necessario -->
         </activity>
 
+        <activity android:name=".WeatherForecastActivity">
+        <!-- Puoi aggiungere un'intent-filter se desideri che questa activity possa essere avviata anche da un altro punto, ma in questo caso non è necessario -->
+        </activity>
+
+        <activity
+            android:name=".FullScreenImageActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"/>
+
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="true">

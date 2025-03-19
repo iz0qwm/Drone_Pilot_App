@@ -20,7 +20,7 @@ object MeteoManager {
     private const val BASE_URL = "https://my.meteoblue.com/packages/basic-day_webcolors"
 
     fun getMeteoData(lat: Double, lon: Double, callback: (MeteoData?) -> Unit) {
-        val url = "$BASE_URL?lat=$lat&lon=$lon&tz=Europe/Zurich&format=json&apikey=$API_KEY"
+        val url = "$BASE_URL?windspeed=kmh&lat=$lat&lon=$lon&tz=Europe/Zurich&format=json&apikey=$API_KEY"
         val client = OkHttpClient()
         val request = Request.Builder().url(url).build()
 
@@ -63,7 +63,14 @@ object MeteoManager {
         }.start()
     }
 
-    fun getMeteogramImageUrl(lat: Double, lon: Double): String {
-        return "https://my.meteoblue.com/images/meteogram_one?lat=$lat&lon=$lon&tz=Europe/Zurich&apikey=$API_KEY"
+    //Funzione caricamento Meteogram All in One
+    fun getMeteogramOneImageUrl(lat: Double, lon: Double): String {
+        return "https://my.meteoblue.com/images/meteogram_one?windspeed=kmh&lat=$lat&lon=$lon&tz=Europe/Zurich&apikey=$API_KEY"
     }
+
+    //Funzione caricamento Meteogram All in One
+    fun getMeteogramImageUrl(lat: Double, lon: Double): String {
+        return "https://my.meteoblue.com/images/meteogram?windspeed=kmh&lat=$lat&lon=$lon&tz=Europe/Zurich&apikey=$API_KEY"
+    }
+
 }
