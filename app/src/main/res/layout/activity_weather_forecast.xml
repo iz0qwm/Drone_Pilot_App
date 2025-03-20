@@ -47,6 +47,35 @@
             android:textSize="16sp"
             android:padding="8dp" />
 
+        <!-- Aggiungi il testo per il TEC -->
+        <TextView
+            android:id="@+id/tecTitleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ERRORI DI POSIZIONAMENTO GPS"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/tecValueTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TEC (Total Electron Content): 0 TECu"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Aggiungi il testo che cambia colore in base al valore TEC -->
+        <TextView
+            android:id="@+id/tecStatusTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status: CALMO"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Altri elementi del layout, come l'alertTextView -->
+
         <TextView
             android:id="@+id/alertTextView"
             android:layout_width="wrap_content"

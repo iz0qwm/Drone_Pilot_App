@@ -13,11 +13,16 @@ import java.util.Locale
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.graphics.Color
+
 
 
 class WeatherForecastActivity : AppCompatActivity() {
 
     private lateinit var gpsStatusHelper: GpsStatusHelper
+    private lateinit var tecValueTextView: TextView
+    private lateinit var tecStatusTextView: TextView
+    private lateinit var tecTitleTextView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +34,9 @@ class WeatherForecastActivity : AppCompatActivity() {
         val closeButton: Button = findViewById(R.id.close_weather_button)
         val locationText: TextView = findViewById(R.id.weather_location)
         val alertTextView: TextView = findViewById(R.id.alertTextView)
+        tecValueTextView = findViewById(R.id.tecValueTextView)
+        tecStatusTextView = findViewById(R.id.tecStatusTextView)
+        tecTitleTextView = findViewById(R.id.tecTitleTextView)
 
         // Recupero le coordinate passate dall'Activity principale
         val lat = intent.getDoubleExtra("LATITUDE", 0.0)
@@ -42,39 +50,77 @@ class WeatherForecastActivity : AppCompatActivity() {
             locationText.text = locationName
         }
 
+// Recupera i dati meteo
         MeteoManager.getMeteoData(lat, lon) { meteoData ->
-            Handler(Looper.getMainLooper()).postDelayed({
-                runOnUiThread {
-                    if (meteoData != null) {
-                        weatherDetails.text =
-                            "Temp. Min: ${meteoData.temperature_min}°C - Max: ${meteoData.temperature_max}°C\n" +
-                                    "Vento Min: ${meteoData.wind_speedmin} km/h\n" +
-                                    "Vento Medio: ${meteoData.wind_speedmean} km/h\n" +
-                                    "Vento Max: ${meteoData.wind_speedmax} km/h\n" +
-                                    "Umidità: ${meteoData.humidity}\n%" +
-                                    "Possibilità di precipitazioni: ${meteoData.precipitation_probability}% "
+            // Assicurati che l'aggiornamento avvenga nel thread principale
+            runOnUiThread {
+                if (meteoData != null) {
+                    weatherDetails.text =
+                        "Temp. Min: ${meteoData.temperature_min}°C - Max: ${meteoData.temperature_max}°C\n" +
+                                "Vento Min: ${meteoData.wind_speedmin} km/h\n" +
+                                "Vento Medio: ${meteoData.wind_speedmean} km/h\n" +
+                                "Vento Max: ${meteoData.wind_speedmax} km/h\n" +
+                                "Umidità: ${meteoData.humidity}%\n" +
+                                "Possibilità di precipitazioni: ${meteoData.precipitation_probability}% "
 
-                        // Aggiungere la logica di allerta basata sul vento
-                        if (meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30) {
-                            alertTextView.text = "ALERT VENTO FORTE!!!"
-                            alertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
-                        }
-                        // Aggiungere la logica di allerta pioggia
-                        else if (meteoData.precipitation_probability > 70) {
-                            alertTextView.text = "ALERT POSSIBILE PIOGGIA!!!"
-                            alertTextView.setTextColor(getColor(R.color.blue)) // Imposta il testo in blu
-                        }
-                        // Altrimenti se il vento è sotto i limiti, rimuovi l'allerta
-                        else {
-                            alertTextView.text = "PUOI FAR VOLARE L'UAS"
-                            alertTextView.setTextColor(getColor(R.color.green)) // Imposta il testo in verde
-                        }
+                    // Aggiungi la logica di allerta basata sul vento
+                    if (meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30) {
+                        alertTextView.text = "ALERT VENTO FORTE!!!"
+                        alertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
+                    } else if (meteoData.precipitation_probability > 70) {
+                        alertTextView.text = "ALERT POSSIBILE PIOGGIA!!!"
+                        alertTextView.setTextColor(getColor(R.color.blue)) // Imposta il testo in blu
                     } else {
-                        weatherDetails.text = "Dati meteo non disponibili"
+                        alertTextView.text = "PUOI FAR VOLARE L'UAS"
+                        alertTextView.setTextColor(getColor(R.color.green)) // Imposta il testo in verde
                     }
+                } else {
+                    weatherDetails.text = "Dati meteo non disponibili"
                 }
-            }, 1000) // Ritardo di 500ms
+            }
         }
+
+// Recupera i dati TEC
+        MeteoManager.getTecData { tecMean ->
+            // Assicurati che l'aggiornamento avvenga nel thread principale
+            runOnUiThread {
+                if (tecMean != null) {
+                    tecValueTextView.text = "TEC (Total Electron Content): $tecMean TECu"
+
+                    // Cambia il colore e il messaggio in base al valore di tecMean
+                    val statusText: String
+                    val statusColor: Int
+
+                    when {
+                        tecMean < 125 -> {
+                            statusText = "Status: CALMO"
+                            statusColor = Color.GREEN
+                        }
+                        tecMean >= 125 && tecMean < 175 -> {
+                            statusText = "Status: MODERATO"
+                            statusColor = Color.rgb(255, 165, 0) // Arancio
+                        }
+                        tecMean >= 175 -> {
+                            statusText = "Status: SEVERO"
+                            statusColor = Color.RED
+                        }
+                        else -> {
+                            statusText = "Status: UNKNOWN"
+                            statusColor = Color.GRAY
+                        }
+                    }
+
+                    // Imposta il testo e il colore per il messaggio di stato
+                    tecStatusTextView.text = statusText
+                    tecStatusTextView.setTextColor(statusColor)
+                } else {
+                    tecValueTextView.text = "Errore nel recupero dei dati TEC"
+                    tecStatusTextView.text = "Status: UNKNOWN"
+                    tecStatusTextView.setTextColor(Color.GRAY)
+                }
+            }
+        }
+
 
         // Carico l'immagine del meteogramma all in One
         val meteogramOneUrl = MeteoManager.getMeteogramOneImageUrl(lat, lon)
