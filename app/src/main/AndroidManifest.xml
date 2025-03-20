@@ -21,6 +21,8 @@
         <!-- Attività principale -->
         <activity
             android:name="com.kwos.dronepilotapp.MainActivity"
+            android:launchMode="singleTask"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.AppCompat.Light">
@@ -33,6 +35,8 @@
         <!-- Aggiungi la dichiarazione per DashboardActivity -->
         <activity
             android:name="com.kwos.dronepilotapp.DashboardActivity"
+            android:launchMode="singleTask"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:label="@string/dashboard_activity_label"
             android:theme="@style/Theme.AppCompat.Light">
@@ -57,14 +61,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
-
-        <receiver
-            android:name=".MyFirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.kwos.dronepilotapp.NEW_MESSAGE" />
-            </intent-filter>
-        </receiver>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

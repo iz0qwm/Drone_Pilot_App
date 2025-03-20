@@ -20,6 +20,8 @@ import android.widget.Toast
 import android.widget.ImageView
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import android.os.Handler
+
 
 
 import androidx.lifecycle.Observer
@@ -77,6 +79,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private val pilotMarkers = mutableMapOf<String, Marker>()
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
 
+    //Gestione ricerca piloti
+    private var pilotsLoaded = false
+    private var retryAttempts = 0
+    private val maxRetryAttempts = 10
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,7 +98,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         supportActionBar?.hide()
 
         //Esecuzione funzioni automatiche
-        CleanupWorker()
+        // CleanupWorker()
         checkForNewMessages()
 
         // altre variabili
@@ -350,72 +357,132 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     private fun loadPilots() {
+        logDebug(TAG, "🔄 loadPilots: Caricamento piloti in corso...")
+
         pilotsListener?.remove()  // Rimuove il vecchio listener se già esiste
-        pilotsListener = db.collection("piloti")
-            .whereEqualTo("inVolo", true)  // Carica solo chi è ancora in volo
-            .addSnapshotListener { documents, e ->
+        pilotsListener = db.collection("users")
+            .whereEqualTo("inVolo", true)  // Cerca solo gli utenti che hanno inVolo = true
+            .addSnapshotListener { userDocs, e ->
                 if (e != null) {
-                    logWarning(TAG, "Errore nel recupero dei dati dei piloti", e)
+                    logWarning(TAG, "loadPilots: Errore nel recupero degli utenti in volo", e)
                     return@addSnapshotListener
                 }
 
-                documents?.documentChanges?.forEach { change ->
-                    val userId = change.document.id
+                if (userDocs == null || userDocs.isEmpty) {
+                    logWarning(TAG, "⚠️ loadPilots: Nessun pilota in volo trovato...")
+                    return@addSnapshotListener
+                }
 
-                    val lat = change.document.getDouble("latitude")
-                    val lng = change.document.getDouble("longitude")
-                    val name = change.document.getString("name") ?: "Sconosciuto"
-                    val drone = change.document.getString("drone") ?: "N/D"
+                logDebug(TAG, "📡 loadPilots: Piloti in volo trovati: ${userDocs.size()}")
 
-                    if (lat != null && lng != null) {
-                        val position = LatLng(lat, lng)
+                userDocs.forEach { userDoc ->
+                    val userId = userDoc.id
 
-                        val markerOptions = MarkerOptions().position(position).title("$name - $drone")
+                    // Ora cerchiamo le coordinate nella collezione "piloti"
+                    db.collection("piloti").document(userId)
+                        .get()
+                        .addOnSuccessListener { pilotDoc ->
+                            if (pilotDoc.exists()) {
+                                val lat = pilotDoc.getDouble("latitude")
+                                val lng = pilotDoc.getDouble("longitude")
+                                val name = pilotDoc.getString("name") ?: "Sconosciuto"
+                                val drone = pilotDoc.getString("drone") ?: "N/D"
 
-                        // Recuperiamo il marker se già esiste
-                        val existingMarker = pilotMarkers[userId]
-                        if (existingMarker == null) {
-                            val marker = mMap.addMarker(markerOptions)!!
-                            marker.tag = userId
-                            pilotMarkers[userId] = marker
-                        } else {
-                            existingMarker.position = position
-                            existingMarker.title = "$name - $drone"
-                            // Aggiorna l'icona per mantenere la coerenza con lo stato della chat
-                            existingMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                                if (lat != null && lng != null) {
+                                    val position = LatLng(lat, lng)
+
+                                    val markerOptions = MarkerOptions().position(position).title("$name - $drone")
+                                    logDebug(TAG, "🔄 loadPilots: Aggiungendo/aggiornando marker per $userId")
+
+                                    // Aggiungi un marker o aggiorna il marker esistente
+                                    val existingMarker = pilotMarkers[userId]
+                                    if (existingMarker == null) {
+                                        val marker = mMap.addMarker(markerOptions)!!
+                                        marker.tag = userId
+                                        pilotMarkers[userId] = marker
+                                        logDebug(TAG, "✅ Marker aggiunto per $userId")
+                                    } else {
+                                        existingMarker.position = position
+                                        existingMarker.title = "$name - $drone"
+                                        existingMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                                        logDebug(TAG, "✅ loadPilots: Marker esistente aggiornato per $userId")
+                                    }
+                                } else {
+                                    pilotMarkers[userId]?.remove()
+                                    pilotMarkers.remove(userId)
+                                    logDebug(TAG, "❌ loadPilots: Marker rimosso per $userId")
+                                }
+                            } else {
+                                logWarning(TAG, "⚠️ loadPilots: Nessun dato trovato in 'piloti' per $userId")
+                            }
                         }
-                    } else {
-                        pilotMarkers[userId]?.remove()
-                        pilotMarkers.remove(userId)
-                    }
+                        .addOnFailureListener { err ->
+                            logWarning(TAG, "❌ loadPilots: Errore nel recupero delle coordinate per $userId", err)
+                        }
+                    // Aggiungi il log per confermare che i piloti sono stati caricati
+                    logDebug(TAG, "✅ loadPilots: Piloti caricati, impostazione di pilotsLoaded a true")
+                    pilotsLoaded = true
                 }
             }
     }
 
-    private fun listenForChatAvailability() {
-        logDebug(TAG, "🟢 Chat: Inizializzazione listener per stato chat")
 
+    private fun listenForChatAvailability() {
+        logDebug(TAG, "🟢 ChatAvail: Inizializzazione listener per stato chat")
+
+        // Esegui il check per assicurarti che i piloti siano stati caricati
+        if (!pilotsLoaded) {
+            logWarning(TAG, "⚠️ ChatAvail: Piloti non ancora caricati, attesa...")
+
+            if (retryAttempts >= maxRetryAttempts) {
+                logWarning(TAG, "❌ ChatAvail: Troppi tentativi, piloti non caricati.")
+                return  // Esce se il numero massimo di tentativi è stato raggiunto
+            }
+
+            // Incrementa il numero di tentativi
+            retryAttempts++
+
+            // Esegui un backoff esponenziale (doppia attesa per ogni tentativo fallito)
+            val delayTime = (500 * Math.pow(2.0, retryAttempts.toDouble())).toLong()
+
+            // Riprovare dopo un breve intervallo
+            Handler(Looper.getMainLooper()).postDelayed({
+                listenForChatAvailability()  // Riprova dopo l'intervallo
+            }, delayTime)
+            return
+        }
+
+        // Se i piloti sono caricati, resetta il contatore dei tentativi
+        retryAttempts = 0
+
+        // Avvia il listener per lo stato della chat
         usersListener = db.collection("users")
             .addSnapshotListener { documents, e ->
                 if (e != null) {
-                    logWarning(TAG, "❌ Chat: Errore nel recupero dello stato chat", e)
+                    logWarning(TAG, "❌ ChatAvail: Errore nel recupero dello stato chat", e)
                     return@addSnapshotListener
                 }
 
                 if (documents == null || documents.isEmpty) {
-                    logWarning(TAG, "⚠️ Chat: Nessun aggiornamento ricevuto da Firestore")
+                    logWarning(TAG, "⚠️ ChatAvail: Nessun aggiornamento ricevuto da Firestore")
                     return@addSnapshotListener
                 }
 
-                logDebug(TAG, "📡 Chat: Aggiornamento ricevuto da Firestore")
+                logDebug(TAG, "📡 ChatAvail: Aggiornamento ricevuto da Firestore")
 
                 documents?.forEach { doc ->
                     val userId = doc.id
                     val availableForChat = doc.getBoolean("availableForChat") ?: false
+                    val inVolo = doc.getBoolean("inVolo") ?: false // Recupera lo stato di volo
 
-                    //Da rimuovere questo log quando gli utenti saranno tanti
-                    //RIMUOVERE
-                    logDebug(TAG, "🔄 Chat: Stato aggiornato per $userId: $availableForChat")
+                    // Evita di processare i marker di chi non è in volo
+                    if (!inVolo) {
+                        logDebug(TAG, "🚫 Chat: $userId non è in volo, marker ignorato")
+                        return@forEach
+                    }
+
+                    // Da rimuovere questo log quando gli utenti saranno tanti
+                    logDebug(TAG, "🔄 ChatAvail: Stato aggiornato per $userId: $availableForChat")
 
                     // Recuperiamo il marker e aggiorniamo l'icona e lo snippet
                     val existingMarker = pilotMarkers[userId]
@@ -433,14 +500,13 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                             "❌ Non disponibile per chat"
                         }
                         existingMarker.snippet = snippetText
-                        logDebug(TAG, "✅ Chat: Marker aggiornato per $userId")
+                        logDebug(TAG, "✅ ChatAvail: Marker aggiornato per $userId")
                     } else {
-                        logWarning(TAG, "⚠️ Chat: Marker non trovato per $userId, impossibile aggiornare lo stato chat")
+                        logWarning(TAG, "⚠️ ChatAvail: Questo $userId, non ha un marker attivo")
                     }
                 }
             }
     }
-
 
     private fun startFlight(userName: String, droneName: String) {
         if (!::mMap.isInitialized) {
@@ -676,6 +742,30 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun aggiornaMarker(userId: String, availableForChat: Boolean) {
+        logDebug(TAG, "✅ aggiornaMarker: sono in aggiornaMarker")
+        val existingMarker = pilotMarkers[userId]
+        if (existingMarker != null) {
+            val markerIcon = if (availableForChat) {
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+            } else {
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+            }
+            existingMarker.setIcon(markerIcon)
+
+            val snippetText = if (availableForChat) {
+                "✅ Disponibile per chat - Clicca per aprire la chat"
+            } else {
+                "❌ Non disponibile per chat"
+            }
+            existingMarker.snippet = snippetText
+            logDebug(TAG, "✅ Marker aggiornato per $userId")
+        } else {
+            logWarning(TAG, "⚠️ Nessun marker trovato per $userId")
+        }
+    }
+
+
     private fun logout() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         logDebug(TAG, "logout: tasto premuto da $userId.")
@@ -703,15 +793,80 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         } else {
             // Effettua il logout da Firebase (deve essere fatto dopo aver completato tutte le operazioni)
-            logDebug(TAG, "logout: Utente disconnesso: $userId")
-            FirebaseAuth.getInstance().signOut()
+            //logDebug(TAG, "logout: Utente disconnesso: $userId")
+            //FirebaseAuth.getInstance().signOut()
             // Torna alla schermata di login
-            logDebug(TAG, "logout: Ricarico la schermata iniziale")
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+            //logDebug(TAG, "logout: Ricarico la schermata iniziale")
+            //startActivity(Intent(this, MainActivity::class.java))
+            //finish()
         }
     }
 
+
+    fun leggiLogin(): String? {
+        val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+        return prefs.getString("user_email", null)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val user = FirebaseAuth.getInstance().currentUser
+        leggiLogin()
+
+        auth.currentUser?.getIdToken(true)?.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                logDebug(TAG, "🔄 onStart Dashboard: Token aggiornato, riprovo accesso a Firestore")
+                recuperaDatiPilota()
+            } else {
+                logError(TAG, "❌ onStart Dashboard: Errore aggiornamento token: ${task.exception?.message}")
+            }
+        }
+        if (user == null) {
+            logError(TAG, "⚠️ onStart Dashboard: Utente disconnesso al resume dell'app")
+            return
+        }
+        logDebug(TAG, "✅ onStart Dashboard: Utente loggato: ${user.email}")
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val userRef = FirebaseFirestore.getInstance().collection("pilots").document(userId)
+
+        userRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val inVolo = document.getBoolean("inVolo") ?: false
+                val availableForChat = document.getBoolean("availableForChat") ?: false
+
+                if (inVolo) {
+                    aggiornaMarker(userId, availableForChat)
+                    logDebug(TAG, "🚀 onStart Dashboard: Ripristinato stato di volo per $userId")
+                } else {
+                    logDebug(TAG, "⚠️ onStart Dashboard: Il pilota $userId non era in volo")
+                }
+            }
+        }.addOnFailureListener { e ->
+            logError(TAG, "❌ onStart Dashboard: Errore nel recupero dello stato di volo: ${e.message}")
+        }
+    }
+
+    private fun recuperaDatiPilota() {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        val userId = user.uid
+        val userRef = FirebaseFirestore.getInstance().collection("pilots").document(userId)
+
+        userRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val inVolo = document.getBoolean("inVolo") ?: false
+                val availableForChat = document.getBoolean("availableForChat") ?: false
+
+                if (inVolo) {
+                    aggiornaMarker(userId, availableForChat)
+                    logDebug(TAG, "🚀 recuperaDatiPilota: Ripristinato stato di volo per $userId")
+                } else {
+                    logDebug(TAG, "⚠️ recuperaDatiPilota: Il pilota $userId non era in volo")
+                }
+            }
+        }.addOnFailureListener { e ->
+            logError(TAG, "❌ recuperaDatiPilota: Errore nel recupero dello stato di volo: ${e.message}")
+        }
+    }
 
     override fun onStop() {
         super.onStop()
@@ -728,6 +883,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onDestroy() {
         super.onDestroy()
+        logDebug(TAG, "⚠️ onDestroy: Attività distrutta")
         usersListener?.remove()
         usersListener = null
         pilotsListener?.remove()

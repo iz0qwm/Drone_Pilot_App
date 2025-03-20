@@ -21,7 +21,7 @@ class CleanupWorker(context: Context, workerParams: WorkerParameters) :
         auth.signInWithEmailAndPassword("admin@dronepilotapp.com", "SuperSicura123!")
             .addOnSuccessListener {
                 val adminData = mapOf("admin" to true)
-                db.collection("users").document("admin@dronepilotapp.com")
+                db.collection("users").document("lCbQfFOWfXcbBcVOQ6MjzYSI87x1")
                     .set(adminData, SetOptions.merge()) // 🔥 Assicura che il campo venga aggiornato
                     .addOnSuccessListener {
                         logDebug(TAG, "CleanupWorker: Admin impostato correttamente!")
@@ -60,11 +60,11 @@ class CleanupWorker(context: Context, workerParams: WorkerParameters) :
                                 userIdsToRemove.add(userId)
                                 // Rimuovere anche i dati nella collezione "piloti"
                                 db.collection("piloti").document(userId).delete()
-                                Log.d("DronePilotApp", "Pilota $userId non più in volo, rimosso.")
+                                logDebug(TAG, "CleanupWorker: Pilota $userId non più in volo, rimosso.")
                             }
                         }
                         .addOnFailureListener { e ->
-                            Log.e("DronePilotApp", "Errore nel recuperare lo stato di volo di $userId", e)
+                            logError(TAG, "CleanupWorker: Errore nel recuperare lo stato di volo di $userId", e)
                         }
                 }
 
@@ -74,7 +74,7 @@ class CleanupWorker(context: Context, workerParams: WorkerParameters) :
                 applicationContext.sendBroadcast(intent) // Usa applicationContext invece di context
             }
             .addOnFailureListener { e ->
-                Log.e("DronePilotApp", "Errore nella pulizia delle posizioni", e)
+                logError(TAG, "CleanupWorker: Errore nella pulizia delle posizioni", e)
             }
     }
 }

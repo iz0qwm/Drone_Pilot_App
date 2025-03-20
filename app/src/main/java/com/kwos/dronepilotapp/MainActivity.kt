@@ -132,10 +132,11 @@ class MainActivity : AppCompatActivity() {
                     FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
                         if (tokenTask.isSuccessful) {
                             val token = tokenTask.result
-                            Log.d(TAG, "Nuovo Token FCM: $token")
+                            logDebug(TAG, "loginUser: Nuovo Token FCM: $token")
                             saveTokenToServer(token) // Salva il token nel database
+                            salvaLogin(email) // Salva il login nelle Shared Preferences
                         } else {
-                            Log.e(TAG, "Errore nel recuperare il token FCM")
+                            logError(TAG, "loginUser: Errore nel recuperare il token FCM")
                         }
                     }
 
@@ -146,6 +147,11 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Errore: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }
+    }
+
+    fun salvaLogin(email: String) {
+        val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+        prefs.edit().putString("user_email", email).apply()
     }
 
     private fun saveTokenToServer(token: String) {
@@ -200,6 +206,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 }
+
 
 fun checkForUpdate(context: Context) {
     val TAG = "DronePilotApp"

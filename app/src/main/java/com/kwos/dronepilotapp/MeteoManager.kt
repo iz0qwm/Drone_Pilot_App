@@ -10,7 +10,8 @@ data class MeteoData(
     val wind_speedmean: Double,
     val wind_speedmax: Double,
     val wind_speedmin: Double,
-    val humidity: Double
+    val humidity: Double,
+    val precipitation_probability: Double
 )
 
 
@@ -40,11 +41,12 @@ object MeteoManager {
                 val jsonObject = JSONObject(responseData)
                 val dataDay = jsonObject.getJSONObject("data_day")
                 val temperatureMin = dataDay.optJSONArray("temperature_min").getDouble(0)
-                val temperatureMax = dataDay.optJSONArray("temperature_max").getDouble(dataDay.optJSONArray("temperature_max").length() - 1)
-                val windSpeedmean = dataDay.optJSONArray("windspeed_mean").getDouble(dataDay.optJSONArray("windspeed_mean").length() - 1)
-                val windSpeedmax = dataDay.optJSONArray("windspeed_max").getDouble(dataDay.optJSONArray("windspeed_max").length() - 1)
-                val windSpeedmin = dataDay.optJSONArray("windspeed_min").getDouble(dataDay.optJSONArray("windspeed_min").length() - 1)
-                val humidity = dataDay.optJSONArray("relativehumidity_mean").getDouble(dataDay.optJSONArray("relativehumidity_mean").length() - 1)
+                val temperatureMax = dataDay.optJSONArray("temperature_max").getDouble(0)
+                val windSpeedmean = dataDay.optJSONArray("windspeed_mean").getDouble(0)
+                val windSpeedmax = dataDay.optJSONArray("windspeed_max").getDouble(0)
+                val windSpeedmin = dataDay.optJSONArray("windspeed_min").getDouble(0)
+                val humidity = dataDay.optJSONArray("relativehumidity_mean").getDouble(0)
+                val precipitationprobability = dataDay.optJSONArray("precipitation_probability").getDouble(0)
 
                 logDebug(TAG, "MeteoManager temperatureMin: $temperatureMin")
                 logDebug(TAG, "MeteoManager temperatureMax: $temperatureMax")
@@ -52,8 +54,9 @@ object MeteoManager {
                 logDebug(TAG, "MeteoManager windSpeedmean: $windSpeedmean")
                 logDebug(TAG, "MeteoManager windSpeedmin: $windSpeedmin")
                 logDebug(TAG, "MeteoManager humidity: $humidity")
+                logDebug(TAG, "MeteoManager precipitation_probability: $precipitationprobability")
 
-                val meteoData = MeteoData(temperatureMin, temperatureMax, windSpeedmean, windSpeedmax, windSpeedmin, humidity)
+                val meteoData = MeteoData(temperatureMin, temperatureMax, windSpeedmean, windSpeedmax, windSpeedmin, humidity, precipitationprobability)
                 callback(meteoData)
             } catch (e: Exception) {
                 logError(TAG, "MeteoManager Errore nel parsing JSON: ${e.message}")
