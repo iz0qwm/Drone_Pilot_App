@@ -18,7 +18,7 @@ class CleanupWorker(context: Context, workerParams: WorkerParameters) :
     override fun doWork(): Result {
         val auth = FirebaseAuth.getInstance()
 
-        auth.signInWithEmailAndPassword("admin@dronepilotapp.com", "SuperSicura123!")
+        auth.signInWithEmailAndPassword("admin@dronepilotapp.com", "_SuperSicura123!_")
             .addOnSuccessListener {
                 val adminData = mapOf("admin" to true)
                 db.collection("users").document("lCbQfFOWfXcbBcVOQ6MjzYSI87x1")

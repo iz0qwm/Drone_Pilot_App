@@ -94,7 +94,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                     when {
                         tecMean < 125 -> {
                             statusText = "Status: CALMO"
-                            statusColor = Color.GREEN
+                            statusColor = Color.rgb(19, 117, 13) // VERDE SCURO
                         }
                         tecMean >= 125 && tecMean < 175 -> {
                             statusText = "Status: MODERATO"

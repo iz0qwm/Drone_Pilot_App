@@ -99,6 +99,9 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //Esecuzione funzioni automatiche
         // CleanupWorker()
+        // Fermo il CleanupWorker()
+        WorkManager.getInstance(this).cancelAllWorkByTag("cleanupWorker")
+        // Controllo la presenza di nuovi messaggi
         checkForNewMessages()
 
         // altre variabili
@@ -394,17 +397,28 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                     val markerOptions = MarkerOptions().position(position).title("$name - $drone")
                                     logDebug(TAG, "🔄 loadPilots: Aggiungendo/aggiornando marker per $userId")
 
+                                    val availableForChat = userDoc.getBoolean("availableForChat") ?: false // Aggiungi questa riga per recuperare la disponibilità per la chat
+
+                                    //Controllo lo stato della chat
+                                    val markerIcon = if (availableForChat) {
+                                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE) // Blu se disponibile per la chat
+                                    } else {
+                                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED) // Rosso se non disponibile
+                                    }
+
+
                                     // Aggiungi un marker o aggiorna il marker esistente
                                     val existingMarker = pilotMarkers[userId]
                                     if (existingMarker == null) {
                                         val marker = mMap.addMarker(markerOptions)!!
                                         marker.tag = userId
+                                        marker.setIcon(markerIcon) // Imposta il colore corretto
                                         pilotMarkers[userId] = marker
                                         logDebug(TAG, "✅ Marker aggiunto per $userId")
                                     } else {
                                         existingMarker.position = position
                                         existingMarker.title = "$name - $drone"
-                                        existingMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                                        existingMarker.setIcon(markerIcon) // Imposta il colore corretto
                                         logDebug(TAG, "✅ loadPilots: Marker esistente aggiornato per $userId")
                                     }
                                 } else {
@@ -413,7 +427,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                     logDebug(TAG, "❌ loadPilots: Marker rimosso per $userId")
                                 }
                             } else {
-                                logWarning(TAG, "⚠️ loadPilots: Nessun dato trovato in 'piloti' per $userId")
+                                logWarning(TAG, "⚠️ loadPilots: Nessun dato trovato in 'piloti' per $userId verrà rimesso in inVolo:false dal server")
                             }
                         }
                         .addOnFailureListener { err ->
@@ -502,7 +516,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                         existingMarker.snippet = snippetText
                         logDebug(TAG, "✅ ChatAvail: Marker aggiornato per $userId")
                     } else {
-                        logWarning(TAG, "⚠️ ChatAvail: Questo $userId, non ha un marker attivo")
+                        logWarning(TAG, "⚠️ ChatAvail: Questo $userId non ha un marker attivo, verrà resettato lo stato dal server")
                     }
                 }
             }
