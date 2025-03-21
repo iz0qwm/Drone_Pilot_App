@@ -661,11 +661,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 50000)
             .setMinUpdateIntervalMillis(120000) // Intervallo minimo di aggiornamento
             .build()
-        //val locationRequest = LocationRequest.create().apply {
-        //    interval = 50000 // Aggiornamenti ogni 50 secondi
-        //    fastestInterval = 20000 // Aggiornamenti veloci ogni 20 secondi
-        //    priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        //}
+
 
         // Crea un callback per gestire gli aggiornamenti della posizione
         locationCallback = object : LocationCallback() {

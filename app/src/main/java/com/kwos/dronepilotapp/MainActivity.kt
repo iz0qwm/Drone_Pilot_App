@@ -1,5 +1,6 @@
 package com.kwos.dronepilotapp
 
+import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -33,8 +34,12 @@ import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import okhttp3.*
 import java.io.File
 import java.io.IOException
@@ -50,6 +55,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db: FirebaseFirestore
 
     private val TAG = "DronePilotApp"
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,6 +97,11 @@ class MainActivity : AppCompatActivity() {
         //controllo gli aggiornamenti su Github
         checkForUpdate(this)
 
+        // Controlla e richiedi i permessi di geolocalizzazione
+        if (!checkLocationPermission()) {
+            requestLocationPermission()
+        }
+
         val emailField = findViewById<EditText>(R.id.emailField)
         val passwordField = findViewById<EditText>(R.id.passwordField)
         val fullNameField = findViewById<EditText>(R.id.fullNameField)
@@ -101,6 +113,14 @@ class MainActivity : AppCompatActivity() {
         val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
         if (resultCode != ConnectionResult.SUCCESS) {
             googleApiAvailability.makeGooglePlayServicesAvailable(this)
+        }
+
+
+        // Verifica e richiedi permesso per notifiche su Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
         }
 
         loginButton.setOnClickListener {
@@ -122,6 +142,42 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+    }
+
+    /**
+     * Controlla se i permessi di geolocalizzazione sono già stati concessi.
+     */
+    private fun checkLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    /**
+     * Richiede all'utente i permessi di geolocalizzazione se non sono stati concessi.
+     */
+    private fun requestLocationPermission() {
+        ActivityCompat.requestPermissions(
+            this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
+
+    /**
+     * Gestisce la risposta dell'utente alla richiesta di permessi.
+     */
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                logDebug(TAG, "Permesso di posizione concesso")
+            } else {
+                Toast.makeText(this, "Permesso posizione necessario per utilizzare l'app", Toast.LENGTH_LONG).show()
+                finish() // Chiude l'app se il permesso non è concesso
+            }
+        }
     }
 
     private fun loginUser(email: String, password: String) {
