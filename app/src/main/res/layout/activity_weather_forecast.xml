@@ -25,6 +25,7 @@
             android:text="Località"
             android:textSize="18sp"
             android:textStyle="italic"
+            android:gravity="center"
             android:layout_below="@+id/weather_title"
             android:layout_centerHorizontal="true"
             android:paddingBottom="10dp"/>
@@ -44,6 +45,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Messaggio di ALERT METEO"
+            android:textStyle="bold"
+            android:gravity="center"
             android:textSize="16sp"
             android:padding="8dp" />
 
@@ -69,6 +72,7 @@
             android:text="Messaggio di ALERT GPS"
             android:textStyle="bold"
             android:textSize="16sp"
+            android:gravity="center"
             android:padding="8dp" />
 
         <View
@@ -82,9 +86,10 @@
             android:id="@+id/tecTitleTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Elettroni nella ionosfera (RICEZIONE GPS)"
+            android:text="Elettroni nella ionosfera (POSIZIONE GPS)"
             android:textSize="16sp"
             android:textStyle="bold"
+            android:gravity="center"
             android:layout_marginTop="16dp"/>
 
         <TextView
@@ -104,6 +109,7 @@
             android:textStyle="bold"
             android:textSize="16sp"
             android:padding="8dp"
+            android:gravity="center"
             android:layout_marginTop="8dp"/>
 
         <View

@@ -82,7 +82,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                         weatherDetails.text = "Dati meteo non disponibili"
                     }
                 }
-            }, 1500) // Ritardo di 1000ms
+            }, 2000) // Ritardo di 1000ms
         }
 
 // Recupera i dati TEC
@@ -108,7 +108,8 @@ class WeatherForecastActivity : AppCompatActivity() {
                             }
                             tecMean >= 175 -> {
                                 statusText = "ATTIVITA' ELEVATA!!\n" +
-                                        "POSSIBILI PROBLEMI DI POSIZIONAMENTO GPS"
+                                        "Possibili problemi nel calcolare la\n" +
+                                        "posizione precisa"
                                 statusColor = Color.RED
                             }
                             else -> {
@@ -126,7 +127,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                         tecStatusTextView.setTextColor(Color.GRAY)
                     }
                 }
-            }, 1500) // Ritardo di 1000ms
+            }, 2000) // Ritardo di 1000ms
         }
 
 
@@ -143,14 +144,19 @@ class WeatherForecastActivity : AppCompatActivity() {
                     val statusText = "Satelliti visibili: $totalSatellites, Usati per il fix: $usedSatellites"
                     findViewById<TextView>(R.id.gpsStatusTextView).text = statusText
                     // Aggiungi il controllo per la bassa ricezione GPS
-                    if (usedSatellites < 15) {
+                    if (usedSatellites < 10) {
                         gpsalertTextView.text = "BASSA RICEZIONE GPS!!!\n" +
-                                "Pochi satelliti per il fix.\n"+
+                                "Il tuo smartphone usa pochi satelliti per il fix.\n"+
                                 "Sei in interno o vi sono alcuni problemi in questa zona."
                         gpsalertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
+                    } else {
+                        gpsalertTextView.text = "BUONA RICEZIONE GPS\n" +
+                                "Il tuo smartphone vede i satelliti GPS.\n"+
+                                "Sei all'esterno e le condizioni di ricezione sono buone."
+                        gpsalertTextView.setTextColor(getColor(R.color.green)) // Imposta il testo in verde
                     }
                 }
-            }, 1500) // Ritardo di 1000ms
+            }, 2000) // Ritardo di 1000ms
         }
 
         gpsStatusHelper.startListening()

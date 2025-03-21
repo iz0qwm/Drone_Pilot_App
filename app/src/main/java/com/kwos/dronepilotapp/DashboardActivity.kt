@@ -710,22 +710,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-    private fun observeCleanupWorker(workRequest: PeriodicWorkRequest) {
-        val workManager = WorkManager.getInstance(this)
-
-        // Osserva il lavoro in corso
-        workManager.getWorkInfoByIdLiveData(workRequest.id).observe(this, Observer { workInfo ->
-            if (workInfo != null && workInfo.state == WorkInfo.State.SUCCEEDED) {
-                // Ottieni i dati restituibili dal lavoro
-                val userIdsToRemove = workInfo.outputData.getStringArray("userIdsToRemove")?.toList() ?: emptyList()
-                if (userIdsToRemove.isNotEmpty()) {
-                    // Chiama la funzione per rimuovere i marker
-                    removeMarkersForPilots(userIdsToRemove)
-                }
-            }
-        })
-    }
-
 
     fun removeMarkersForPilots(userIdsToRemove: List<String>) {
         for (userId in userIdsToRemove) {

@@ -43,8 +43,11 @@
             android:theme="@style/Theme.AppCompat.Light">
         </activity>
 
-        <activity android:name=".ChatActivity">
-            <!-- Puoi aggiungere un'intent-filter se desideri che questa activity possa essere avviata anche da un altro punto, ma in questo caso non è necessario -->
+        <activity
+            android:name=".ChatActivity"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize"
+            android:excludeFromRecents="true">
         </activity>
 
         <activity android:name=".WeatherForecastActivity">

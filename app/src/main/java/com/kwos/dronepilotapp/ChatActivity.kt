@@ -42,11 +42,29 @@ class ChatActivity : AppCompatActivity() {
         setContentView(R.layout.activity_chat)
         supportActionBar?.hide()
 
-        Log.d(TAG, "Sessione chat attivata")
+        logDebug(TAG, "ChatActivity: Sessione chat attivata")
+
+        // Leggo il senderId dall'Intent
+        val senderId = intent.getStringExtra("senderId")
+        receiverId = intent.getStringExtra("receiverId") ?: ""
+
+        logDebug(TAG, "ChatActivity: senderId ricevuto: ${intent.getStringExtra("senderId")}")
+        logDebug(TAG, "ChatActivity: receiverId ricevuto: $receiverId")
+
+
+
+        if (senderId.isNullOrBlank()) {
+            logError(TAG, "ChatActivity: Errore: senderId è nullo o vuoto!")
+        }
+
+        if (receiverId.isBlank()) {
+            logError(TAG, "ChatActivity: Errore: receiverId è nullo o vuoto!")
+            finish() // Esci dall'activity per evitare errori
+            return
+        }
 
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
-        receiverId = intent.getStringExtra("receiverId") ?: ""
 
         chattingWithText = findViewById(R.id.chattingWithText)
         messageInput = findViewById(R.id.messageInput)
@@ -66,13 +84,18 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun loadReceiverName() {
-        db.collection("users").document(receiverId).get()
-            .addOnSuccessListener { document ->
-                userName = document.getString("fullName")
-                chattingWithText.text = userName?.let { "Stai chattando con: $it" } ?: "Utente sconosciuto"
-            }
-            .addOnFailureListener { Log.e(TAG, "Errore nel recupero del nome del pilota", it) }
+        if (receiverId.isNotBlank()) {
+            db.collection("users").document(receiverId).get()
+                .addOnSuccessListener { document ->
+                    userName = document.getString("fullName")
+                    chattingWithText.text = userName?.let { "Stai chattando con: $it" } ?: "Utente sconosciuto"
+                }
+                .addOnFailureListener { logError(TAG, "ChatActivity: Errore nel recupero del nome del pilota", it) }
+        } else {
+            logError(TAG, "ChatActivity: Impossibile caricare il nome del pilota: receiverId vuoto")
+        }
     }
+
 
     private fun sendMessage() {
         val senderId = auth.currentUser?.uid ?: return
@@ -86,7 +109,7 @@ class ChatActivity : AppCompatActivity() {
                 messageInput.text.clear()
                 sendPushNotification(messageText)
             }
-            .addOnFailureListener { Log.e(TAG, "Errore nell'invio del messaggio", it) }
+            .addOnFailureListener { logError(TAG, "ChatActivity: Errore nell'invio del messaggio", it) }
     }
 
     private fun listenForMessages() {
@@ -108,23 +131,23 @@ class ChatActivity : AppCompatActivity() {
     private fun sendPushNotification(message: String) {
         val senderId = auth.currentUser?.uid
         if (senderId.isNullOrEmpty()) {
-            Log.e(TAG, "Errore: UID del mittente non disponibile.")
+            logError(TAG, "ChatActivity: Errore: UID del mittente non disponibile.")
             return
         }
 
         val receiverId = this.receiverId
         if (receiverId.isNullOrEmpty()) {
-            Log.e(TAG, "Errore: receiverId mancante.")
+            logError(TAG, "ChatActivity: Errore: receiverId mancante.")
             return
         }
 
         if (message.isEmpty()) {
-            Log.e(TAG, "Errore: il messaggio è vuoto.")
+            logError(TAG, "ChatActivity: Errore: il messaggio è vuoto.")
             return
         }
 
         // Log per il debug
-        Log.d(TAG, "Invio notifica - receiverId: $receiverId, senderId: $senderId, message: $message")
+        logDebug(TAG, "ChatActivity: Invio notifica - receiverId: $receiverId, senderId: $senderId, message: $message")
 
         // Recupera il FCM token del destinatario
         fetchFCMTokenAndSendNotification(receiverId, message, senderId)
@@ -137,19 +160,19 @@ class ChatActivity : AppCompatActivity() {
             if (document.exists()) {
                 // Recupera l'array di token FCM (se esiste)
                 val tokens = document.get("fcmTokens") as? List<String>
-                Log.d(TAG, "FCM Tokens del receiver: $tokens")
+                logDebug(TAG, "ChatActivity: FCM Tokens del receiver: $tokens")
 
                 if (tokens != null && tokens.isNotEmpty()) {
                     // Invia la notifica a ciascun token nell'array
                     tokens.forEach { token ->
                         sendNotificationToReceiver(token, message, senderId)
-                        Log.d(TAG, "Invio dopo token - token: $token, senderId: $senderId, message: $message")
+                        logDebug(TAG, "ChatActivity: Invio dopo token - token: $token, senderId: $senderId, message: $message")
                     }
                 } else {
-                    Log.e(TAG, "Errore: il destinatario non ha token FCM salvati.")
+                    logError(TAG, "ChatActivity: Errore: il destinatario non ha token FCM salvati.")
                 }
             } else {
-                Log.e(TAG, "Errore: Destinatario non trovato.")
+                logError(TAG, "ChatActivity: Errore: Destinatario non trovato.")
             }
         }
     }
@@ -165,15 +188,17 @@ class ChatActivity : AppCompatActivity() {
         )
 
         try {
+            //logDebug(TAG, "ChatActivity: Invio dati alla funzione: $data")
+
             functions.getHttpsCallable("sendChatNotification").call(data)
                 .addOnSuccessListener {
-                    Log.d(TAG, "Notifica push inviata con successo: ${it.data}")
+                    logDebug(TAG, "ChatActivity: Notifica push inviata con successo: ${it.data}")
                 }
                 .addOnFailureListener { exception ->
-                    Log.e(TAG, "Errore nell'invio della notifica push: ${exception.message}", exception)
+                    logError(TAG, "ChatActivity: Errore nell'invio della notifica push: ${exception.message}", exception)
                 }
         } catch (e: Exception) {
-            Log.e(TAG, "Eccezione durante l'invio della notifica push: ${e.message}", e)
+            logError(TAG, "ChatActivity: Eccezione durante l'invio della notifica push: ${e.message}", e)
         }
     }
 

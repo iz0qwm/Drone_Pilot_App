@@ -26,69 +26,65 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     private val TAG = "DronePilotApp"
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        Log.d(TAG, "Messaggio ricevuto: $remoteMessage")
+        logDebug(TAG, "Messaggio ricevuto: $remoteMessage")
+
+        var senderId: String = "Sconosciuto"
+        var receiverId: String = FirebaseAuth.getInstance().currentUser?.uid ?: "Sconosciuto" // 🔹 Usa l'UID dell'utente attuale
+        var message: String = "Hai un nuovo messaggio"
+        var notificationTitle = "Nuovo Messaggio"
+        var notificationBody = "Hai un nuovo messaggio"
 
         // Controlla se il messaggio contiene una notifica
         remoteMessage.notification?.let { notification ->
-            val title = notification.title ?: "Nuovo Messaggio"
-            val body = notification.body ?: "Hai un nuovo messaggio"
-            // Mostra la notifica quando arriva una notifica
-            showNotification(title, body)
-
-            // Crea un Intent per inviare un broadcast
-            //val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE")
-            val intent = Intent(this, MyFirebaseMessagingService::class.java)
-            intent.action = "com.kwos.dronepilotapp.NEW_MESSAGE"
-            sendBroadcast(intent)
-
-            intent.putExtra("message", title)
-            intent.putExtra("title", body)
-
-            // Aggiungi il senderId al broadcast
-            val senderId = remoteMessage.data["senderId"] ?: "Sconosciuto"
-            intent.putExtra("senderId", senderId)
-
-            // Invia il broadcast
-            sendBroadcast(intent)
+            notificationTitle = notification.title ?: notificationTitle
+            notificationBody = notification.body ?: notificationBody
         }
 
         // Controlla se il messaggio contiene dati extra
         if (remoteMessage.data.isNotEmpty()) {
-            val senderId = remoteMessage.data["senderId"] ?: "Sconosciuto"
-            val message = remoteMessage.data["message"] ?: "Hai un nuovo messaggio"
+            senderId = remoteMessage.data["senderId"] ?: senderId
+            message = remoteMessage.data["message"] ?: notificationBody
+        }
 
-            // Recupera il nome completo da Firestore
+        // Se c'è un senderId valido, cerchiamo il nome su Firestore
+        if (senderId != "Sconosciuto") {
             val db = FirebaseFirestore.getInstance()
             db.collection("users").document(senderId).get()
                 .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val fullName = document.getString("fullName") ?: "Sconosciuto"
+                    val fullName = document.getString("fullName") ?: "Sconosciuto"
+                    val finalTitle = "Messaggio da $fullName"
+                    val finalMessage = message
 
-                        // Mostra la notifica con il nome
-                        showNotification("Messaggio da $fullName", message)
+                    // Mostra la notifica con il nome completo
+                    showNotification(finalTitle, finalMessage, senderId, receiverId)
 
-                        // Invia un broadcast con il nome al posto del senderId
-                        //val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE")
-                        val intent = Intent(this, MyFirebaseMessagingService::class.java)
-                        intent.action = "com.kwos.dronepilotapp.NEW_MESSAGE"
-                        sendBroadcast(intent)
-                        intent.putExtra("message", message)
-                        intent.putExtra("title", "Messaggio da $fullName")
-                        intent.putExtra("senderId", senderId)
-                        sendBroadcast(intent)
-                    } else {
-                        Log.w(TAG, "Utente non trovato")
-                    }
+                    // Invia un broadcast
+                    sendNewMessageBroadcast(senderId, finalTitle, finalMessage)
                 }
                 .addOnFailureListener { e ->
                     Log.e(TAG, "Errore nel recupero del nome utente", e)
+                    // In caso di errore, usa il senderId invece del nome
+                    showNotification(notificationTitle, notificationBody, senderId, receiverId)
+                    sendNewMessageBroadcast(senderId, notificationTitle, notificationBody)
                 }
+        } else {
+            // Se non c'è un senderId valido, mostra la notifica con i dati ricevuti
+            showNotification(notificationTitle, notificationBody, senderId, receiverId)
+            sendNewMessageBroadcast(senderId, notificationTitle, notificationBody)
         }
-
-
-
     }
 
+    /**
+     * Invia un broadcast con i dettagli del nuovo messaggio
+     */
+    private fun sendNewMessageBroadcast(senderId: String, title: String, message: String) {
+        val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE").apply {
+            putExtra("message", message)
+            putExtra("title", title)
+            putExtra("senderId", senderId)
+        }
+        sendBroadcast(intent)
+    }
 
 
     override fun onNewToken(token: String) {
@@ -97,24 +93,31 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         saveTokenToServer(token) // Invia il token al server
     }
 
-    private fun showNotification(title: String, message: String) {
-        val intent = Intent(this, ChatActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    private fun showNotification(title: String, message: String, senderId: String, receiverId: String) {
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            //flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            putExtra("senderId", receiverId)  // Passa il senderId alla ChatActivity
+            putExtra("receiverId", senderId)  // 📌 Aggiunto receiverId = senderId
+        }
+
+        logDebug(TAG, "MyFirebaseMessagingService showNotification: senderId: $senderId, receiverId: $receiverId")
 
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val channelId = "chat_notifications"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_mail) // Usa un'icona della bustina
+            .setSmallIcon(R.drawable.ic_mail)
             .setContentTitle(title)
             .setContentText(message)
             .setAutoCancel(true)
             .setSound(defaultSoundUri)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(pendingIntent) // Qui associamo il pendingIntent
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -123,13 +126,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 channelId, "Notifiche Chat", NotificationManager.IMPORTANCE_HIGH
             )
             notificationManager.createNotificationChannel(channel)
-            Log.d("Notification", "Canale di notifiche creato")
         }
 
-
         notificationManager.notify(0, notificationBuilder.build())
-
     }
+
 
     private fun saveTokenToServer(token: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -138,18 +139,18 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val userDocRef = db.collection("users").document(userId)
 
             // Log per vedere se l'utente è effettivamente autenticato
-            Log.d(TAG, "Utente autenticato: $userId")
+            logDebug(TAG, "MyFirebaseMessagingService: Utente autenticato: $userId")
 
             // Aggiungi il token alla lista esistente di token
             userDocRef.update("fcmTokens", FieldValue.arrayUnion(token))
                 .addOnSuccessListener {
-                    Log.d(TAG, "Token FCM aggiunto nel database per l'utente $userId")
+                    logDebug(TAG, "MyFirebaseMessagingService: Token FCM aggiunto nel database per l'utente $userId")
                 }
                 .addOnFailureListener { exception ->
-                    Log.e(TAG, "Errore aggiornando il token FCM", exception)
+                    logError(TAG, "MyFirebaseMessagingService: Errore aggiornando il token FCM", exception)
                 }
         } else {
-            Log.e(TAG, "Errore: nessun utente autenticato")
+            logError(TAG, "MyFirebaseMessagingService: Errore: nessun utente autenticato")
         }
     }
 
@@ -158,7 +159,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val db = FirebaseFirestore.getInstance()
         val userDocRef = db.collection("users").document(userId)
 
-        Log.d(TAG, "removeToken: Sto rimuovendo i token FCM per l'utente $userId")
+        logDebug(TAG, "MyFirebaseMessagingService: removeToken: Sto rimuovendo i token FCM per l'utente $userId")
 
         userDocRef.get().addOnSuccessListener { document ->
             if (document.exists()) {
@@ -166,23 +167,23 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 if (!tokens.isNullOrEmpty()) {
                     userDocRef.update("fcmTokens", FieldValue.delete())
                         .addOnSuccessListener {
-                            Log.d(TAG, "removeToken: Token FCM rimossi con successo per $userId")
+                            logDebug(TAG, "MyFirebaseMessagingService: removeToken: Token FCM rimossi con successo per $userId")
                             onComplete() // Chiamata di callback per continuare il logout
                         }
                         .addOnFailureListener { exception ->
-                            Log.e(TAG, "❌ Errore nella rimozione dei token FCM", exception)
+                            logError(TAG, "❌ MyFirebaseMessagingService: Errore nella rimozione dei token FCM", exception)
                             onComplete() // Anche in caso di errore, continua il logout
                         }
                 } else {
-                    Log.d(TAG, "removeToken: Nessun token FCM trovato per $userId")
+                    logDebug(TAG, "MyFirebaseMessagingService: removeToken: Nessun token FCM trovato per $userId")
                     onComplete()
                 }
             } else {
-                Log.d(TAG, "removeToken: Documento utente non esistente")
+                logDebug(TAG, "MyFirebaseMessagingService:removeToken: Documento utente non esistente")
                 onComplete()
             }
         }.addOnFailureListener { exception ->
-            Log.e(TAG, "❌ removeToke: Errore nel recupero del documento utente", exception)
+            logError(TAG, "❌ MyFirebaseMessagingService: removeToken: Errore nel recupero del documento utente", exception)
             onComplete()
         }
     }
