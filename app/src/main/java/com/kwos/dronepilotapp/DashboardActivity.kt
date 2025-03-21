@@ -48,6 +48,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.location.Priority
+
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -98,9 +100,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         supportActionBar?.hide()
 
         //Esecuzione funzioni automatiche
-        // CleanupWorker()
-        // Fermo il CleanupWorker()
-        WorkManager.getInstance(this).cancelAllWorkByTag("cleanupWorker")
         // Controllo la presenza di nuovi messaggi
         checkForNewMessages()
 
@@ -541,10 +540,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 db.collection("users").document(userId)
                     .update("inVolo", true)
                     .addOnSuccessListener {
-                        logDebug(TAG, "🚀 Impostato 'inVolo' su true per $userId")
+                        logDebug(TAG, "🚀 startFlight: Impostato 'inVolo' su true per $userId")
                     }
                     .addOnFailureListener {
-                        logWarning(TAG, "⚠️ Errore nell'impostare 'inVolo' su true", it)
+                        logWarning(TAG, "⚠️ startFlight: Errore nell'impostare 'inVolo' su true", it)
                     }
 
                 val position = hashMapOf(
@@ -572,6 +571,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 startLocationUpdates(userId, userName, droneName)
             }
+        }.addOnFailureListener {
+            logWarning(TAG, "⚠️ startFlight: Errore nel recupero della posizione", it)
         }
     }
 
@@ -655,16 +656,21 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     private fun startLocationUpdates(userId: String, userName: String, droneName: String) {
+        logDebug(TAG, "LocationUpdates: START Aggiornamento posizioni per $userId con drone $droneName")
         // Crea una richiesta per gli aggiornamenti della posizione
-        val locationRequest = LocationRequest.create().apply {
-            interval = 10000 // Aggiornamenti ogni 10 secondi
-            fastestInterval = 5000 // Aggiornamenti veloci ogni 5 secondi
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 50000)
+            .setMinUpdateIntervalMillis(120000) // Intervallo minimo di aggiornamento
+            .build()
+        //val locationRequest = LocationRequest.create().apply {
+        //    interval = 50000 // Aggiornamenti ogni 50 secondi
+        //    fastestInterval = 20000 // Aggiornamenti veloci ogni 20 secondi
+        //    priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        //}
 
         // Crea un callback per gestire gli aggiornamenti della posizione
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
+                logDebug(TAG, "📍 LocationUpdates: Nuova posizione ricevuta (${locationResult.locations.size} per $userId)")
                 // Non è necessario il controllo "if (result != null)"
                 for (location in locationResult.locations) {
                     val position = hashMapOf(
@@ -686,6 +692,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                         existingMarker.title = "$userName - $droneName"
                     } else {
                         // Crea un nuovo marker solo se non esiste
+                        logError(TAG, "LocationUpdates: QUI NON DEVE MAI ENTRARE sto ricreando il marker per $userId")
                         val marker = mMap.addMarker(MarkerOptions().position(userPosition).title("$userName - $droneName"))
                         marker?.tag = userId // Associa l'ID del pilota al marker
                         pilotMarkers[userId] = marker!!
@@ -717,21 +724,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         })
-    }
-
-    private fun CleanupWorker() {
-        val workRequest = PeriodicWorkRequestBuilder<CleanupWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
-            .build()
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "cleanupWorker",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
-
-        // Passa workRequest a observeCleanupWorker
-        observeCleanupWorker(workRequest)
     }
 
 

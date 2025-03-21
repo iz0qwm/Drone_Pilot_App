@@ -23,6 +23,7 @@ class WeatherForecastActivity : AppCompatActivity() {
     private lateinit var tecValueTextView: TextView
     private lateinit var tecStatusTextView: TextView
     private lateinit var tecTitleTextView: TextView
+    private lateinit var weather_meteogram: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,9 +35,11 @@ class WeatherForecastActivity : AppCompatActivity() {
         val closeButton: Button = findViewById(R.id.close_weather_button)
         val locationText: TextView = findViewById(R.id.weather_location)
         val alertTextView: TextView = findViewById(R.id.alertTextView)
+        val gpsalertTextView: TextView = findViewById(R.id.gpsalertTextView)
         tecValueTextView = findViewById(R.id.tecValueTextView)
         tecStatusTextView = findViewById(R.id.tecStatusTextView)
         tecTitleTextView = findViewById(R.id.tecTitleTextView)
+        weather_meteogram = findViewById(R.id.weather_meteogram)
 
         // Recupero le coordinate passate dall'Activity principale
         val lat = intent.getDoubleExtra("LATITUDE", 0.0)
@@ -52,73 +55,78 @@ class WeatherForecastActivity : AppCompatActivity() {
 
 // Recupera i dati meteo
         MeteoManager.getMeteoData(lat, lon) { meteoData ->
-            // Assicurati che l'aggiornamento avvenga nel thread principale
-            runOnUiThread {
-                if (meteoData != null) {
-                    weatherDetails.text =
-                        "Temp. Min: ${meteoData.temperature_min}°C - Max: ${meteoData.temperature_max}°C\n" +
-                                "Vento Min: ${meteoData.wind_speedmin} km/h\n" +
-                                "Vento Medio: ${meteoData.wind_speedmean} km/h\n" +
-                                "Vento Max: ${meteoData.wind_speedmax} km/h\n" +
-                                "Umidità: ${meteoData.humidity}%\n" +
-                                "Possibilità di precipitazioni: ${meteoData.precipitation_probability}% "
+            Handler(Looper.getMainLooper()).postDelayed({
+                // Assicurati che l'aggiornamento avvenga nel thread principale
+                runOnUiThread {
+                    if (meteoData != null) {
+                        weatherDetails.text =
+                            "Temp. Min: ${meteoData.temperature_min}°C - Max: ${meteoData.temperature_max}°C\n" +
+                                    "Vento Min: ${meteoData.wind_speedmin} km/h\n" +
+                                    "Vento Medio: ${meteoData.wind_speedmean} km/h\n" +
+                                    "Vento Max: ${meteoData.wind_speedmax} km/h\n" +
+                                    "Umidità: ${meteoData.humidity}%\n" +
+                                    "Possibilità di precipitazioni: ${meteoData.precipitation_probability}% "
 
-                    // Aggiungi la logica di allerta basata sul vento
-                    if (meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30) {
-                        alertTextView.text = "ALERT VENTO FORTE!!!"
-                        alertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
-                    } else if (meteoData.precipitation_probability > 70) {
-                        alertTextView.text = "ALERT POSSIBILE PIOGGIA!!!"
-                        alertTextView.setTextColor(getColor(R.color.blue)) // Imposta il testo in blu
+                        // Aggiungi la logica di allerta basata sul vento
+                        if (meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30) {
+                            alertTextView.text = "ALERT VENTO FORTE!!!"
+                            alertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
+                        } else if (meteoData.precipitation_probability > 70) {
+                            alertTextView.text = "ALERT POSSIBILE PIOGGIA!!!"
+                            alertTextView.setTextColor(getColor(R.color.blue)) // Imposta il testo in blu
+                        } else {
+                            alertTextView.text = "LE CONDIZIONI METEOROLOGICHE PERMETTONO DI FAR VOLARE L'UAS"
+                            alertTextView.setTextColor(getColor(R.color.green)) // Imposta il testo in verde
+                        }
                     } else {
-                        alertTextView.text = "PUOI FAR VOLARE L'UAS"
-                        alertTextView.setTextColor(getColor(R.color.green)) // Imposta il testo in verde
+                        weatherDetails.text = "Dati meteo non disponibili"
                     }
-                } else {
-                    weatherDetails.text = "Dati meteo non disponibili"
                 }
-            }
+            }, 1500) // Ritardo di 1000ms
         }
 
 // Recupera i dati TEC
         MeteoManager.getTecData { tecMean ->
+            Handler(Looper.getMainLooper()).postDelayed({
             // Assicurati che l'aggiornamento avvenga nel thread principale
-            runOnUiThread {
-                if (tecMean != null) {
-                    tecValueTextView.text = "TEC (Total Electron Content): $tecMean TECu"
+                runOnUiThread {
+                    if (tecMean != null) {
+                        tecValueTextView.text = "TEC (Total Electron Content): $tecMean TECu"
 
-                    // Cambia il colore e il messaggio in base al valore di tecMean
-                    val statusText: String
-                    val statusColor: Int
+                        // Cambia il colore e il messaggio in base al valore di tecMean
+                        val statusText: String
+                        val statusColor: Int
 
-                    when {
-                        tecMean < 125 -> {
-                            statusText = "Status: CALMO"
-                            statusColor = Color.rgb(19, 117, 13) // VERDE SCURO
+                        when {
+                            tecMean < 125 -> {
+                                statusText = "CONDIZIONI DI CALMA"
+                                statusColor = Color.rgb(19, 117, 13) // VERDE SCURO
+                            }
+                            tecMean >= 125 && tecMean < 175 -> {
+                                statusText = "ATTIVITA' MODERATA"
+                                statusColor = Color.rgb(255, 165, 0) // Arancio
+                            }
+                            tecMean >= 175 -> {
+                                statusText = "ATTIVITA' ELEVATA!!\n" +
+                                        "POSSIBILI PROBLEMI DI POSIZIONAMENTO GPS"
+                                statusColor = Color.RED
+                            }
+                            else -> {
+                                statusText = "Status: UNKNOWN"
+                                statusColor = Color.GRAY
+                            }
                         }
-                        tecMean >= 125 && tecMean < 175 -> {
-                            statusText = "Status: MODERATO"
-                            statusColor = Color.rgb(255, 165, 0) // Arancio
-                        }
-                        tecMean >= 175 -> {
-                            statusText = "Status: SEVERO"
-                            statusColor = Color.RED
-                        }
-                        else -> {
-                            statusText = "Status: UNKNOWN"
-                            statusColor = Color.GRAY
-                        }
+
+                        // Imposta il testo e il colore per il messaggio di stato
+                        tecStatusTextView.text = statusText
+                        tecStatusTextView.setTextColor(statusColor)
+                    } else {
+                        tecValueTextView.text = "Errore nel recupero dei dati TEC"
+                        tecStatusTextView.text = "Status: UNKNOWN"
+                        tecStatusTextView.setTextColor(Color.GRAY)
                     }
-
-                    // Imposta il testo e il colore per il messaggio di stato
-                    tecStatusTextView.text = statusText
-                    tecStatusTextView.setTextColor(statusColor)
-                } else {
-                    tecValueTextView.text = "Errore nel recupero dei dati TEC"
-                    tecStatusTextView.text = "Status: UNKNOWN"
-                    tecStatusTextView.setTextColor(Color.GRAY)
                 }
-            }
+            }, 1500) // Ritardo di 1000ms
         }
 
 
@@ -130,15 +138,19 @@ class WeatherForecastActivity : AppCompatActivity() {
         Picasso.get().load(meteogramUrl).into(meteogramImage)
 
         gpsStatusHelper = GpsStatusHelper(this) { totalSatellites, usedSatellites ->
-            runOnUiThread {
-                val statusText = "Satelliti visibili: $totalSatellites, Usati per il fix: $usedSatellites"
-                findViewById<TextView>(R.id.gpsStatusTextView).text = statusText
-                // Aggiungi il controllo per la bassa ricezione GPS
-                if (totalSatellites < 15) {
-                    alertTextView.text = "ALERT BASSA RICEZIONE GPS!!!"
-                    alertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
+            Handler(Looper.getMainLooper()).postDelayed({
+                runOnUiThread {
+                    val statusText = "Satelliti visibili: $totalSatellites, Usati per il fix: $usedSatellites"
+                    findViewById<TextView>(R.id.gpsStatusTextView).text = statusText
+                    // Aggiungi il controllo per la bassa ricezione GPS
+                    if (usedSatellites < 15) {
+                        gpsalertTextView.text = "BASSA RICEZIONE GPS!!!\n" +
+                                "Pochi satelliti per il fix.\n"+
+                                "Sei in interno o vi sono alcuni problemi in questa zona."
+                        gpsalertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
+                    }
                 }
-            }
+            }, 1500) // Ritardo di 1000ms
         }
 
         gpsStatusHelper.startListening()

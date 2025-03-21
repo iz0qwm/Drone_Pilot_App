@@ -40,19 +40,49 @@
             android:gravity="center"/>
 
         <TextView
+            android:id="@+id/alertTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Messaggio di ALERT METEO"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
+
+        <TextView
             android:id="@+id/gpsStatusTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Stato GPS..."
+            android:textStyle="bold"
             android:textSize="16sp"
             android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/gpsalertTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Messaggio di ALERT GPS"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
 
         <!-- Aggiungi il testo per il TEC -->
         <TextView
             android:id="@+id/tecTitleTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ERRORI DI POSIZIONAMENTO GPS"
+            android:text="Elettroni nella ionosfera (RICEZIONE GPS)"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginTop="16dp"/>
@@ -70,19 +100,28 @@
             android:id="@+id/tecStatusTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Status: CALMO"
-            android:textSize="14sp"
+            android:text="Attività elettroni nella ionosfera..."
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:padding="8dp"
             android:layout_marginTop="8dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
 
         <!-- Altri elementi del layout, come l'alertTextView -->
 
         <TextView
-            android:id="@+id/alertTextView"
+            android:id="@+id/weather_meteogram"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Messaggio di ALERT"
+            android:text="Meteogrammi settimanali"
             android:textSize="16sp"
-            android:padding="8dp" />
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
 
         <com.github.chrisbanes.photoview.PhotoView
             android:id="@+id/weather_meteogramOne_general"

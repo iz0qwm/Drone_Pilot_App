@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.kwos.dronepilotapp"
-        minSdk = 27
+        minSdk = 30
         targetSdk = 35
         versionCode = 4
         versionName = "1.1.2"
