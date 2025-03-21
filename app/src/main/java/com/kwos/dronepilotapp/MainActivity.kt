@@ -48,6 +48,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import java.util.*
+import java.util.Properties
 
 
 class MainActivity : AppCompatActivity() {
@@ -265,27 +266,43 @@ class MainActivity : AppCompatActivity() {
 
 fun getApiKey(keyName: String, context: Context): String? {
     val properties = Properties()
-    try {
+    return try {
         val inputStream = context.assets.open("secrets.properties")
         properties.load(inputStream)
+        inputStream.close() // Chiudiamo il file dopo averlo letto
+        val key = properties.getProperty(keyName)
+
+        if (key.isNullOrBlank()) {
+            logDebug("DronePilotApp", "getApiKey: Chiave $keyName non trovata o vuota in secrets.properties")
+            null
+        } else {
+            key
+        }
     } catch (e: Exception) {
-        e.printStackTrace()
+        logError("DronePilotApp", "getApiKey: Errore nel caricamento di secrets.properties: ${e.message}")
+        null
     }
-    return properties.getProperty(keyName)
 }
 
 fun checkForUpdate(context: Context) {
     val TAG = "DronePilotApp"
     val url = "https://api.github.com/repos/iz0qwm/Drone_Pilot_App/releases"
     val token = getApiKey("GITHUB_TOKEN", context)
+    if (token == null) {
+        logError(TAG, "checkForUpdate: Token GitHub non trovato!")
+    } else {
+        logDebug(TAG, "Token GitHub caricato correttamente")
+    }
 
     CoroutineScope(Dispatchers.IO).launch {
+        logDebug(TAG, "UpdateCheck: Token: $token")
         logDebug(TAG, "UpdateCheck: Checking update from URL: $url")
 
         val client = OkHttpClient()
         val request = Request.Builder()
             .url(url)
-            .addHeader("Authorization", "token $token")  // <-- Aggiunto l'header per l'autenticazione
+            //commentato perchè il repository GitHub è Open
+            //.addHeader("Authorization", "token $token")  // <-- Aggiunto l'header per l'autenticazione
             .addHeader("Accept", "application/vnd.github.v3+json")
             .addHeader("X-GitHub-Api-Version", "2022-11-28")
             .build()

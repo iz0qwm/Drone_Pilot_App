@@ -1,7 +1,8 @@
 *.iml
 .gradle
 /local.properties
-/secrets.properties
+/app/src/main/assets/secrets.properties
+/app/src/main/res/values/google_maps_api.xml
 /app/google-services.json
 /.idea/caches
 /.idea/libraries
