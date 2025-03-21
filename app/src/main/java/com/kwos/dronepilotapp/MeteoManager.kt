@@ -152,4 +152,5 @@ object MeteoManager {
         return "https://my.meteoblue.com/images/meteogram?windspeed=kmh&lat=$lat&lon=$lon&tz=Europe/Zurich&apikey=$API_KEY"
     }
 
+
 }

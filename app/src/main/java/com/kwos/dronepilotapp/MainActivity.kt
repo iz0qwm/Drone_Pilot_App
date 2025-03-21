@@ -47,7 +47,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
-
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -263,11 +263,21 @@ class MainActivity : AppCompatActivity() {
 
 }
 
+fun getApiKey(keyName: String, context: Context): String? {
+    val properties = Properties()
+    try {
+        val inputStream = context.assets.open("secrets.properties")
+        properties.load(inputStream)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return properties.getProperty(keyName)
+}
 
 fun checkForUpdate(context: Context) {
     val TAG = "DronePilotApp"
     val url = "https://api.github.com/repos/iz0qwm/Drone_Pilot_App/releases"
-    val token = "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"
+    val token = getApiKey("GITHUB_TOKEN", context)
 
     CoroutineScope(Dispatchers.IO).launch {
         logDebug(TAG, "UpdateCheck: Checking update from URL: $url")
