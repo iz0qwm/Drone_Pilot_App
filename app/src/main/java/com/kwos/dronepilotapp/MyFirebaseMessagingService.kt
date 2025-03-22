@@ -101,11 +101,16 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             putExtra("receiverId", senderId)  // 📌 Aggiunto receiverId = senderId
         }
 
+        val nullIntent = Intent() // Intent vuoto
+
         logDebug(TAG, "MyFirebaseMessagingService showNotification: senderId: $senderId, receiverId: $receiverId")
 
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent = PendingIntent.getActivity(this, 0, nullIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        // Abilitare se vuoi utilizzare l'Intent che apre la chat ( OCCHIO va in Destroy() mai risolto)
+        //val pendingIntent = PendingIntent.getActivity(
+        //    this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        //)
 
         val channelId = "chat_notifications"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)

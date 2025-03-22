@@ -54,6 +54,16 @@
         <!-- Puoi aggiungere un'intent-filter se desideri che questa activity possa essere avviata anche da un altro punto, ma in questo caso non è necessario -->
         </activity>
 
+        <activity android:name=".PilotiOnlineActivity">
+            <!-- Puoi aggiungere un'intent-filter se desideri che questa activity possa essere avviata anche da un altro punto, ma in questo caso non è necessario -->
+        </activity>
+        <activity android:name=".ImpostazioniActivity">
+            <!-- Puoi aggiungere un'intent-filter se desideri che questa activity possa essere avviata anche da un altro punto, ma in questo caso non è necessario -->
+        </activity>
+        <activity android:name=".InformazioniActivity">
+            <!-- Puoi aggiungere un'intent-filter se desideri che questa activity possa essere avviata anche da un altro punto, ma in questo caso non è necessario -->
+        </activity>
+
         <activity
             android:name=".FullScreenImageActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"/>

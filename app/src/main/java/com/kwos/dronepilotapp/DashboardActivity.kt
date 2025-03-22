@@ -1,64 +1,46 @@
 package com.kwos.dronepilotapp
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.content.Context
-import android.os.Build
-import android.location.Location
 
+import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.location.Location
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageButton
+import androidx.appcompat.widget.PopupMenu
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
-import android.widget.ImageView
-import android.content.BroadcastReceiver
-import android.content.IntentFilter
-import android.os.Handler
-
-
-
-import androidx.lifecycle.Observer
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.WorkManager
-import androidx.work.PeriodicWorkRequest
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkInfo
-
-
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.location.Priority
-
-
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.DocumentChange
-import java.util.concurrent.TimeUnit
-import com.squareup.picasso.Picasso
-
-
 import com.kwos.dronepilotapp.databinding.ActivityDashboardBinding
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -71,6 +53,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityDashboardBinding
     // Dichiarazione del receiver come variabile membro
     private lateinit var messageReceiver: BroadcastReceiver
+    private lateinit var pilotNearAlert: TextView
 
     private var mapFragment: SupportMapFragment? = null
     private var userName: String? = null  // Ora viene caricato da loadUserName()
@@ -160,6 +143,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapContainer = findViewById<FrameLayout>(R.id.mapContainer)
         //val weatherInfoText = findViewById<TextView>(R.id.weather_info_text)
         val weatherButton: Button = findViewById(R.id.weather_forecast_button)
+        val menuButton: ImageButton = findViewById(R.id.menuButton)
 
         //Partenza della mappa
         mapContainer.visibility = View.VISIBLE
@@ -172,6 +156,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         }
+
+        menuButton.setOnClickListener { view ->
+            showPopupMenu(view)
+        }
+
 
         weatherButton.setOnClickListener {
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
@@ -265,6 +254,31 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     /// INIZIO FUNZIONI
+
+    // Mostra il menu in Popup
+    private fun showPopupMenu(view: View) {
+        val popupMenu = PopupMenu(this, view)
+        popupMenu.menuInflater.inflate(R.menu.menu_options, popupMenu.menu)
+
+        popupMenu.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.menu_piloti_online -> {
+                    startActivity(Intent(this, PilotiOnlineActivity::class.java))
+                    true
+                }
+                R.id.menu_impostazioni -> {
+                    startActivity(Intent(this, ImpostazioniActivity::class.java))
+                    true
+                }
+                R.id.menu_informazioni -> {
+                    startActivity(Intent(this, InformazioniActivity::class.java))
+                    true
+                }
+                else -> false
+            }
+        }
+        popupMenu.show()
+    }
 
     // Mostra messaggi dopo averli recuperati dal Broadcast
     private fun showNewMessageInDashboard(title: String, message: String, senderId: String) {
@@ -687,17 +701,20 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     // Controlla se il marker esiste già per l'utente
                     val existingMarker = pilotMarkers[userId]
                     if (existingMarker != null) {
+                        logDebug(TAG, "LocationUpdates: Il marker per $userId esiste già, lo aggiorno")
                         // Se il marker esiste già, aggiorna la posizione
                         existingMarker.position = userPosition
-                        existingMarker.title = "$userName - $droneName"
+                        //existingMarker.title = "$userName - $droneName"
                     } else {
                         // Crea un nuovo marker solo se non esiste
-                        logError(TAG, "LocationUpdates: QUI NON DEVE MAI ENTRARE sto ricreando il marker per $userId")
-                        val marker = mMap.addMarker(MarkerOptions().position(userPosition).title("$userName - $droneName"))
-                        marker?.tag = userId // Associa l'ID del pilota al marker
-                        pilotMarkers[userId] = marker!!
+                        logError(TAG, "LocationUpdates: QUI NON DEVE MAI ENTRARE vuol dire che non ho trovato il marker di $userId")
+                        //val marker = mMap.addMarker(MarkerOptions().position(userPosition).title("$userName - $droneName"))
+                        //marker?.tag = userId // Associa l'ID del pilota al marker
+                        //pilotMarkers[userId] = marker!!
                     }
-                    //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userPosition, 15f))
+                    // Recupera la lista di piloti nelle vicinanze
+                    checkNearbyPilots(location.latitude, location.longitude)
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userPosition, 8f))
                 }
             }
         }
@@ -856,6 +873,52 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }.addOnFailureListener { e ->
             logError(TAG, "❌ recuperaDatiPilota: Errore nel recupero dello stato di volo: ${e.message}")
         }
+    }
+
+    // Funzione per calcolare la distanza tra due coordinate geografiche (Haversine)
+    fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371 // raggio della Terra in km
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return R * c // distanza in km
+    }
+
+    // Funzione per controllare la posizione dei piloti nelle vicinanze
+    fun checkNearbyPilots(userLat: Double, userLon: Double) {
+        logDebug(TAG, "checkNearbyPilots: Controlliamo se vi sono piloti nelle vicinanze")
+        db.collection("users")
+            .get()
+            .addOnSuccessListener { result ->
+                var nearbyPilotsFound = false
+                for (document in result) {
+                    val pilotLat = document.getDouble("latitude") ?: 0.0
+                    val pilotLon = document.getDouble("longitude") ?: 0.0
+
+                    // Calcola la distanza tra l'utente e il pilota
+                    val distance = calculateDistance(userLat, userLon, pilotLat, pilotLon)
+                    if (distance < 1) {  // Se la distanza è inferiore a 1 km
+                        nearbyPilotsFound = true
+                        break
+                    }
+                }
+
+                // Se ci sono piloti nelle vicinanze, mostra il messaggio
+                if (nearbyPilotsFound) {
+                    showNearbyPilotAlert()
+                }
+            }
+    }
+
+    // Funzione per mostrare l'alert del pilota nelle vicinanze
+    fun showNearbyPilotAlert() {
+        logDebug(TAG, "showNearbyPilotAlert: Pilota nelle vicinanze")
+        pilotNearAlert.text = "Attenzione! Piloti nelle vicinanze!"
+        pilotNearAlert.visibility = TextView.VISIBLE
+        pilotNearAlert.setTextColor(getColor(R.color.red))
     }
 
     override fun onStop() {

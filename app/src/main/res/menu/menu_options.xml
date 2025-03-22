@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_piloti_online"
+        android:title="Piloti attivi" />
+    <item
+        android:id="@+id/menu_impostazioni"
+        android:title="Impostazioni" />
+    <item
+        android:id="@+id/menu_informazioni"
+        android:title="Informazioni" />
+</menu>
