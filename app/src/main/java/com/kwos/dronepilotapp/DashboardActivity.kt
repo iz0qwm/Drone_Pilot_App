@@ -293,6 +293,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.newMessageIcon.setOnClickListener {
             openChatWithPilot(senderId)  // Passa il senderId per aprire la chat con il mittente
         }
+        // Imposta un'azione di clic sul messaggio per aprire la chat con il mittente
+        binding.newMessageText.setOnClickListener {
+            openChatWithPilot(senderId)  // Passa il senderId per aprire la chat con il mittente
+        }
     }
 
 

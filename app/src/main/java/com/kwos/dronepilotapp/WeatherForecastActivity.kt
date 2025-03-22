@@ -14,7 +14,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.graphics.Color
-
+import android.view.View
+import android.widget.ProgressBar
 
 
 class WeatherForecastActivity : AppCompatActivity() {
@@ -28,6 +29,12 @@ class WeatherForecastActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_weather_forecast)
+
+        // Recupero la ProgressBar
+        val weatherProgressBar: ProgressBar = findViewById(R.id.weatherProgressBar)
+
+        // Mostro la ProgressBar prima di caricare i dati
+        weatherProgressBar.visibility = View.VISIBLE
 
         val weatherDetails: TextView = findViewById(R.id.weather_details)
         val meteogramOneImage: ImageView = findViewById(R.id.weather_meteogramOne_general)
@@ -69,17 +76,27 @@ class WeatherForecastActivity : AppCompatActivity() {
 
                         // Aggiungi la logica di allerta basata sul vento
                         if (meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30) {
-                            alertTextView.text = "ALERT VENTO FORTE!!!"
+                            alertTextView.text = "ALERT !! VENTO FORTE"
                             alertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
                         } else if (meteoData.precipitation_probability > 70) {
-                            alertTextView.text = "ALERT POSSIBILE PIOGGIA!!!"
-                            alertTextView.setTextColor(getColor(R.color.blue)) // Imposta il testo in blu
+                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERA'"
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0))// Imposta il testo in arancio
+                        } else if (meteoData.precipitation_probability > 40 && meteoData.wind_speedmean < 10 &&  meteoData.humidity > 70) {
+                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERA'"
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0))// Imposta il testo in arancio
                         } else {
                             alertTextView.text = "LE CONDIZIONI METEOROLOGICHE PERMETTONO DI FAR VOLARE L'UAS"
                             alertTextView.setTextColor(getColor(R.color.green)) // Imposta il testo in verde
                         }
+
+
+                        // Nascondo la ProgressBar perché i dati sono caricati
+                        weatherProgressBar.visibility = View.GONE
+
                     } else {
                         weatherDetails.text = "Dati meteo non disponibili"
+                        // Nascondo la ProgressBar perché i dati sono caricati
+                        weatherProgressBar.visibility = View.GONE
                     }
                 }
             }, 2000) // Ritardo di 1000ms
@@ -121,22 +138,22 @@ class WeatherForecastActivity : AppCompatActivity() {
                         // Imposta il testo e il colore per il messaggio di stato
                         tecStatusTextView.text = statusText
                         tecStatusTextView.setTextColor(statusColor)
+
+                        // Nascondo la ProgressBar
+                        weatherProgressBar.visibility = View.GONE
                     } else {
                         tecValueTextView.text = "Errore nel recupero dei dati TEC"
                         tecStatusTextView.text = "Status: UNKNOWN"
                         tecStatusTextView.setTextColor(Color.GRAY)
+                        // Nascondo la ProgressBar
+                        weatherProgressBar.visibility = View.GONE
                     }
                 }
             }, 2000) // Ritardo di 1000ms
         }
 
 
-        // Carico l'immagine del meteogramma all in One
-        val meteogramOneUrl = MeteoManager.getMeteogramOneImageUrl(lat, lon)
-        Picasso.get().load(meteogramOneUrl).into(meteogramOneImage)
-        // Carico l'immagine del meteogramma
-        val meteogramUrl = MeteoManager.getMeteogramImageUrl(lat, lon)
-        Picasso.get().load(meteogramUrl).into(meteogramImage)
+
 
         gpsStatusHelper = GpsStatusHelper(this) { totalSatellites, usedSatellites ->
             Handler(Looper.getMainLooper()).postDelayed({
@@ -161,20 +178,37 @@ class WeatherForecastActivity : AppCompatActivity() {
 
         gpsStatusHelper.startListening()
 
+        val handler = Handler(Looper.getMainLooper())
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                if (weatherProgressBar.visibility == View.GONE) {
+                    // Ora che i dati sono stati caricati, carico le immagini
+                    val meteogramOneUrl = MeteoManager.getMeteogramOneImageUrl(lat, lon)
+                    Picasso.get().load(meteogramOneUrl).into(meteogramOneImage)
 
-        meteogramOneImage.setOnClickListener {
-            val intent = Intent(this, FullScreenImageActivity::class.java)
-            intent.putExtra("IMAGE_URL", meteogramOneUrl)
-            startActivity(intent)
-        }
-        //
+                    val meteogramUrl = MeteoManager.getMeteogramImageUrl(lat, lon)
+                    Picasso.get().load(meteogramUrl).into(meteogramImage)
 
-        meteogramImage.setOnClickListener {
-            val intent = Intent(this, FullScreenImageActivity::class.java)
-            intent.putExtra("IMAGE_URL", meteogramUrl)
-            startActivity(intent)
-        }
-        //
+                    // Imposto il click per visualizzare le immagini a schermo intero
+                    meteogramOneImage.setOnClickListener {
+                        val intent = Intent(this@WeatherForecastActivity, FullScreenImageActivity::class.java)
+                        intent.putExtra("IMAGE_URL", meteogramOneUrl)
+                        startActivity(intent)
+                    }
+
+                    meteogramImage.setOnClickListener {
+                        val intent = Intent(this@WeatherForecastActivity, FullScreenImageActivity::class.java)
+                        intent.putExtra("IMAGE_URL", meteogramUrl)
+                        startActivity(intent)
+                    }
+
+                } else {
+                    // Riprova tra 500ms se la ProgressBar è ancora visibile
+                    handler.postDelayed(this, 500)
+                }
+            }
+        }, 500)
+
 
         // Pulsante per chiudere la finestra
         closeButton.setOnClickListener {

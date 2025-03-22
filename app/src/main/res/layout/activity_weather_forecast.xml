@@ -30,6 +30,14 @@
             android:layout_centerHorizontal="true"
             android:paddingBottom="10dp"/>
 
+        <ProgressBar
+            android:id="@+id/weatherProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/weather_location"
+            android:layout_centerHorizontal="true"
+            android:visibility="gone"/>
+
         <TextView
             android:id="@+id/weather_details"
             android:layout_width="match_parent"
