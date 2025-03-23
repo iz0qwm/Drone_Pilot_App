@@ -210,7 +210,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                     handler.postDelayed(this, 500)
                 }
             }
-        }, 500)
+        }, 2500)
 
 
         // Pulsante per chiudere la finestra
