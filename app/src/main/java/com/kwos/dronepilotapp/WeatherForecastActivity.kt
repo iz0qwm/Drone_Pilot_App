@@ -78,11 +78,14 @@ class WeatherForecastActivity : AppCompatActivity() {
                         if (meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30) {
                             alertTextView.text = "ALERT !! VENTO FORTE"
                             alertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
-                        } else if (meteoData.precipitation_probability > 70) {
-                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERA'"
+                        } else if (meteoData.precipitation_probability > 70 &&  meteoData.humidity > 70) {
+                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERA' A BREVE"
                             alertTextView.setTextColor(Color.rgb(255, 165, 0))// Imposta il testo in arancio
                         } else if (meteoData.precipitation_probability > 40 && meteoData.wind_speedmean < 10 &&  meteoData.humidity > 70) {
-                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERA'"
+                            alertTextView.text = "STA PIOVENDO O PIOVERA'. ATTENZIONE"
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0))// Imposta il testo in arancio
+                        } else if (meteoData.precipitation_probability > 20 && meteoData.wind_speedmean < 10 &&  meteoData.humidity > 70) {
+                            alertTextView.text = "NON E' BEL TEMPO. STAI ATTENTO."
                             alertTextView.setTextColor(Color.rgb(255, 165, 0))// Imposta il testo in arancio
                         } else {
                             alertTextView.text = "LE CONDIZIONI METEOROLOGICHE PERMETTONO DI FAR VOLARE L'UAS"

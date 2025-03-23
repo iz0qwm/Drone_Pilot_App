@@ -145,6 +145,9 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val weatherButton: Button = findViewById(R.id.weather_forecast_button)
         val menuButton: ImageButton = findViewById(R.id.menuButton)
 
+        //val pilotNearAlert = findViewById<TextView>(R.id.pilotNearAlert)
+
+
         //Partenza della mappa
         mapContainer.visibility = View.VISIBLE
 
@@ -713,7 +716,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                         //pilotMarkers[userId] = marker!!
                     }
                     // Recupera la lista di piloti nelle vicinanze
-                    checkNearbyPilots(location.latitude, location.longitude)
+                    checkNearbyPilots(location.latitude, location.longitude, userId)
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userPosition, 8f))
                 }
             }
@@ -888,13 +891,18 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     // Funzione per controllare la posizione dei piloti nelle vicinanze
-    fun checkNearbyPilots(userLat: Double, userLon: Double) {
+    fun checkNearbyPilots(userLat: Double, userLon: Double, currentUserName: String) {
         logDebug(TAG, "checkNearbyPilots: Controlliamo se vi sono piloti nelle vicinanze")
-        db.collection("users")
+
+        db.collection("piloti")
             .get()
             .addOnSuccessListener { result ->
                 var nearbyPilotsFound = false
+
                 for (document in result) {
+                    // Escludi il pilota corrente
+                    if (document.id == currentUserName) continue
+
                     val pilotLat = document.getDouble("latitude") ?: 0.0
                     val pilotLon = document.getDouble("longitude") ?: 0.0
 
@@ -913,12 +921,15 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
     }
 
+
     // Funzione per mostrare l'alert del pilota nelle vicinanze
     fun showNearbyPilotAlert() {
         logDebug(TAG, "showNearbyPilotAlert: Pilota nelle vicinanze")
-        pilotNearAlert.text = "Attenzione! Piloti nelle vicinanze!"
-        pilotNearAlert.visibility = TextView.VISIBLE
-        pilotNearAlert.setTextColor(getColor(R.color.red))
+        findViewById<TextView>(R.id.pilotNearAlert)?.apply {
+            text = "Attenzione! Piloti nelle vicinanze!"
+            visibility = View.VISIBLE
+            setTextColor(getColor(R.color.red))
+        }
     }
 
     override fun onStop() {
