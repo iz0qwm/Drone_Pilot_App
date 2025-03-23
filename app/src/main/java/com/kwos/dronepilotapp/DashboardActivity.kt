@@ -42,6 +42,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.kwos.dronepilotapp.databinding.ActivityDashboardBinding
+import android.util.Log
+import org.json.JSONObject
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlinx.coroutines.*
+
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -54,6 +61,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     // Dichiarazione del receiver come variabile membro
     private lateinit var messageReceiver: BroadcastReceiver
     private lateinit var pilotNearAlert: TextView
+    private lateinit var lowerLimitTextView: TextView
+
 
     private var mapFragment: SupportMapFragment? = null
     private var userName: String? = null  // Ora viene caricato da loadUserName()
@@ -144,6 +153,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         //val weatherInfoText = findViewById<TextView>(R.id.weather_info_text)
         val weatherButton: Button = findViewById(R.id.weather_forecast_button)
         val menuButton: ImageButton = findViewById(R.id.menuButton)
+        //val lowerLimitTextView: TextView = findViewById(R.id.lowerLimitTextView)
+
 
         //val pilotNearAlert = findViewById<TextView>(R.id.pilotNearAlert)
 
@@ -176,19 +187,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     intent.putExtra("LONGITUDE", userLon) // Inserisci la longitudine reale
                     startActivity(intent)
 
-                    // Ottiene i dati meteo
-                    //MeteoManager.getMeteoData(userLat, userLon) { meteo ->
-                    //    runOnUiThread {
-                    //        if (meteo != null) {
-                    //            val weatherText = "Temperatura Min: ${meteo.temperature_min}° - Max: ${meteo.temperature_max}°\n" +
-                    //                    "Vento: ${meteo.wind_speedmax} Km/h - ${meteo.wind_speedmean} Km/h - ${meteo.wind_speedmin} Km/h\n " +
-                    //                    "Umidità: ${meteo.humidity}%"
-                    //            weatherInfoText.text = weatherText
-                    //        } else {
-                    //            weatherInfoText.text = "Dati meteo non disponibili"
-                    //        }
-                    //    }
-                    //}
                 }
             }
         }
@@ -251,7 +249,13 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
         }
 
+        // Mostra la mappa
         showMap()
+
+        //vede se si può volare di d-flight JASON
+        // Verifica se la TextView esiste nel layout
+        findViewById<TextView>(R.id.lowerLimitTextView)?.text = "In attesa...."
+        fetchFlightLimitWithLocation()
 
     }
 
@@ -930,6 +934,102 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             visibility = View.VISIBLE
             setTextColor(getColor(R.color.red))
         }
+    }
+
+    private fun fetchFlightLimitWithLocation() {
+        // Controllo dei permessi per la posizione
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+            return
+        }
+
+        // Recupera la posizione attuale
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                location?.let {
+                    // Chiama direttamente fetchFlightLimit con la posizione
+                    val latitude = it.latitude
+                    val longitude = it.longitude
+                    fetchFlightLimit(latitude, longitude) { lowerLimit ->
+                        // Aggiorna l'interfaccia con il valore del lowerLimit
+                        runOnUiThread {
+                            findViewById<TextView>(R.id.lowerLimitTextView)?.apply {
+                                text = "Open Category fino a: $lowerLimit m\n" +
+                                        "controlla D-Flight prima di accendere il drone"
+                                visibility = View.VISIBLE
+                                setTextColor(getColor(R.color.red))
+                            }
+                        }
+                    }
+                } ?: logError(TAG, "fetchCurrentLocation: Errore: Nessuna posizione disponibile")
+            }
+            .addOnFailureListener { e ->
+                logError(TAG, "fetchCurrentLocation: Errore nel recupero della posizione: ${e.message}")
+            }
+    }
+
+    fun fetchFlightLimit(latitude: Double, longitude: Double, callback: (String) -> Unit) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "UnknownUser"
+
+        // Crea un oggetto JSON per i dati da inviare
+        val jsonData = JSONObject().apply {
+            put("latitude", latitude)
+            put("longitude", longitude)
+            put("userId", userId)
+        }
+
+        // Esegui la richiesta HTTP in un thread di background
+        GlobalScope.launch(Dispatchers.IO) {
+            val result = sendPostRequest(jsonData)
+
+            withContext(Dispatchers.Main) {
+                val lowerLimit = try {
+                    val jsonResponse = JSONObject(result)
+                    jsonResponse.optString("lowerLimit", "Errore")
+                } catch (e: Exception) {
+                    logError(TAG, "fetchFlightLimit: Errore nel parsing della risposta: ${e.message}")
+                    "Errore nel parsing della risposta"
+                }
+
+                findViewById<TextView>(R.id.lowerLimitTextView)?.apply {
+                    text = lowerLimit
+                    visibility = View.VISIBLE
+                    setTextColor(getColor(R.color.red))
+                }
+
+                callback(lowerLimit)
+            }
+        }
+    }
+
+    // Funzione per inviare la richiesta HTTP POST
+    private fun sendPostRequest(jsonData: JSONObject): String {
+        val url = URL("https://us-central1-tutto-sui-droni-community.cloudfunctions.net/getFlightLimit")
+        var result = "Errore nel server"
+
+        try {
+            val urlConnection = url.openConnection() as HttpURLConnection
+            urlConnection.requestMethod = "POST"
+            urlConnection.setRequestProperty("Content-Type", "application/json")
+            urlConnection.doOutput = true
+
+            // Scrivi i dati JSON nel corpo della richiesta
+            urlConnection.outputStream.write(jsonData.toString().toByteArray(Charsets.UTF_8))
+            urlConnection.outputStream.flush()
+
+            // Leggi la risposta
+            val inputStream = urlConnection.inputStream
+            val reader = inputStream.bufferedReader()
+            result = reader.readText()
+
+            // Chiudi la connessione
+            urlConnection.disconnect()
+        } catch (e: Exception) {
+            Log.e("sendPostRequest", "Errore nella richiesta HTTP: ${e.message}")
+        }
+
+        return result
     }
 
     override fun onStop() {

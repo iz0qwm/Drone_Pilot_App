@@ -82,7 +82,8 @@
             android:id="@+id/mapContainer"
             android:layout_width="match_parent"
             android:layout_height="325dp"
-            android:visibility="visible" />
+            android:visibility="visible"
+            android:background="@drawable/border"/>
 
         <LinearLayout
             android:id="@+id/new_message_container"
@@ -91,7 +92,7 @@
             android:orientation="horizontal"
             android:gravity="center"
             android:visibility="visible"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
             android:layout_gravity="center_horizontal">
 
             <ImageView
@@ -116,7 +117,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
             android:gravity="center">
 
             <!-- Pulsante per aprire le previsioni meteo -->
@@ -137,8 +138,18 @@
             android:textSize="16sp"
             android:textColor="@android:color/holo_green_dark"
             android:gravity="center"
-            android:padding="8dp"
+            android:padding="5dp"
             android:background="#e7e1d3"/>
+
+        <TextView
+            android:id="@+id/lowerLimitTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Caricamento..."
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="5dp"/>
+
 
     </LinearLayout>
 </ScrollView>

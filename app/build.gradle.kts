@@ -74,6 +74,7 @@ dependencies {
     implementation("com.google.firebase:firebase-appcheck:18.0.0")
     implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
     implementation("com.google.firebase:firebase-appcheck-debug")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
