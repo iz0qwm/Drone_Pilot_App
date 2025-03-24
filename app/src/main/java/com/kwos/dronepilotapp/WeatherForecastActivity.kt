@@ -16,6 +16,7 @@ import android.os.Looper
 import android.graphics.Color
 import android.view.View
 import android.widget.ProgressBar
+import androidx.core.content.ContextCompat
 
 
 class WeatherForecastActivity : AppCompatActivity() {
@@ -60,49 +61,54 @@ class WeatherForecastActivity : AppCompatActivity() {
             locationText.text = locationName
         }
 
-// Recupera i dati meteo
+        // Recupera i dati meteo
         MeteoManager.getMeteoData(lat, lon) { meteoData ->
             Handler(Looper.getMainLooper()).postDelayed({
-                // Assicurati che l'aggiornamento avvenga nel thread principale
-                runOnUiThread {
-                    if (meteoData != null) {
-                        weatherDetails.text =
-                            "Temp. Min: ${meteoData.temperature_min}°C - Max: ${meteoData.temperature_max}°C\n" +
-                                    "Vento Min: ${meteoData.wind_speedmin} km/h\n" +
-                                    "Vento Medio: ${meteoData.wind_speedmean} km/h\n" +
-                                    "Vento Max: ${meteoData.wind_speedmax} km/h\n" +
-                                    "Umidità: ${meteoData.humidity}%\n" +
-                                    "Possibilità di precipitazioni: ${meteoData.precipitation_probability}% "
+                if (meteoData != null) {
+                    // Usa getString per evitare concatenazione manuale delle stringhe
+                    weatherDetails.text = getString(
+                        R.string.weather_info,
+                        meteoData.temperature_min,
+                        meteoData.temperature_max,
+                        meteoData.wind_speedmin,
+                        meteoData.wind_speedmean,
+                        meteoData.wind_speedmax,
+                        meteoData.humidity,
+                        meteoData.precipitation_probability
+                    )
 
-                        // Aggiungi la logica di allerta basata sul vento
-                        if (meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30) {
-                            alertTextView.text = "ALERT !! VENTO FORTE"
-                            alertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
-                        } else if (meteoData.precipitation_probability > 70 &&  meteoData.humidity > 70) {
-                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERA' A BREVE"
-                            alertTextView.setTextColor(Color.rgb(255, 165, 0))// Imposta il testo in arancio
-                        } else if (meteoData.precipitation_probability > 40 && meteoData.wind_speedmean < 10 &&  meteoData.humidity > 70) {
-                            alertTextView.text = "STA PIOVENDO O PIOVERA'. ATTENZIONE"
-                            alertTextView.setTextColor(Color.rgb(255, 165, 0))// Imposta il testo in arancio
-                        } else if (meteoData.precipitation_probability > 20 && meteoData.wind_speedmean < 10 &&  meteoData.humidity > 70) {
-                            alertTextView.text = "NON E' BEL TEMPO. STAI ATTENTO."
-                            alertTextView.setTextColor(Color.rgb(255, 165, 0))// Imposta il testo in arancio
-                        } else {
-                            alertTextView.text = "LE CONDIZIONI METEOROLOGICHE PERMETTONO DI FAR VOLARE L'UAS"
-                            alertTextView.setTextColor(getColor(R.color.green)) // Imposta il testo in verde
+                    // Logica di allerta basata sul vento e precipitazioni
+                    when {
+                        meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30 -> {
+                            alertTextView.text = getString(R.string.alert_vento_forte)
+                            alertTextView.setTextColor(ContextCompat.getColor(this, R.color.red))
                         }
-
-
-                        // Nascondo la ProgressBar perché i dati sono caricati
-                        weatherProgressBar.visibility = View.GONE
-
-                    } else {
-                        weatherDetails.text = "Dati meteo non disponibili"
-                        // Nascondo la ProgressBar perché i dati sono caricati
-                        weatherProgressBar.visibility = View.GONE
+                        meteoData.precipitation_probability > 70 && meteoData.humidity > 70 -> {
+                            alertTextView.text = getString(R.string.alert_pioggia_forte)
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
+                        }
+                        meteoData.precipitation_probability > 40 && meteoData.wind_speedmean < 10 && meteoData.humidity > 70 -> {
+                            alertTextView.text = getString(R.string.alert_pioggia_moderata)
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
+                        }
+                        meteoData.precipitation_probability > 20 && meteoData.wind_speedmean < 10 && meteoData.humidity > 70 -> {
+                            alertTextView.text = getString(R.string.alert_pioggia_leggera)
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
+                        }
+                        else -> {
+                            alertTextView.text = getString(R.string.alert_condizioni_ok)
+                            alertTextView.setTextColor(ContextCompat.getColor(this, R.color.green))
+                        }
                     }
+
+                } else {
+                    weatherDetails.text = getString(R.string.weather_data_not_available)
                 }
-            }, 2000) // Ritardo di 1000ms
+
+                // Nascondo la ProgressBar perché i dati sono caricati
+                weatherProgressBar.visibility = View.GONE
+
+            }, 2000) // Ritardo di 2000ms
         }
 
 // Recupera i dati TEC
@@ -156,8 +162,6 @@ class WeatherForecastActivity : AppCompatActivity() {
         }
 
 
-
-
         gpsStatusHelper = GpsStatusHelper(this) { totalSatellites, usedSatellites ->
             Handler(Looper.getMainLooper()).postDelayed({
                 runOnUiThread {
@@ -178,6 +182,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                 }
             }, 2000) // Ritardo di 1000ms
         }
+
 
         gpsStatusHelper.startListening()
 

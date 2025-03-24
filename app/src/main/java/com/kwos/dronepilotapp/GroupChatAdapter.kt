@@ -21,6 +21,8 @@ class GroupChatAdapter(private val messages: List<GroupChatActivity.Message>) :
         holder.messageTextView.text = message.text
     }
 
+
+
     override fun getItemCount(): Int {
         return messages.size
     }

@@ -48,7 +48,10 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.*
-
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
+import android.app.AlertDialog
+import android.content.DialogInterface
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -90,6 +93,22 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //setContentView(R.layout.activity_dashboard)
         supportActionBar?.hide()
+
+        // Aggiungi il callback per gestire il tasto indietro
+        onBackPressedDispatcher.addCallback(this) {
+            // Usa 'this@MainActivity' per ottenere il contesto
+            val builder = AlertDialog.Builder(this@DashboardActivity)
+            builder.setMessage("Sei sicuro di voler uscire?")
+                .setCancelable(false)
+                .setPositiveButton("Sì") { dialog, id ->
+                    super.onBackPressed() // Comportamento di default per il tasto indietro
+                }
+                .setNegativeButton("No") { dialog, id ->
+                    dialog.dismiss() // Se l'utente annulla, non succede nulla
+                }
+            val alert = builder.create()
+            alert.show()
+        }
 
         //Esecuzione funzioni automatiche
         // Controllo la presenza di nuovi messaggi
@@ -446,7 +465,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                         logDebug(TAG, "✅ Marker aggiunto per $userId")
                                     } else {
                                         existingMarker.position = position
-                                        existingMarker.title = "$name - $drone"
+                                        //existingMarker.title = "$name - $drone"
                                         existingMarker.setIcon(markerIcon) // Imposta il colore corretto
                                         logDebug(TAG, "✅ loadPilots: Marker esistente aggiornato per $userId")
                                     }
@@ -1060,8 +1079,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Unregister the receiver when the activity is destroyed
         unregisterReceiver(messageReceiver)
     }
-
-
 
 
 }

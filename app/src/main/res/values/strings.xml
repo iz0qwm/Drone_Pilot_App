@@ -10,5 +10,23 @@
         <br/><br/>Per maggiori informazioni <b>iscriviti</b> al gruppo <b>Telegram: tuttosuidroni</b>
         <br/><br/>Copyright<br/><i>@2025 Raffaello Di Martino KWOS</i>
     ]]></string>
+
+    <string name="weather_info">
+    Temp. Min: %.1f°C - Max: %.1f°C\n
+    Vento Min: %.1f km/h\n
+    Vento Medio: %.1f km/h\n
+    Vento Max: %.1f km/h\n
+    Umidità: %.1f%%\n
+    Possibilità di precipitazioni: %.1f%%
+    </string>
+
+
+    <string name="alert_vento_forte">ALERT !! VENTO FORTE</string>
+    <string name="alert_pioggia_forte">ALERT !! STA PIOVENDO O PIOVERÀ A BREVE</string>
+    <string name="alert_pioggia_moderata">STA PIOVENDO O PIOVERÀ. ATTENZIONE</string>
+    <string name="alert_pioggia_leggera">NON È BEL TEMPO. STAI ATTENTO.</string>
+    <string name="alert_condizioni_ok">LE CONDIZIONI METEOROLOGICHE PERMETTONO DI FAR VOLARE L\'UAS</string>
+    <string name="weather_data_not_available">Dati meteo non disponibili</string>
+
 </resources>
 
