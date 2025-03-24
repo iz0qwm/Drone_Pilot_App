@@ -281,6 +281,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     startActivity(Intent(this, InformazioniActivity::class.java))
                     true
                 }
+                R.id.menu_group_chat -> {
+                    startActivity(Intent(this, GroupChatActivity::class.java))
+                    true
+                }
+
                 else -> false
             }
         }

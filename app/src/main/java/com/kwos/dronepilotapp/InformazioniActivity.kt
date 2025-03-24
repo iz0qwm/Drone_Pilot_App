@@ -45,8 +45,13 @@ class InformazioniActivity : AppCompatActivity() {
 <p><span style='font-family: Arial, Helvetica, sans-serif;'>I droni stabilizzati, utilizzano un ricevitore GPS per rimanere stabili in volo e per avere un traiettoria corretta.</span></p>
 <p><span style='font-family: Arial, Helvetica, sans-serif;'>Sebbene al<span style='font-family: Arial, Helvetica, sans-serif;'>le nostre latitudini sia veramente difficile rilevare errori di posizionamento superiori al metro, &egrave; bene sapere che il</span>&nbsp;numero di elettroni totali (Total Electron Content) presenti nello strato della ionosfera terrestre, &egrave; indice degli errori di valutazione della posizione da parte dei ricevitori GPS.</span></p>
 <p><span style='font-family: Arial, Helvetica, sans-serif;'>In condizioni di elevato numero di TEC si pu&ograve; arrivare ad errori compresi tra -3 e +7m, soprattutto alle latitudini elevate (verso i poli terrestri).</span></p>
-<p><br></p>
-<p><br></p>
+<p><strong><span style="font-family: Arial, Helvetica, sans-serif;">Informazioni tecniche e privacy</span></strong></p>
+<p><span style="font-family: Arial, Helvetica, sans-serif;">L&apos;applicazione &egrave; stata sviluppata in linguaggio Kotlin ed &egrave; rilasciata in licenza Open Source.&nbsp;</span><br><span style="font-family: Arial, Helvetica, sans-serif;">Si pu&ograve; scaricare il progetto da: <a data-fr-linked="true" href="https://github.com/iz0qwm/Drone_Pilot_App/">https://github.com/iz0qwm/Drone_Pilot_App/</a></span></p>
+<p><span style="font-family: Arial, Helvetica, sans-serif;">Per il corretto funzionamento sono necessari un Firestore DataBase ed un Firestore Realtime Database.&nbsp;</span></p>
+<p><span style="font-family: Arial, Helvetica, sans-serif;">Gli unici dati registrati e permanenti sono l&apos;email e il nome dell&apos;utente, per garantire i successivi Login.</span></p>
+<p><span style="font-family: Arial, Helvetica, sans-serif;">I dati di posizione vengono cancellati a &quot;Fine Volo&quot; o al &quot;Logout&quot;.</span></p>
+<p><span style="font-family: Arial, Helvetica, sans-serif;">Le chat tra due piloti vengono cancellate periodicamente se entrambi i piloti sono off-line o al termine volo di entrambi.</span></p>
+<p><span style="font-family: Arial, Helvetica, sans-serif;">I messaggi contenuti nella Group Chat, vengono cancellati periodicamente quando non &egrave; pi&ugrave; nessuno presente nel gruppo.&nbsp;</span></p>
             </body>
             </html>
         """
