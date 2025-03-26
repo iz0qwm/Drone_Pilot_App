@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Switch
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.common.ConnectionResult
@@ -20,36 +19,39 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.text.HtmlCompat
 import com.google.firebase.appcheck.appCheck
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.Firebase
 import com.google.firebase.initialize
 import com.google.firebase.appcheck.FirebaseAppCheck
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.JSONObject
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
+import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import okhttp3.*
-import java.io.File
-import java.io.IOException
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
-import java.util.*
 import java.util.Properties
-
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import android.util.Base64
+import java.security.KeyStore
+import javax.crypto.spec.GCMParameterSpec
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -62,6 +64,25 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        //Fa il padding automatico (non va a coprire i tasti funzione per i
+        //telefoni con immersive view
+        // Recupera la root view del layout
+        val rootView = findViewById<View>(android.R.id.content)
+
+        // Applica il padding per evitare che gli elementi vengano coperti
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            view.updatePadding(
+                top = systemBars.top, // Evita sovrapposizione con la status bar
+                bottom = systemBars.bottom // Evita sovrapposizione con la navigation bar
+            )
+
+            WindowInsetsCompat.CONSUMED
+        }
+        // fine padding
+
         supportActionBar?.hide()
 
         //Carica il logo
@@ -124,11 +145,43 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+// Controllo presenza della registrazione email nelle SharedPreferences
+        val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+        val savedEmail = prefs.getString("user_email", null)
+
         loginButton.setOnClickListener {
-            val email = emailField.text.toString()
-            val password = passwordField.text.toString()
-            loginUser(email, password)
+            if (savedEmail != null) {
+                logDebug(TAG, "setOnClickListener: Sono nel login button")
+                // Se la biometria è disponibile, usiamo il prompt biometrico
+                if (isBiometricAvailable()) {
+                    logDebug(TAG, "setOnClickListener: sono in isBiometricAvailable")
+                    val savedPassword = getPasswordFromKeystore()
+                    if (savedPassword != null) {
+                        // Login con password dal Keystore
+                        showBiometricPrompt()
+                        //loginUser(savedEmail, savedPassword)
+                    } else {
+                        // Se la password non è presente nel Keystore, mostra il prompt biometrico
+                        showBiometricPrompt()
+                    }
+                } else {
+                    // Se la biometria non è disponibile, fai il login con email e password
+                    val email = emailField.text.toString()
+                    val password = passwordField.text.toString()
+                    loginUser(email, password)
+                    savePasswordToKeystore(password)  // Salva la password nel Keystore
+                }
+            } else {
+                // Se non c'è email salvata, chiedi email e password
+                val email = emailField.text.toString()
+                val password = passwordField.text.toString()
+                loginUser(email, password)
+                savePasswordToKeystore(password)  // Salva la password nel Keystore
+            }
         }
+
+
+
 
         registerButton.setOnClickListener {
             val email = emailField.text.toString()
@@ -143,6 +196,110 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+    }
+
+    private fun isBiometricAvailable(): Boolean {
+        val biometricManager = BiometricManager.from(this)
+        return biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+                BiometricManager.BIOMETRIC_SUCCESS
+    }
+
+    private fun showBiometricPrompt() {
+        val executor = ContextCompat.getMainExecutor(this)
+        val biometricPrompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                super.onAuthenticationSucceeded(result)
+                // Decifra la password dal Keystore e fai il login
+                val password = getPasswordFromKeystore()
+                if (password != null) {
+                    val savedEmail = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+                        .getString("user_email", null)
+                    if (savedEmail != null) {
+                        loginUser(savedEmail, password)
+                    }
+                } else {
+                    Toast.makeText(applicationContext, "Password non trovata!", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                super.onAuthenticationError(errorCode, errString)
+                Toast.makeText(applicationContext, "Errore: $errString", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onAuthenticationFailed() {
+                super.onAuthenticationFailed()
+                Toast.makeText(applicationContext, "Autenticazione fallita", Toast.LENGTH_SHORT).show()
+            }
+        })
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Accesso rapido")
+            .setSubtitle("Usa l'impronta digitale per accedere")
+            .setNegativeButtonText("Usa email e password")
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
+    }
+
+    private fun savePasswordToKeystore(password: String) {
+        try {
+            // Genera una chiave segreta nel Keystore
+            val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+            val keySpec = KeyGenParameterSpec.Builder("password_key", KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .build()
+
+            keyGenerator.init(keySpec)
+            val secretKey: SecretKey = keyGenerator.generateKey()
+
+            // Cifra la password con la chiave nel Keystore
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+
+            val iv = cipher.iv
+            val encryption = cipher.doFinal(password.toByteArray())
+
+            // Salva la password cifrata e l'IV nelle SharedPreferences (non direttamente, ma cifrato)
+            val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+            val editor = prefs.edit()
+            editor.putString("encrypted_password", Base64.encodeToString(encryption, Base64.DEFAULT))
+            editor.putString("iv", Base64.encodeToString(iv, Base64.DEFAULT))
+            editor.apply()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun getPasswordFromKeystore(): String? {
+        try {
+            val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+            val encryptedPassword = prefs.getString("encrypted_password", null)
+            val ivString = prefs.getString("iv", null)
+
+            if (encryptedPassword != null && ivString != null) {
+                val iv = Base64.decode(ivString, Base64.DEFAULT)
+                val encryptedPasswordBytes = Base64.decode(encryptedPassword, Base64.DEFAULT)
+
+                val keyStore = KeyStore.getInstance("AndroidKeyStore")
+                keyStore.load(null)
+
+                val key = keyStore.getKey("password_key", null) as SecretKey
+
+                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                val gcmParameterSpec = GCMParameterSpec(128, iv)
+                cipher.init(Cipher.DECRYPT_MODE, key, gcmParameterSpec)
+
+                val decryptedPasswordBytes = cipher.doFinal(encryptedPasswordBytes)
+                return String(decryptedPasswordBytes)
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
     }
 
     /**

@@ -8,6 +8,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+//per il padding
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import android.view.View
 
 class ImpostazioniActivity : AppCompatActivity() {
 
@@ -20,6 +25,25 @@ class ImpostazioniActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_impostazioni)
+
+        //Fa il padding automatico (non va a coprire i tasti funzione per i
+        //telefoni con immersive view
+        // Recupera la root view del layout
+        val rootView = findViewById<View>(android.R.id.content)
+
+        // Applica il padding per evitare che gli elementi vengano coperti
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            view.updatePadding(
+                top = systemBars.top, // Evita sovrapposizione con la status bar
+                bottom = systemBars.bottom // Evita sovrapposizione con la navigation bar
+            )
+
+            WindowInsetsCompat.CONSUMED
+        }
+        // fine padding
+
         supportActionBar?.hide()
 
         textEmail = findViewById(R.id.textEmail)

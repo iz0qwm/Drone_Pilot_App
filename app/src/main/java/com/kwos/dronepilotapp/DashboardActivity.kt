@@ -52,6 +52,10 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import android.app.AlertDialog
 import android.content.DialogInterface
+// per il padding
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -91,24 +95,45 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Imposta il layout
         setContentView(binding.root)
 
+        //Fa il padding automatico (non va a coprire i tasti funzione per i
+        //telefoni con immersive view
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            view.updatePadding(
+                top = systemBars.top, // Adatta per la status bar
+                bottom = systemBars.bottom // Adatta per la navigation bar
+            )
+
+            WindowInsetsCompat.CONSUMED
+        }
+        // fine padding
+
+
         //setContentView(R.layout.activity_dashboard)
         supportActionBar?.hide()
 
-        // Aggiungi il callback per gestire il tasto indietro
-        onBackPressedDispatcher.addCallback(this) {
-            // Usa 'this@MainActivity' per ottenere il contesto
-            val builder = AlertDialog.Builder(this@DashboardActivity)
-            builder.setMessage("Sei sicuro di voler uscire?")
-                .setCancelable(false)
-                .setPositiveButton("Sì") { dialog, id ->
-                    super.onBackPressed() // Comportamento di default per il tasto indietro
-                }
-                .setNegativeButton("No") { dialog, id ->
-                    dialog.dismiss() // Se l'utente annulla, non succede nulla
-                }
-            val alert = builder.create()
-            alert.show()
-        }
+
+
+// Aggiungi il callback per gestire il tasto indietro
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Usa 'this@DashboardActivity' per ottenere il contesto
+                val builder = AlertDialog.Builder(this@DashboardActivity)
+                builder.setMessage("Sei sicuro di voler uscire?")
+                    .setCancelable(false)
+                    .setPositiveButton("Sì") { _, _ ->
+                        logout()
+                        finish() // Chiude l'attività invece di chiamare super.onBackPressed()
+                    }
+                    .setNegativeButton("No") { dialog, _ ->
+                        dialog.dismiss() // Se l'utente annulla, non succede nulla
+                    }
+                val alert = builder.create()
+                alert.show()
+            }
+        })
+
 
         //Esecuzione funzioni automatiche
         // Controllo la presenza di nuovi messaggi
@@ -617,8 +642,28 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 pilotMarkers[userId] = marker  // Salva il marker
 
                 logDebug(TAG, "✅ startFlight: Attivato il volo per: $userId - $userName - $droneName")
-
                 startLocationUpdates(userId, userName, droneName)
+
+                // Controlliamo se ha lo stato di availableForChat
+                val userRef = FirebaseFirestore.getInstance().collection("pilots").document(userId)
+
+                userRef.get().addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val inVolo = document.getBoolean("inVolo") ?: false
+                        val availableForChat = document.getBoolean("availableForChat") ?: false
+
+                        if (inVolo) {
+                            aggiornaMarker(userId, availableForChat)
+                            logDebug(TAG, "🚀 startFlight: Aggiorno marker per $userId")
+                        } else {
+                            logDebug(TAG, "⚠️ startFlight: Il pilota $userId non era in volo")
+                        }
+                    }
+                }.addOnFailureListener { e ->
+                    logError(TAG, "❌ startFlight: Errore nel recupero dello stato di volo: ${e.message}")
+                }
+
+
             }
         }.addOnFailureListener {
             logWarning(TAG, "⚠️ startFlight: Errore nel recupero della posizione", it)
@@ -1078,6 +1123,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         pilotsListener = null
         // Unregister the receiver when the activity is destroyed
         unregisterReceiver(messageReceiver)
+        logout()
     }
 
 

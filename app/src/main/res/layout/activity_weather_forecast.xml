@@ -1,171 +1,181 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="#e7e1d3"
-        android:padding="16dp">
+        android:clipToPadding="false">
 
-        <TextView
-            android:id="@+id/weather_title"
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Previsioni Meteo"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:paddingBottom="10dp"/>
-
-        <TextView
-            android:id="@+id/weather_location"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Località"
-            android:textSize="18sp"
-            android:textStyle="italic"
-            android:gravity="center"
-            android:layout_below="@+id/weather_title"
-            android:layout_centerHorizontal="true"
-            android:paddingBottom="10dp"/>
-
-        <ProgressBar
-            android:id="@+id/weatherProgressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/weather_location"
-            android:layout_centerHorizontal="true"
-            android:gravity="center"
-            android:visibility="gone"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical"
-            android:padding="16dp"
-            android:gravity="center_horizontal">
+            android:background="#e7e1d3"
+            android:padding="16dp">
 
             <TextView
-                android:id="@+id/weather_details"
+                android:id="@+id/weather_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Caricamento dati meteo..."
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:padding="8dp"
-                android:gravity="center" />
-
-            <TextView
-                android:id="@+id/alertTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Messaggio di ALERT METEO"
+                android:text="Previsioni Meteo"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"
+                android:paddingBottom="10dp"/>
+
+            <TextView
+                android:id="@+id/weather_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Località"
+                android:textSize="18sp"
+                android:textStyle="italic"
+                android:gravity="center"
+                android:layout_below="@+id/weather_title"
+                android:layout_centerHorizontal="true"
+                android:paddingBottom="10dp"/>
+
+            <ProgressBar
+                android:id="@+id/weatherProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/weather_location"
+                android:layout_centerHorizontal="true"
+                android:gravity="center"
+                android:visibility="gone"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/weather_details"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Caricamento dati meteo..."
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:padding="8dp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/alertTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Messaggio di ALERT METEO"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:textSize="16sp"
+                    android:padding="8dp" />
+            </LinearLayout>
+
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <TextView
+                android:id="@+id/gpsStatusTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stato GPS..."
+                android:textStyle="bold"
                 android:textSize="16sp"
                 android:padding="8dp" />
+
+            <TextView
+                android:id="@+id/gpsalertTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Messaggio di ALERT GPS"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:padding="8dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <!-- Aggiungi il testo per il TEC -->
+            <TextView
+                android:id="@+id/tecTitleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Elettroni nella ionosfera (POSIZIONE GPS)"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginTop="16dp"/>
+
+            <TextView
+                android:id="@+id/tecValueTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TEC (Total Electron Content): 0 TECu"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"/>
+
+            <!-- Aggiungi il testo che cambia colore in base al valore TEC -->
+            <TextView
+                android:id="@+id/tecStatusTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Attività elettroni nella ionosfera..."
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:padding="8dp"
+                android:gravity="center"
+                android:layout_marginTop="8dp"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <!-- Altri elementi del layout, come l'alertTextView -->
+
+            <TextView
+                android:id="@+id/weather_meteogram"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Meteogrammi settimanali"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"/>
+
+            <com.github.chrisbanes.photoview.PhotoView
+                android:id="@+id/weather_meteogramOne_general"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Meteogramma"/>
+
+            <com.github.chrisbanes.photoview.PhotoView
+                android:id="@+id/weather_meteogram_general"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Meteogramma"/>
+
+            <Button
+                android:id="@+id/close_weather_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Chiudi"
+                android:layout_marginTop="16dp"/>
         </LinearLayout>
-
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_marginVertical="8dp" />
-
-        <TextView
-            android:id="@+id/gpsStatusTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Stato GPS..."
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:padding="8dp" />
-
-        <TextView
-            android:id="@+id/gpsalertTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Messaggio di ALERT GPS"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:gravity="center"
-            android:padding="8dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_marginVertical="8dp" />
-
-        <!-- Aggiungi il testo per il TEC -->
-        <TextView
-            android:id="@+id/tecTitleTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Elettroni nella ionosfera (POSIZIONE GPS)"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginTop="16dp"/>
-
-        <TextView
-            android:id="@+id/tecValueTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="TEC (Total Electron Content): 0 TECu"
-            android:textSize="14sp"
-            android:layout_marginTop="8dp"/>
-
-        <!-- Aggiungi il testo che cambia colore in base al valore TEC -->
-        <TextView
-            android:id="@+id/tecStatusTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Attività elettroni nella ionosfera..."
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:padding="8dp"
-            android:gravity="center"
-            android:layout_marginTop="8dp"/>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_marginVertical="8dp" />
-
-        <!-- Altri elementi del layout, come l'alertTextView -->
-
-        <TextView
-            android:id="@+id/weather_meteogram"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Meteogrammi settimanali"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginTop="16dp"/>
-
-        <com.github.chrisbanes.photoview.PhotoView
-            android:id="@+id/weather_meteogramOne_general"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="fitCenter"
-            android:contentDescription="Meteogramma"/>
-
-        <com.github.chrisbanes.photoview.PhotoView
-            android:id="@+id/weather_meteogram_general"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="fitCenter"
-            android:contentDescription="Meteogramma"/>
-
-        <Button
-            android:id="@+id/close_weather_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Chiudi"
-            android:layout_marginTop="16dp"/>
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

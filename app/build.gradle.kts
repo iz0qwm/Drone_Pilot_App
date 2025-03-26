@@ -5,6 +5,7 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+
 android {
     namespace = "com.kwos.dronepilotapp"
     compileSdk = 35
@@ -32,6 +33,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -43,7 +45,6 @@ android {
         compose = true
         viewBinding = true
     }
-
 }
 
 dependencies {
@@ -78,6 +79,9 @@ dependencies {
     implementation("com.google.firebase:firebase-database:21.0.0")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.security:security-crypto:1.0.0")
+
 
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)

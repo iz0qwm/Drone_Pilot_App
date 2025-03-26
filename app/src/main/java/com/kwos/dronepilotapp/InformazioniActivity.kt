@@ -1,9 +1,13 @@
 package com.kwos.dronepilotapp
 
 import android.os.Bundle
+import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 
 class InformazioniActivity : AppCompatActivity() {
 
@@ -13,6 +17,24 @@ class InformazioniActivity : AppCompatActivity() {
         supportActionBar?.hide()
 
         setContentView(R.layout.activity_informazioni)
+
+        //Fa il padding automatico (non va a coprire i tasti funzione per i
+        //telefoni con immersive view
+        // Recupera la root view del layout
+        val rootView = findViewById<View>(android.R.id.content)
+
+        // Applica il padding per evitare che gli elementi vengano coperti
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            view.updatePadding(
+                top = systemBars.top, // Evita sovrapposizione con la status bar
+                bottom = systemBars.bottom // Evita sovrapposizione con la navigation bar
+            )
+
+            WindowInsetsCompat.CONSUMED
+        }
+        // fine padding
 
         // Recupera la versione dell'app
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName

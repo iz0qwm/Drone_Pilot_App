@@ -17,6 +17,10 @@ import android.graphics.Color
 import android.view.View
 import android.widget.ProgressBar
 import androidx.core.content.ContextCompat
+//per il padding
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 
 
 class WeatherForecastActivity : AppCompatActivity() {
@@ -30,6 +34,24 @@ class WeatherForecastActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_weather_forecast)
+
+        //Fa il padding automatico (non va a coprire i tasti funzione per i
+        //telefoni con immersive view
+        // Recupera la root view del layout
+        val rootView = findViewById<View>(android.R.id.content)
+
+        // Applica il padding per evitare che gli elementi vengano coperti
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            view.updatePadding(
+                top = systemBars.top, // Evita sovrapposizione con la status bar
+                bottom = systemBars.bottom // Evita sovrapposizione con la navigation bar
+            )
+
+            WindowInsetsCompat.CONSUMED
+        }
+        // fine padding
 
         // Recupero la ProgressBar
         val weatherProgressBar: ProgressBar = findViewById(R.id.weatherProgressBar)
@@ -85,13 +107,13 @@ class WeatherForecastActivity : AppCompatActivity() {
                         }
                         meteoData.precipitation_probability > 70 && meteoData.humidity > 70 -> {
                             alertTextView.text = getString(R.string.alert_pioggia_forte)
-                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
+                            alertTextView.setTextColor(ContextCompat.getColor(this, R.color.red)) // Rosso
                         }
                         meteoData.precipitation_probability > 40 && meteoData.wind_speedmean < 10 && meteoData.humidity > 70 -> {
                             alertTextView.text = getString(R.string.alert_pioggia_moderata)
                             alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
                         }
-                        meteoData.precipitation_probability > 20 && meteoData.wind_speedmean < 10 && meteoData.humidity > 70 -> {
+                        meteoData.precipitation_probability > 25 && meteoData.wind_speedmean < 10 && meteoData.humidity > 70 -> {
                             alertTextView.text = getString(R.string.alert_pioggia_leggera)
                             alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
                         }
@@ -108,7 +130,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                 // Nascondo la ProgressBar perché i dati sono caricati
                 weatherProgressBar.visibility = View.GONE
 
-            }, 2000) // Ritardo di 2000ms
+            }, 500) // Ritardo di 2000ms
         }
 
 // Recupera i dati TEC
@@ -158,7 +180,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                         weatherProgressBar.visibility = View.GONE
                     }
                 }
-            }, 2000) // Ritardo di 1000ms
+            }, 1000) // Ritardo di 1000ms
         }
 
 
@@ -215,7 +237,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                     handler.postDelayed(this, 500)
                 }
             }
-        }, 2500)
+        }, 3000)
 
 
         // Pulsante per chiudere la finestra
