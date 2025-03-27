@@ -78,22 +78,25 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
      * Invia un broadcast con i dettagli del nuovo messaggio
      */
     private fun sendNewMessageBroadcast(senderId: String, title: String, message: String) {
+        logDebug(TAG, "sendNewMessageBroadcast: sono qui. Sto inserendo l'Intent")
         val intent = Intent("com.kwos.dronepilotapp.NEW_MESSAGE").apply {
             putExtra("message", message)
             putExtra("title", title)
             putExtra("senderId", senderId)
         }
         sendBroadcast(intent)
+        logDebug(TAG, "sendNewMessageBroadcast: senderId: $senderId, message: $message")
     }
 
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d(TAG, "Nuovo Token FCM: $token")
+        logDebug(TAG, "MyFirebaseMessagingService - onNewToken: Nuovo Token FCM: $token")
         saveTokenToServer(token) // Invia il token al server
     }
 
     private fun showNotification(title: String, message: String, senderId: String, receiverId: String) {
+        logDebug(TAG, "MyFirebaseMessagingService - showNotification: Sto creando l'intent: $title - $message - $senderId - $receiverId ")
         val intent = Intent(this, ChatActivity::class.java).apply {
             //flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -103,7 +106,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val nullIntent = Intent() // Intent vuoto
 
-        logDebug(TAG, "MyFirebaseMessagingService showNotification: senderId: $senderId, receiverId: $receiverId")
+        logDebug(TAG, "MyFirebaseMessagingService - showNotification: senderId: $senderId, receiverId: $receiverId")
 
         val pendingIntent = PendingIntent.getActivity(this, 0, nullIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 

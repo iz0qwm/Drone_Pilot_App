@@ -401,10 +401,14 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //Fa aprire la Chat con il mittente (receiver) se si clicca sul messaggio ricevuto
     private fun openChatWithPilot(userId: String) {
+        logDebug(TAG, "DashboardActivity: openChatWithPilot")
         val intent = Intent(this, ChatActivity::class.java)
         intent.putExtra("receiverId", userId)  // Assicurati di usare la chiave giusta
+        val senderId = FirebaseAuth.getInstance().currentUser?.uid
+        intent.putExtra("senderId", senderId)
         startActivity(intent)
     }
+
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -1109,9 +1113,38 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(messageReceiver)
+    }
+
+
     override fun onResume() {
         super.onResume()
+        // Registra il receiver per ricevere il broadcast
+        val filter = IntentFilter("com.kwos.dronepilotapp.NEW_MESSAGE")
+        // Per Android 12 e versioni successive, registriamo dinamicamente il receiver in modo sicuro
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        //    registerReceiver(messageReceiver, filter, Context.RECEIVER_EXPORTED)
+        //} else {
+        registerReceiver(messageReceiver, filter, Context.RECEIVER_EXPORTED)
+        //}
+        // Verifica e richiedi permesso per notifiche su Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
+        }
+        // FINE BROADCAST RECEIVER
+
         checkForNewMessages() // Controlla se ci sono nuovi messaggi
+        val userId = auth.currentUser?.uid
+        if (userId != null && userName != null && droneName != null) {
+            logDebug(TAG, "onResume: faccio partire startLocationUpdates per $userId - $userName - $droneName")
+
+            startLocationUpdates(userId, userName!!, droneName!!)
+        }
+
     }
 
     override fun onDestroy() {
@@ -1122,7 +1155,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         pilotsListener?.remove()
         pilotsListener = null
         // Unregister the receiver when the activity is destroyed
-        unregisterReceiver(messageReceiver)
+        //unregisterReceiver(messageReceiver)
         logout()
     }
 

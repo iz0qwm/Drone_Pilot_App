@@ -42,8 +42,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import java.util.Properties
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import javax.crypto.Cipher
@@ -149,34 +147,47 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
         val savedEmail = prefs.getString("user_email", null)
 
+        //prefs.edit().remove("encrypted_password").apply()  // Cancella solo la password
+        //prefs.edit().remove("user_email").apply()  // Cancella solo l'email
+
         loginButton.setOnClickListener {
             if (savedEmail != null) {
-                logDebug(TAG, "setOnClickListener: Sono nel login button")
-                // Se la biometria è disponibile, usiamo il prompt biometrico
-                if (isBiometricAvailable()) {
-                    logDebug(TAG, "setOnClickListener: sono in isBiometricAvailable")
-                    val savedPassword = getPasswordFromKeystore()
-                    if (savedPassword != null) {
-                        // Login con password dal Keystore
-                        showBiometricPrompt()
-                        //loginUser(savedEmail, savedPassword)
-                    } else {
-                        // Se la password non è presente nel Keystore, mostra il prompt biometrico
-                        showBiometricPrompt()
-                    }
+                logDebug(TAG, "setOnClickListener: Sono nel login button la mail è salvata")
+                // Se la password è salvata, la utilizziamo
+                val savedPassword = getPasswordFromKeystore()
+                if (savedPassword != null) {
+                    logDebug(TAG, "setOnClickListener: La password è già salvata $savedEmail - $savedPassword")
+                    // Login con password dal Keystore
+                    loginUser(savedEmail, savedPassword)
                 } else {
-                    // Se la biometria non è disponibile, fai il login con email e password
-                    val email = emailField.text.toString()
-                    val password = passwordField.text.toString()
+                    logDebug(TAG, "setOnClickListener: La password non è salvata")
+                    AlertDialog.Builder(this)
+                        .setTitle("Attenzione")
+                        .setMessage("Inserisci la password")
+                        .setPositiveButton("OK", null)
+                        .show()
+                    // Se la password non è salvata la facciamo scrivere
+                    emailField.setText(savedEmail)
+                    val email = emailField.text.toString().trim()
+                    val password = passwordField.text.toString().trim()
                     loginUser(email, password)
                     savePasswordToKeystore(password)  // Salva la password nel Keystore
                 }
             } else {
-                // Se non c'è email salvata, chiedi email e password
-                val email = emailField.text.toString()
-                val password = passwordField.text.toString()
-                loginUser(email, password)
-                savePasswordToKeystore(password)  // Salva la password nel Keystore
+                logDebug(TAG, "setOnClickListener: Sono nel login button la mail non è salvata")
+                val email = emailField.text.toString().trim()
+                val password = passwordField.text.toString().trim()
+
+                if (email.isEmpty() || password.isEmpty()) {
+                    AlertDialog.Builder(this)
+                        .setTitle("Attenzione")
+                        .setMessage("Inserisci email e password")
+                        .setPositiveButton("OK", null)
+                        .show()
+                } else {
+                    loginUser(email, password)
+                    savePasswordToKeystore(password)  // Salva la password nel Keystore
+                }
             }
         }
 
@@ -198,49 +209,6 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun isBiometricAvailable(): Boolean {
-        val biometricManager = BiometricManager.from(this)
-        return biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
-                BiometricManager.BIOMETRIC_SUCCESS
-    }
-
-    private fun showBiometricPrompt() {
-        val executor = ContextCompat.getMainExecutor(this)
-        val biometricPrompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                super.onAuthenticationSucceeded(result)
-                // Decifra la password dal Keystore e fai il login
-                val password = getPasswordFromKeystore()
-                if (password != null) {
-                    val savedEmail = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
-                        .getString("user_email", null)
-                    if (savedEmail != null) {
-                        loginUser(savedEmail, password)
-                    }
-                } else {
-                    Toast.makeText(applicationContext, "Password non trovata!", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                super.onAuthenticationError(errorCode, errString)
-                Toast.makeText(applicationContext, "Errore: $errString", Toast.LENGTH_SHORT).show()
-            }
-
-            override fun onAuthenticationFailed() {
-                super.onAuthenticationFailed()
-                Toast.makeText(applicationContext, "Autenticazione fallita", Toast.LENGTH_SHORT).show()
-            }
-        })
-
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Accesso rapido")
-            .setSubtitle("Usa l'impronta digitale per accedere")
-            .setNegativeButtonText("Usa email e password")
-            .build()
-
-        biometricPrompt.authenticate(promptInfo)
-    }
 
     private fun savePasswordToKeystore(password: String) {
         try {
@@ -338,10 +306,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun cancellaTokens(userId: String) {
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("users").document(userId).collection("fcmTokens")
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    document.reference.delete() // Cancella ogni token nel database
+                }
+                logDebug(TAG, "cancellaTokens: Tutti i token dell'utente sono stati eliminati.")
+            }
+            .addOnFailureListener { e ->
+                logError(TAG, "cancellaTokens: Errore nella rimozione dei token.", e)
+            }
+
+        // Cancella anche il token locale del dispositivo
+        FirebaseMessaging.getInstance().deleteToken()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    logDebug(TAG, "cancellaTokens: Token FCM locale rimosso con successo.")
+                } else {
+                    logError(TAG, "cancellaTokens: Errore nella rimozione del token FCM locale.", task.exception)
+                }
+            }
+    }
+
     private fun loginUser(email: String, password: String) {
+        logDebug(TAG, "loginUser: Sto per inserire $email e $password")
+
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
+                    val userId = auth.currentUser?.uid
+
+                    if (userId != null) {
+                        cancellaTokens(userId) // Cancella i token dell'utente senza crearne uno nuovo
+                    }
+
+                    //salvaLogin(email) // Salva il login nelle Shared Preferences
+                    //savePasswordToKeystore(password)  // Salva la password nel Keystore
                     // Login riuscito, procedi con l'ottenimento del token FCM
                     FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
                         if (tokenTask.isSuccessful) {
@@ -349,11 +353,11 @@ class MainActivity : AppCompatActivity() {
                             logDebug(TAG, "loginUser: Nuovo Token FCM: $token")
                             saveTokenToServer(token) // Salva il token nel database
                             salvaLogin(email) // Salva il login nelle Shared Preferences
+                            savePasswordToKeystore(password)  // Salva la password nel Keystore
                         } else {
                             logError(TAG, "loginUser: Errore nel recuperare il token FCM")
                         }
                     }
-
                     Toast.makeText(this, "Login riuscito!", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, DashboardActivity::class.java))
                     finish()

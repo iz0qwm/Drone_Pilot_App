@@ -14,8 +14,8 @@ android {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.2.5"
+        versionCode = 8
+        versionName = "1.2.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -79,7 +79,6 @@ dependencies {
     implementation("com.google.firebase:firebase-database:21.0.0")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.security:security-crypto:1.0.0")
 
 

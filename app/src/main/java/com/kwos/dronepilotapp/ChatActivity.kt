@@ -69,9 +69,11 @@ class ChatActivity : AppCompatActivity() {
 
         // Leggo il senderId dall'Intent
         val senderId = intent.getStringExtra("senderId")
+        //val senderId = FirebaseAuth.getInstance().currentUser?.uid
         receiverId = intent.getStringExtra("receiverId") ?: ""
 
         logDebug(TAG, "ChatActivity: senderId ricevuto: ${intent.getStringExtra("senderId")}")
+        //logDebug(TAG, "ChatActivity: senderId ricevuto: $senderId")
         logDebug(TAG, "ChatActivity: receiverId ricevuto: $receiverId")
 
 
