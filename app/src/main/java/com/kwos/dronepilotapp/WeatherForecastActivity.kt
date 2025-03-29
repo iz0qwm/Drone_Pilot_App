@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 
 class WeatherForecastActivity : AppCompatActivity() {
@@ -33,6 +34,10 @@ class WeatherForecastActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Abilita l'invio dei crash su Firebase console
+        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+
         setContentView(R.layout.activity_weather_forecast)
 
         //Fa il padding automatico (non va a coprire i tasti funzione per i

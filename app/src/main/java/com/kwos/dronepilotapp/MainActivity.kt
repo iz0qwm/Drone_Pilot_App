@@ -48,6 +48,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import android.util.Base64
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.security.KeyStore
 import javax.crypto.spec.GCMParameterSpec
 
@@ -62,6 +63,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Abilita l'invio dei crash su Firebase console
+        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
 
         //Fa il padding automatico (non va a coprire i tasti funzione per i
         //telefoni con immersive view

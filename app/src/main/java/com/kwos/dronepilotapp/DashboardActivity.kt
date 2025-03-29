@@ -51,7 +51,7 @@ import kotlinx.coroutines.*
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import android.app.AlertDialog
-import android.content.DialogInterface
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 // per il padding
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -79,6 +79,15 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private var usersListener: ListenerRegistration? = null
     private val pilotMarkers = mutableMapOf<String, Marker>()
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
+    private val handler = Handler(Looper.getMainLooper())
+    private val refreshRunnable = object : Runnable {
+        override fun run() {
+            loadPilots() // Ricarica tutti i piloti
+            handler.postDelayed(this, 60000) // Ripeti ogni 60 secondi
+        }
+    }
+
+
 
     //Gestione ricerca piloti
     private var pilotsLoaded = false
@@ -89,6 +98,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
+        // Abilita l'invio dei crash su Firebase console
+        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
 
         //BINDING ??
         binding = ActivityDashboardBinding.inflate(layoutInflater)
@@ -1116,6 +1129,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onPause() {
         super.onPause()
         unregisterReceiver(messageReceiver)
+        // Ferma il refresh dell'handler di loadpilots quando l'app è in pausa
+        handler.removeCallbacks(refreshRunnable)
     }
 
 
@@ -1144,6 +1159,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
             startLocationUpdates(userId, userName!!, droneName!!)
         }
+        // Ricarica la lista dei piloti quando l'app torna in primo piano, utilizzando l'handler
+        handler.post(refreshRunnable) // Avvia il refresh quando l'app torna attiva
 
     }
 
