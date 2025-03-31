@@ -44,11 +44,12 @@ import org.json.JSONArray
 import java.util.Properties
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.text.method.ScrollingMovementMethod
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import android.util.Base64
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+//import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.security.KeyStore
 import javax.crypto.spec.GCMParameterSpec
 
@@ -65,7 +66,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         // Abilita l'invio dei crash su Firebase console
-        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        //FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        //FirebaseCrashlytics.getInstance().setCustomKey("app_version", BuildConfig.VERSION_NAME)
+        //FirebaseCrashlytics.getInstance().checkForUnsentReports()
+        //FirebaseCrashlytics.getInstance().sendUnsentReports()
 
         //Fa il padding automatico (non va a coprire i tasti funzione per i
         //telefoni con immersive view
@@ -147,7 +151,23 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-// Controllo presenza della registrazione email nelle SharedPreferences
+
+        // SOLO PER VERDE MARCO ---- DA RIMUOVERE - STACKTRACE -
+        // Trova il TextView dove verrà mostrato lo stacktrace
+        //val stacktraceTextView = findViewById<TextView>(R.id.stacktraceTextView)
+
+        // Se ci sono extra nell'intent, mostra lo stacktrace
+        //val stackTrace = intent.getStringExtra("stacktrace")
+        //if (stackTrace != null) {
+        //    stacktraceTextView.text = stackTrace
+        //    stacktraceTextView.visibility = View.VISIBLE
+        //    stacktraceTextView.setMovementMethod(ScrollingMovementMethod()) // Per scorrere
+        //}
+        //
+
+
+
+        // Controllo presenza della registrazione email nelle SharedPreferences
         val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
         val savedEmail = prefs.getString("user_email", null)
 

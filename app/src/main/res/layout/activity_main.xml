@@ -67,6 +67,17 @@
             android:textColor="@color/gray"
             android:paddingTop="8dp"/>
 
+        <TextView
+            android:id="@+id/stacktraceTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:scrollbars="vertical"
+            android:visibility="gone"
+            android:background="#FFF"
+            android:textColor="#000"
+            android:padding="16dp" />
+
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

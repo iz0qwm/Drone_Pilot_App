@@ -22,6 +22,7 @@ data class MeteoData(
     val precipitation_probability: Double
 )
 
+
 data class TecData(
     val dt: String,
     val refresh_rate: String,
@@ -41,6 +42,7 @@ object MeteoManager {
     private const val API_KEY = "tqz42yKjRbD18S7o" // Sostituisci con la tua API Key
     private const val BASE_URL = "https://my.meteoblue.com/packages/basic-day_webcolors"
     private const val BASE_URL_INGV = "http://ws-eswua.rm.ingv.it/tecdb.php/records/wsnc_eu"
+
 
     fun getMeteoData(lat: Double, lon: Double, callback: (MeteoData?) -> Unit) {
         val url = "$BASE_URL?windspeed=kmh&lat=$lat&lon=$lon&tz=Europe/Zurich&format=json&apikey=$API_KEY"

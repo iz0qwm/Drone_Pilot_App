@@ -52,6 +52,9 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import android.app.AlertDialog
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 // per il padding
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -101,7 +104,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         // Abilita l'invio dei crash su Firebase console
-        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        //FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        FirebaseCrashlytics.getInstance().setCustomKey("app_version", BuildConfig.VERSION_NAME)
+        FirebaseCrashlytics.getInstance().checkForUnsentReports()
+        FirebaseCrashlytics.getInstance().sendUnsentReports()
+
 
         //BINDING ??
         binding = ActivityDashboardBinding.inflate(layoutInflater)
@@ -1118,6 +1125,23 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         return result
     }
 
+
+    fun writeStackTraceToFile(stackTrace: String) {
+        // Ottieni il percorso della memoria interna del dispositivo
+        val file = File(filesDir, "stacktrace_log.txt")
+        try {
+            // Aggiungi lo stacktrace al file
+            val outputStream = FileOutputStream(file, true) // 'true' per appendere al file esistente
+            outputStream.write(stackTrace.toByteArray())
+            outputStream.close()
+
+            // Log per confermare che il file è stato scritto
+            logDebug(TAG, "Stacktrace scritto su file: ${file.absolutePath}")
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
     override fun onStop() {
         super.onStop()
         // Ferma gli aggiornamenti della posizione quando l'attività è in stop
@@ -1167,6 +1191,20 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onDestroy() {
         super.onDestroy()
         logDebug(TAG, "⚠️ onDestroy: Attività distrutta")
+
+
+        //INVIO STACKTRACE PER MARCO VERDE Google Pixel 9
+        // Ottieni lo stacktrace corrente
+        //val stackTrace = Throwable().stackTrace.joinToString("\n") { it.toString() }
+
+        // Scrivi lo stacktrace nel file
+        //writeStackTraceToFile(stackTrace)
+
+        // Crea un Intent per aprire la MainActivity e passare lo stacktrace
+        //val intent = Intent(this, MainActivity::class.java)
+        //intent.putExtra("stacktrace", stackTrace)  // Passa lo stacktrace tramite Intent
+        //startActivity(intent)  // Avvia la MainActivity
+
         usersListener?.remove()
         usersListener = null
         pilotsListener?.remove()

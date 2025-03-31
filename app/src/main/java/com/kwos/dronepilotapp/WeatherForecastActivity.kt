@@ -23,6 +23,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 class WeatherForecastActivity : AppCompatActivity() {
 
@@ -31,6 +33,9 @@ class WeatherForecastActivity : AppCompatActivity() {
     private lateinit var tecStatusTextView: TextView
     private lateinit var tecTitleTextView: TextView
     private lateinit var weather_meteogram: TextView
+
+    private lateinit var hourlyWeatherRecyclerView: RecyclerView
+    private lateinit var hourlyWeatherAdapter: HourlyWeatherAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,6 +93,7 @@ class WeatherForecastActivity : AppCompatActivity() {
             locationText.text = locationName
         }
 
+
         // Recupera i dati meteo
         MeteoManager.getMeteoData(lat, lon) { meteoData ->
             Handler(Looper.getMainLooper()).postDelayed({
@@ -106,6 +112,10 @@ class WeatherForecastActivity : AppCompatActivity() {
 
                     // Logica di allerta basata sul vento e precipitazioni
                     when {
+                        meteoData.wind_speedmin > 20 || meteoData.wind_speedmean > 20 || meteoData.wind_speedmax > 20 -> {
+                            alertTextView.text = getString(R.string.alert_vento_moderato)
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
+                        }
                         meteoData.wind_speedmin > 30 || meteoData.wind_speedmean > 30 || meteoData.wind_speedmax > 30 -> {
                             alertTextView.text = getString(R.string.alert_vento_forte)
                             alertTextView.setTextColor(ContextCompat.getColor(this, R.color.red))
@@ -137,6 +147,10 @@ class WeatherForecastActivity : AppCompatActivity() {
 
             }, 500) // Ritardo di 2000ms
         }
+
+        //Ricarica alertTextView
+        alertTextView.requestLayout()
+
 
 // Recupera i dati TEC
         MeteoManager.getTecData { tecMean ->
@@ -188,6 +202,9 @@ class WeatherForecastActivity : AppCompatActivity() {
             }, 1000) // Ritardo di 1000ms
         }
 
+        // Ricarica TEC Values
+        tecValueTextView.requestLayout()
+        tecStatusTextView.requestLayout()
 
         gpsStatusHelper = GpsStatusHelper(this) { totalSatellites, usedSatellites ->
             Handler(Looper.getMainLooper()).postDelayed({
@@ -210,8 +227,22 @@ class WeatherForecastActivity : AppCompatActivity() {
             }, 2000) // Ritardo di 1000ms
         }
 
+        //Ricarica gpsalertTextView
+        gpsalertTextView.requestLayout()
 
         gpsStatusHelper.startListening()
+
+        hourlyWeatherRecyclerView = findViewById(R.id.hourlyWeatherRecyclerView)
+        hourlyWeatherRecyclerView.layoutManager = LinearLayoutManager(this)
+
+        OpenWeatherManager.getHourlyWeather(lat, lon) { forecastList ->
+            runOnUiThread {
+                if (forecastList != null) {
+                    hourlyWeatherAdapter = HourlyWeatherAdapter(forecastList)
+                    hourlyWeatherRecyclerView.adapter = hourlyWeatherAdapter
+                }
+            }
+        }
 
         val handler = Handler(Looper.getMainLooper())
         handler.postDelayed(object : Runnable {
