@@ -21,7 +21,7 @@
                 android:id="@+id/weather_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Previsioni Meteo"
+                android:text="Situazione meteo attuale"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"
@@ -83,99 +83,17 @@
                 android:background="@android:color/darker_gray"
                 android:layout_marginVertical="8dp" />
 
-            <TextView
-                android:id="@+id/gpsStatusTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Stato GPS..."
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:padding="8dp" />
-
-            <TextView
-                android:id="@+id/gpsalertTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Messaggio di ALERT GPS"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:gravity="center"
-                android:padding="8dp" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@android:color/darker_gray"
-                android:layout_marginVertical="8dp" />
-
-            <!-- Aggiungi il testo per il TEC -->
-            <TextView
-                android:id="@+id/tecTitleTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Elettroni nella ionosfera (POSIZIONE GPS)"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginTop="16dp"/>
-
-            <TextView
-                android:id="@+id/tecValueTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TEC (Total Electron Content): 0 TECu"
-                android:textSize="14sp"
-                android:layout_marginTop="8dp"/>
-
-            <!-- Aggiungi il testo che cambia colore in base al valore TEC -->
-            <TextView
-                android:id="@+id/tecStatusTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Attività elettroni nella ionosfera..."
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:padding="8dp"
-                android:gravity="center"
-                android:layout_marginTop="8dp"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@android:color/darker_gray"
-                android:layout_marginVertical="8dp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/hourlyWeatherRecyclerView"
+             <Button
+                android:id="@+id/btn_gps"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:layout_marginTop="16dp"/>
+                android:text="Stato GPS" />
 
-            <!-- Altri elementi del layout, come l'alertTextView -->
-
-            <TextView
-                android:id="@+id/weather_meteogram"
-                android:layout_width="wrap_content"
+            <Button
+                android:id="@+id/btn_forecast_details"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Meteogrammi settimanali"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginTop="16dp"/>
-
-            <com.github.chrisbanes.photoview.PhotoView
-                android:id="@+id/weather_meteogramOne_general"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:scaleType="fitCenter"
-                android:contentDescription="Meteogramma"/>
-
-            <com.github.chrisbanes.photoview.PhotoView
-                android:id="@+id/weather_meteogram_general"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:scaleType="fitCenter"
-                android:contentDescription="Meteogramma"/>
+                android:text="Previsioni" />
 
             <Button
                 android:id="@+id/close_weather_button"

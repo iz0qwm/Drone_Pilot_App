@@ -1,0 +1,152 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="#e7e1d3"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/weather_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Previsioni orarie e giornaliere"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="10dp"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <!-- Riga con i parametri del meteo -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="start"
+                android:weightSum="6">
+
+
+                <TextView
+                    android:id="@+id/date_time_header"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Giorno/Ora"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/temp_header"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Temp (°C)"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/pressure_header"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Press (hPa)"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/clouds_header"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Cop. Nuvolosa (%)"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/wind_speed_header"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Vel. Vento (km/h)"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/wind_gust_header"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Vel. Raff. (km/h)"
+                    android:textStyle="bold"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/hourlyWeatherRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:layout_marginTop="16dp"/>
+
+            <!-- Altri elementi del layout, come l'alertTextView -->
+
+            <TextView
+                android:id="@+id/weather_meteogram"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Meteogrammi settimanali"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"/>
+
+            <com.github.chrisbanes.photoview.PhotoView
+                android:id="@+id/weather_meteogramOne_general"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Meteogramma"/>
+
+            <com.github.chrisbanes.photoview.PhotoView
+                android:id="@+id/weather_meteogram_general"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Meteogramma"/>
+
+
+            <Button
+                android:id="@+id/close_weather_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Chiudi"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,29 +4,37 @@ import android.util.Log
 import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 object OpenWeatherManager {
     private const val API_KEY = "1b4656e0d2c4084cb53766425375c83c" // Sostituisci con la tua API key di OpenWeather
-    private const val BASE_URL = "https://api.openweathermap.org/data/2.5/forecast/hourly"
+    private const val BASE_URL = "https://api.openweathermap.org/data/3.0/onecall"
 
     fun getHourlyWeather(lat: Double, lon: Double, callback: (List<HourlyForecast>?) -> Unit) {
-        val url = "$BASE_URL?lat=$lat&lon=$lon&units=metric&appid=$API_KEY"
-
+        val url = "$BASE_URL?exclude=current,minutely,daily,alerts&lat=$lat&lon=$lon&units=metric&appid=$API_KEY"
+        logDebug("DronePilotApp", "OpenWeatherManager:  getHourlyWeather: Vado su:  $url")
         val request = Request.Builder()
             .url(url)
             .build()
 
-        val client = OkHttpClient()
+        val client = OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .build()
+
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                logError("DronePilotApp", "OpenWeatherManager: Errore nella richiesta meteo", e)
+                Log.e("DronePilotApp", "Errore nella richiesta meteo", e)
                 callback(null)
             }
 
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     if (!response.isSuccessful) {
-                        logError("DronePilotApp", "OpenWeatherManager: Risposta non riuscita: ${response.code}")
+                        Log.e("DronePilotApp", "Risposta non riuscita: ${response.code}")
                         callback(null)
                         return
                     }
@@ -35,24 +43,33 @@ object OpenWeatherManager {
                     if (responseData != null) {
                         try {
                             val json = JSONObject(responseData)
-                            val list = json.getJSONArray("list")
+                            val hourlyArray = json.getJSONArray("hourly")
                             val forecastList = mutableListOf<HourlyForecast>()
 
-                            for (i in 0 until list.length()) {
-                                val item = list.getJSONObject(i)
-                                val dt_txt = item.getString("dt_txt")
-                                val main = item.getJSONObject("main")
-                                val clouds = item.getJSONObject("clouds")
-                                val wind = item.getJSONObject("wind")
-                                val rain = item.optJSONObject("rain")?.optDouble("1h", 0.0) ?: 0.0
+                            for (i in 0 until hourlyArray.length()) {
+                                val item = hourlyArray.getJSONObject(i)
+                                val dt = item.getLong("dt")
+                                val temp = item.getDouble("temp")
+                                val pressure = item.getDouble("pressure")
+                                val windSpeed = item.getDouble("wind_speed")
+                                val windGust = item.optDouble("wind_gust", 0.0)
+                                val clouds = item.getInt("clouds")
+
+                                val formattedDate = formatDateTime(dt)
+
+                                val tempRounded = (temp * 10).roundToInt() / 10.0  // Arrotonda a una cifra decimale
+                                val pressureRounded = pressure.roundToInt()  // Arrotondamento
+                                val windSpeedInKmhRounded = (windSpeed * 3.6).roundToInt()  // Arrotondamento
+                                val windGustInKmhRounded = (windGust * 3.6).roundToInt()    // Arrotondamento
+
 
                                 val forecast = HourlyForecast(
-                                    dt_txt = dt_txt,
-                                    temperature = main.getDouble("temp"),
-                                    seaLevel = main.optDouble("sea_level", 0.0),
-                                    cloudiness = clouds.getInt("all"),
-                                    windSpeed = wind.getDouble("speed"),
-                                    rainVolume = rain
+                                    dt = formattedDate,
+                                    temp = tempRounded,
+                                    pressure = pressureRounded,
+                                    windSpeed = windSpeedInKmhRounded,
+                                    windGust = windGustInKmhRounded,
+                                    clouds = clouds
                                 )
 
                                 forecastList.add(forecast)
@@ -60,7 +77,7 @@ object OpenWeatherManager {
 
                             callback(forecastList)
                         } catch (e: Exception) {
-                            logError("DronePilotApp", "OpenWeatherManager: Errore nel parsing dei dati meteo", e)
+                            Log.e("DronePilotApp", "Errore nel parsing dei dati meteo", e)
                             callback(null)
                         }
                     } else {
@@ -70,13 +87,20 @@ object OpenWeatherManager {
             }
         })
     }
+
+    private fun formatDateTime(timestamp: Long): String {
+        val date = Date(timestamp * 1000)
+        val sdf = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
+        return sdf.format(date)
+    }
 }
 
+// Data class per il meteo orario
 data class HourlyForecast(
-    val dt_txt: String,
-    val temperature: Double,
-    val seaLevel: Double,
-    val cloudiness: Int,
-    val windSpeed: Double,
-    val rainVolume: Double
+    val dt: String,
+    val temp: Double,
+    val pressure: Int,
+    val windSpeed: Int,
+    val windGust: Int,
+    val clouds: Int
 )

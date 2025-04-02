@@ -1,0 +1,114 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="#e7e1d3"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/weather_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Stato GPS e rete GNSS"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="10dp"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <TextView
+                android:id="@+id/gpsStatusTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stato GPS..."
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:padding="8dp" />
+
+            <TextView
+                android:id="@+id/gpsalertTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Messaggio di ALERT GPS"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:padding="8dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <!-- Aggiungi il testo per il TEC -->
+            <TextView
+                android:id="@+id/tecTitleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Elettroni nella ionosfera (POSIZIONE GPS)"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginTop="16dp"/>
+
+            <TextView
+                android:id="@+id/tecValueTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TEC (Total Electron Content): 0 TECu"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"/>
+
+            <!-- Aggiungi il testo che cambia colore in base al valore TEC -->
+            <TextView
+                android:id="@+id/tecStatusTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Attività elettroni nella ionosfera..."
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:padding="8dp"
+                android:gravity="center"
+                android:layout_marginTop="8dp"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/hourlyWeatherRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:layout_marginTop="16dp"/>
+
+
+            <Button
+                android:id="@+id/close_gps_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Chiudi"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
