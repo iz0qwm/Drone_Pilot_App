@@ -134,9 +134,10 @@
                 android:id="@+id/weather_info_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:orientation="horizontal"
                 android:layout_marginTop="5dp"
-                android:gravity="center">
+                android:gravity="center"
+                android:padding="8dp">
 
                 <!-- Pulsante per aprire le previsioni meteo -->
                 <Button
@@ -144,8 +145,16 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Previsioni Meteo e GPS"
-                    android:padding="8dp"/>
+                    android:layout_marginEnd="8dp"/>
+
+                <!-- Nuovo pulsante per Spot di volo -->
+                <Button
+                    android:id="@+id/takeoff_spots_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Spot di Volo"/>
             </LinearLayout>
+
 
             <!-- TextView per il messaggio di piloti nelle vicinanze -->
             <TextView

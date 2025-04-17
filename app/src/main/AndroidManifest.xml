@@ -75,6 +75,9 @@
         <activity android:name=".GroupChatActivity">
             <!-- Puoi aggiungere eventuali intent-filter o altre configurazioni se necessarie -->
         </activity>
+        <activity android:name=".TakeoffSpotsActivity">
+            <!-- Puoi aggiungere eventuali intent-filter o altre configurazioni se necessarie -->
+        </activity>
 
         <activity
             android:name=".FullScreenImageActivity"

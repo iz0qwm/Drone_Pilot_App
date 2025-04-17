@@ -217,6 +217,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         //val weatherInfoText = findViewById<TextView>(R.id.weather_info_text)
         val weatherButton: Button = findViewById(R.id.weather_forecast_button)
         val menuButton: ImageButton = findViewById(R.id.menuButton)
+        val spotButton: Button = findViewById(R.id.takeoff_spots_button)
         //val lowerLimitTextView: TextView = findViewById(R.id.lowerLimitTextView)
 
 
@@ -255,7 +256,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-
+        spotButton.setOnClickListener {
+            val intent = Intent(this, TakeoffSpotsActivity::class.java)
+            startActivity(intent)
+        }
 
         // Controlla l'esecuzione del Logout
         logoutButton.setOnClickListener {
