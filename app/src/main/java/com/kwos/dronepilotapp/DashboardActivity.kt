@@ -491,22 +491,36 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                 val lng = pilotDoc.getDouble("longitude")
                                 val name = pilotDoc.getString("name") ?: "Sconosciuto"
                                 val drone = pilotDoc.getString("drone") ?: "N/D"
+                                val radioPMR = userDoc.getBoolean("radioPMR") ?: false
 
                                 if (lat != null && lng != null) {
                                     val position = LatLng(lat, lng)
 
                                     val markerOptions = MarkerOptions().position(position).title("$name - $drone")
+
+
                                     logDebug(TAG, "🔄 loadPilots: Aggiungendo/aggiornando marker per $userId")
 
                                     val availableForChat = userDoc.getBoolean("availableForChat") ?: false // Aggiungi questa riga per recuperare la disponibilità per la chat
+                                    val radioPMR = userDoc.getBoolean("radioPMR") ?: false
 
                                     //Controllo lo stato della chat
-                                    val markerIcon = if (availableForChat) {
-                                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE) // Blu se disponibile per la chat
-                                    } else {
-                                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED) // Rosso se non disponibile
+                                    val markerIcon = when {
+                                        radioPMR -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+                                        availableForChat -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+                                        else -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
                                     }
 
+                                    val snippetText = buildString {
+                                        if (availableForChat) {
+                                            append("💬 Chat ON")
+                                        } else {
+                                            append("❌ Chat OFF")
+                                        }
+                                        if (radioPMR) {
+                                            append(" | 📻 PMR CH4")
+                                        }
+                                    }
 
                                     // Aggiungi un marker o aggiorna il marker esistente
                                     val existingMarker = pilotMarkers[userId]
@@ -514,12 +528,14 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                         val marker = mMap.addMarker(markerOptions)!!
                                         marker.tag = userId
                                         marker.setIcon(markerIcon) // Imposta il colore corretto
+                                        marker.snippet = snippetText
                                         pilotMarkers[userId] = marker
                                         logDebug(TAG, "✅ Marker aggiunto per $userId")
                                     } else {
                                         existingMarker.position = position
                                         //existingMarker.title = "$name - $drone"
                                         existingMarker.setIcon(markerIcon) // Imposta il colore corretto
+                                        existingMarker.snippet = snippetText
                                         logDebug(TAG, "✅ loadPilots: Marker esistente aggiornato per $userId")
                                     }
                                 } else {
@@ -588,6 +604,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 documents?.forEach { doc ->
                     val userId = doc.id
                     val availableForChat = doc.getBoolean("availableForChat") ?: false
+                    val radioPMR = doc.getBoolean("radioPMR") ?: false
                     val inVolo = doc.getBoolean("inVolo") ?: false // Recupera lo stato di volo
 
                     // Evita di processare i marker di chi non è in volo
@@ -602,17 +619,22 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     // Recuperiamo il marker e aggiorniamo l'icona e lo snippet
                     val existingMarker = pilotMarkers[userId]
                     if (existingMarker != null) {
-                        val markerIcon = if (availableForChat) {
-                            BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-                        } else {
-                            BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                        val markerIcon = when {
+                            radioPMR -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+                            availableForChat -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+                            else -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
                         }
                         existingMarker.setIcon(markerIcon)
 
-                        val snippetText = if (availableForChat) {
-                            "✅ Disponibile per chat - Clicca per aprire la chat"
-                        } else {
-                            "❌ Non disponibile per chat"
+                        val snippetText = buildString {
+                            if (availableForChat) {
+                                append("💬 Chat ON")
+                            } else {
+                                append("❌ Chat OFF")
+                            }
+                            if (radioPMR) {
+                                append(" | 📻 PMR CH4")
+                            }
                         }
                         existingMarker.snippet = snippetText
                         logDebug(TAG, "✅ ChatAvail: Marker aggiornato per $userId")
@@ -661,6 +683,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 existingMarker?.remove()  // Rimuove il marker vecchio prima di crearne uno nuovo
 
                 val userPosition = LatLng(location.latitude, location.longitude)
+
+
                 val marker = mMap.addMarker(MarkerOptions()
                     .position(userPosition)
                     .title("$userName - $droneName")
@@ -673,16 +697,17 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 startLocationUpdates(userId, userName, droneName)
 
                 // Controlliamo se ha lo stato di availableForChat
-                val userRef = FirebaseFirestore.getInstance().collection("pilots").document(userId)
+                val userRef = FirebaseFirestore.getInstance().collection("users").document(userId)
 
                 userRef.get().addOnSuccessListener { document ->
                     if (document.exists()) {
                         val inVolo = document.getBoolean("inVolo") ?: false
                         val availableForChat = document.getBoolean("availableForChat") ?: false
+                        val radioPMR = document.getBoolean("radioPMR") ?: false
 
                         if (inVolo) {
-                            aggiornaMarker(userId, availableForChat)
-                            logDebug(TAG, "🚀 startFlight: Aggiorno marker per $userId")
+                            aggiornaMarker(userId, availableForChat, radioPMR)
+                            logDebug(TAG, "🚀 startFlight: Aggiorno marker per $userId con PMR=$radioPMR")
                         } else {
                             logDebug(TAG, "⚠️ startFlight: Il pilota $userId non era in volo")
                         }
@@ -853,28 +878,35 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun aggiornaMarker(userId: String, availableForChat: Boolean) {
+    private fun aggiornaMarker(userId: String, availableForChat: Boolean, radioPMR: Boolean) {
         logDebug(TAG, "✅ aggiornaMarker: sono in aggiornaMarker")
         val existingMarker = pilotMarkers[userId]
         if (existingMarker != null) {
-            val markerIcon = if (availableForChat) {
-                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-            } else {
-                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+            val markerIcon = when {
+                radioPMR -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+                availableForChat -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+                else -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
             }
             existingMarker.setIcon(markerIcon)
 
-            val snippetText = if (availableForChat) {
-                "✅ Disponibile per chat - Clicca per aprire la chat"
-            } else {
-                "❌ Non disponibile per chat"
+            val snippetText = buildString {
+                if (availableForChat) {
+                    append("💬 Chat ON")
+                } else {
+                    append("❌ Chat OFF")
+                }
+                if (radioPMR) {
+                    append(" | 📻 PMR CH4")
+                }
             }
+
             existingMarker.snippet = snippetText
             logDebug(TAG, "✅ Marker aggiornato per $userId")
         } else {
             logWarning(TAG, "⚠️ Nessun marker trovato per $userId")
         }
     }
+
 
 
     private fun logout() {
@@ -938,15 +970,16 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         logDebug(TAG, "✅ onStart Dashboard: Utente loggato: ${user.email}")
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val userRef = FirebaseFirestore.getInstance().collection("pilots").document(userId)
+        val userRef = FirebaseFirestore.getInstance().collection("users").document(userId)
 
         userRef.get().addOnSuccessListener { document ->
             if (document.exists()) {
                 val inVolo = document.getBoolean("inVolo") ?: false
                 val availableForChat = document.getBoolean("availableForChat") ?: false
+                val radioPMR = document.getBoolean("radioPMR") ?: false
 
                 if (inVolo) {
-                    aggiornaMarker(userId, availableForChat)
+                    aggiornaMarker(userId, availableForChat, radioPMR)
                     logDebug(TAG, "🚀 onStart Dashboard: Ripristinato stato di volo per $userId")
                 } else {
                     logDebug(TAG, "⚠️ onStart Dashboard: Il pilota $userId non era in volo")
@@ -960,15 +993,16 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun recuperaDatiPilota() {
         val user = FirebaseAuth.getInstance().currentUser ?: return
         val userId = user.uid
-        val userRef = FirebaseFirestore.getInstance().collection("pilots").document(userId)
+        val userRef = FirebaseFirestore.getInstance().collection("users").document(userId)
 
         userRef.get().addOnSuccessListener { document ->
             if (document.exists()) {
                 val inVolo = document.getBoolean("inVolo") ?: false
                 val availableForChat = document.getBoolean("availableForChat") ?: false
+                val radioPMR = document.getBoolean("radioPMR") ?: false
 
                 if (inVolo) {
-                    aggiornaMarker(userId, availableForChat)
+                    aggiornaMarker(userId, availableForChat, radioPMR)
                     logDebug(TAG, "🚀 recuperaDatiPilota: Ripristinato stato di volo per $userId")
                 } else {
                     logDebug(TAG, "⚠️ recuperaDatiPilota: Il pilota $userId non era in volo")

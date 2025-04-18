@@ -1,6 +1,7 @@
 package com.kwos.dronepilotapp
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -25,13 +26,15 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.google.firebase.firestore.FieldValue
 //per il padding
 import androidx.core.view.ViewCompat
-import androidx.core.view.updatePadding
 import android.view.View
+import android.widget.EditText
+import com.google.android.gms.maps.model.Marker
 
 
 class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -39,6 +42,7 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var currentLocation: Location
+    private var selectedMarker: Marker? = null
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1000
 
@@ -96,6 +100,22 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+
+        map.setOnMarkerClickListener { marker ->
+            selectedMarker = marker
+            marker.showInfoWindow()
+            true
+        }
+
+        map.setOnInfoWindowClickListener { marker ->
+            val lat = marker.position.latitude
+            val lng = marker.position.longitude
+            val uri = Uri.parse("https://www.google.com/maps?q=$lat,$lng")
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            intent.setPackage("com.google.android.apps.maps") // apre direttamente Google Maps se installato
+            startActivity(intent)
+        }
+
         loadTakeoffSpots()
         getCurrentLocation()
     }
@@ -128,11 +148,11 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
                     val lat = document.getDouble("lat") ?: continue
                     val lng = document.getDouble("lng") ?: continue
                     val count = document.getLong("count") ?: 1
+                    val descrizione = document.getString("descrizione") ?: "Nessuna descrizione"
 
                     val position = LatLng(lat, lng)
-                    val title = "Spot segnalato ($count segnalazione${if (count > 1) "i" else ""})"
+                    val title = "Spot segnalato $count volt${if (count > 1) "e" else "a"}"
 
-                    // Carica l'immagine da URL per ogni marker
                     Glide.with(this)
                         .asBitmap()
                         .load(iconUrl)
@@ -143,6 +163,7 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
                                     MarkerOptions()
                                         .position(position)
                                         .title(title)
+                                        .snippet(descrizione)
                                         .icon(icon)
                                 )
                             }
@@ -157,7 +178,11 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
+
     private fun addSpot() {
+
+        val descriptionEditText = findViewById<EditText>(R.id.edit_spot_description)
+        val spotDescription = descriptionEditText.text.toString().trim()
         // Verifica se il permesso di accesso alla posizione è concesso
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             // Permesso concesso, ottieni la posizione
@@ -213,7 +238,8 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
                                         "lng" to newSpotLng,
                                         "count" to 1,
                                         "userId" to userId,
-                                        "timestamp" to FieldValue.serverTimestamp()
+                                        "timestamp" to FieldValue.serverTimestamp(),
+                                        "descrizione" to spotDescription
                                     )
                                     db.collection("takeoff_spots")
                                         .add(newSpot)
@@ -237,74 +263,112 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun removeSpot() {
-        // Verifica se il permesso di accesso alla posizione è concesso
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // Permesso concesso, ottieni la posizione
-            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
 
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    if (location != null) {
-                        val db = FirebaseFirestore.getInstance()
-                        val newSpotLat = location.latitude
-                        val newSpotLng = location.longitude
+        if (selectedMarker != null) {
+            // 🔸 Se un marker è stato selezionato manualmente
+            val marker = selectedMarker!!
+            val lat = marker.position.latitude
+            val lng = marker.position.longitude
 
-                        val newLocation = Location("").apply {
-                            latitude = newSpotLat
-                            longitude = newSpotLng
+            db.collection("takeoff_spots")
+                .whereEqualTo("lat", lat)
+                .whereEqualTo("lng", lng)
+                .get()
+                .addOnSuccessListener { result ->
+                    var spotToRemoveId: String? = null
+                    for (document in result) {
+                        val docUserId = document.getString("userId")
+                        val count = document.getLong("count") ?: 1
+
+                        if (docUserId == userId && count == 1L) {
+                            spotToRemoveId = document.id
+                            break
                         }
+                    }
 
-                        db.collection("takeoff_spots")
-                            .get()
-                            .addOnSuccessListener { result ->
-                                var spotToRemoveId: String? = null
-
-                                for (document in result) {
-                                    val lat = document.getDouble("lat") ?: continue
-                                    val lng = document.getDouble("lng") ?: continue
-                                    val locationDb = Location("").apply {
-                                        latitude = lat
-                                        longitude = lng
-                                    }
-
-                                    if (newLocation.distanceTo(locationDb) <= 500) {
-                                        val storedUserId = document.getString("userId")
-                                        val count = document.getLong("count") ?: 1
-
-                                        if (storedUserId == userId && count == 1L) {
-                                            spotToRemoveId = document.id
-                                            break
-                                        }
-                                    }
-                                }
-
-                                if (spotToRemoveId != null) {
-                                    // Rimuovi lo spot
-                                    db.collection("takeoff_spots")
-                                        .document(spotToRemoveId)
-                                        .delete()
-                                        .addOnSuccessListener {
-                                            Toast.makeText(this, "Spot rimosso! Si cancella quando esci", Toast.LENGTH_SHORT).show()
-                                            loadTakeoffSpots()
-                                        }
-                                        .addOnFailureListener {
-                                            Toast.makeText(this, "Errore nella rimozione dello spot", Toast.LENGTH_SHORT).show()
-                                        }
-                                } else {
-                                    Toast.makeText(this, "Nessun spot valido trovato per la rimozione", Toast.LENGTH_SHORT).show()
-                                }
+                    if (spotToRemoveId != null) {
+                        db.collection("takeoff_spots").document(spotToRemoveId)
+                            .delete()
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Spot rimosso!", Toast.LENGTH_SHORT).show()
+                                marker.remove()
+                                selectedMarker = null
+                                loadTakeoffSpots()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(this, "Errore nella rimozione dello spot", Toast.LENGTH_SHORT).show()
                             }
                     } else {
-                        Toast.makeText(this, "Posizione non disponibile", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Non puoi rimuovere questo spot", Toast.LENGTH_SHORT).show()
                     }
                 }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Errore nell'ottenere la posizione", Toast.LENGTH_SHORT).show()
-                }
         } else {
-            // Permesso non concesso, richiedi il permesso
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+            // 🔸 Nessun marker selezionato, usa la logica basata sulla posizione GPS
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        if (location != null) {
+                            val newSpotLat = location.latitude
+                            val newSpotLng = location.longitude
+
+                            val newLocation = Location("").apply {
+                                latitude = newSpotLat
+                                longitude = newSpotLng
+                            }
+
+                            db.collection("takeoff_spots")
+                                .get()
+                                .addOnSuccessListener { result ->
+                                    var spotToRemoveId: String? = null
+
+                                    for (document in result) {
+                                        val lat = document.getDouble("lat") ?: continue
+                                        val lng = document.getDouble("lng") ?: continue
+                                        val locationDb = Location("").apply {
+                                            latitude = lat
+                                            longitude = lng
+                                        }
+
+                                        if (newLocation.distanceTo(locationDb) <= 500) {
+                                            val storedUserId = document.getString("userId")
+                                            val count = document.getLong("count") ?: 1
+
+                                            if (storedUserId == userId && count == 1L) {
+                                                spotToRemoveId = document.id
+                                                break
+                                            }
+                                        }
+                                    }
+
+                                    if (spotToRemoveId != null) {
+                                        db.collection("takeoff_spots")
+                                            .document(spotToRemoveId)
+                                            .delete()
+                                            .addOnSuccessListener {
+                                                Toast.makeText(this, "Spot rimosso! Si cancella quando esci", Toast.LENGTH_SHORT).show()
+                                                loadTakeoffSpots()
+                                            }
+                                            .addOnFailureListener {
+                                                Toast.makeText(this, "Errore nella rimozione dello spot", Toast.LENGTH_SHORT).show()
+                                            }
+                                    } else {
+                                        Toast.makeText(this, "Nessun spot valido trovato per la rimozione", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                        } else {
+                            Toast.makeText(this, "Posizione non disponibile", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Errore nell'ottenere la posizione", Toast.LENGTH_SHORT).show()
+                    }
+            } else {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+            }
         }
     }
 

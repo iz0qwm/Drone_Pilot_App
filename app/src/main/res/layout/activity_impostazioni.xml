@@ -26,10 +26,19 @@
             android:layout_height="wrap_content"
             android:hint="Inserisci il tuo nome"/>
 
+        <CheckBox
+            android:id="@+id/checkboxPMR"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ho la radio PMR accesa sul CH4" />
+
         <Button
             android:id="@+id/btnSalvaNome"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Salva Nome"/>
-    </LinearLayout>
+            android:text="Salva impostazioni"/>
+
+
+
+</LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

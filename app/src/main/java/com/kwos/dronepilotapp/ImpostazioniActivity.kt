@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import android.view.View
+import android.widget.CheckBox
 
 class ImpostazioniActivity : AppCompatActivity() {
 
@@ -21,6 +22,8 @@ class ImpostazioniActivity : AppCompatActivity() {
     private lateinit var btnSalvaNome: Button
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private lateinit var checkboxPMR: CheckBox
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +52,8 @@ class ImpostazioniActivity : AppCompatActivity() {
         textEmail = findViewById(R.id.textEmail)
         editFullName = findViewById(R.id.editFullName)
         btnSalvaNome = findViewById(R.id.btnSalvaNome)
+        checkboxPMR = findViewById(R.id.checkboxPMR)
+
 
         val user = auth.currentUser
         if (user != null) {
@@ -60,6 +65,9 @@ class ImpostazioniActivity : AppCompatActivity() {
                     if (document.exists()) {
                         val fullName = document.getString("fullName") ?: ""
                         editFullName.setText(fullName)
+                        val radioPMR = document.getBoolean("radioPMR") ?: false
+                        checkboxPMR.isChecked = radioPMR
+
                     }
                 }
                 .addOnFailureListener {
@@ -69,11 +77,18 @@ class ImpostazioniActivity : AppCompatActivity() {
 
         btnSalvaNome.setOnClickListener {
             val nuovoNome = editFullName.text.toString().trim()
+            val haRadioPMR = checkboxPMR.isChecked
+
+            val updates = mapOf(
+                "fullName" to nuovoNome,
+                "radioPMR" to haRadioPMR
+            )
+
             if (nuovoNome.isNotEmpty() && user != null) {
                 db.collection("users").document(user.uid)
-                    .update("fullName", nuovoNome)
+                    .update(updates)
                     .addOnSuccessListener {
-                        Toast.makeText(this, "Nome aggiornato!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Dati aggiornati!", Toast.LENGTH_SHORT).show()
                     }
                     .addOnFailureListener {
                         Toast.makeText(this, "Errore nell'aggiornamento", Toast.LENGTH_SHORT).show()
