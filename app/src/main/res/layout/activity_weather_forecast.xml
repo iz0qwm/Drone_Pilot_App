@@ -1,52 +1,46 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-
-    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false">
 
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#e7e1d3"
+            android:background="#f4f4f4"
             android:padding="16dp">
 
             <TextView
                 android:id="@+id/weather_title"
+                style="@style/AppTextViewBold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Situazione meteo attuale"
-                android:textSize="20sp"
-                android:textStyle="bold"
                 android:gravity="center"
-                android:paddingBottom="10dp"/>
+                android:paddingBottom="10dp" />
 
             <TextView
                 android:id="@+id/weather_location"
+                style="@style/AppTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Località"
-                android:textSize="18sp"
-                android:textStyle="italic"
                 android:gravity="center"
-                android:layout_below="@+id/weather_title"
-                android:layout_centerHorizontal="true"
-                android:paddingBottom="10dp"/>
+                android:layout_marginBottom="10dp" />
 
             <ProgressBar
                 android:id="@+id/weatherProgressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/weather_location"
-                android:layout_centerHorizontal="true"
-                android:gravity="center"
-                android:visibility="gone"/>
+                android:layout_gravity="center"
+                android:visibility="gone" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -57,25 +51,22 @@
 
                 <TextView
                     android:id="@+id/weather_details"
+                    style="@style/AppTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Caricamento dati meteo..."
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:padding="8dp"
-                    android:gravity="center" />
+                    android:gravity="center"
+                    android:padding="8dp" />
 
                 <TextView
                     android:id="@+id/alertTextView"
+                    style="@style/AppTextViewBold"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Messaggio di ALERT METEO"
-                    android:textStyle="bold"
                     android:gravity="center"
-                    android:textSize="16sp"
                     android:padding="8dp" />
             </LinearLayout>
-
 
             <View
                 android:layout_width="match_parent"
@@ -83,24 +74,34 @@
                 android:background="@android:color/darker_gray"
                 android:layout_marginVertical="8dp" />
 
-             <Button
+            <Button
                 android:id="@+id/btn_gps"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Stato GPS" />
+                android:text="Stato GPS"
+                android:textAllCaps="false"
+                android:layout_marginTop="16dp"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_green" />
 
             <Button
                 android:id="@+id/btn_forecast_details"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Previsioni" />
+                android:text="Previsioni"
+                android:textAllCaps="false"
+                android:layout_marginTop="16dp"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_green" />
 
             <Button
                 android:id="@+id/close_weather_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Chiudi"
-                android:layout_marginTop="16dp"/>
+                android:layout_marginTop="24dp"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

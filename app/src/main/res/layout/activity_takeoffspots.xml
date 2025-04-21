@@ -27,8 +27,8 @@
             android:id="@+id/edit_spot_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Descrizione dello spot (facoltativa)"
-            android:background="@android:drawable/edit_text"
+            android:hint="Descrizione dello spot"
+            android:background="@drawable/rounded_input"
             android:padding="10dp"
             android:textColor="#000"
             android:textColorHint="#ccc"
@@ -47,13 +47,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Aggiungi Spot"
-                android:layout_marginEnd="10dp"/>
+                android:layout_marginEnd="10dp"
+                android:textAllCaps="false"
+                android:textColor="@color/button_text_color"
+                android:paddingHorizontal="10dp"
+                android:background="@drawable/rounded_button_green" />
 
             <Button
                 android:id="@+id/btn_remove_spot"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Rimuovi Spot"/>
+                android:text="Rimuovi Spot"
+                android:textAllCaps="false"
+                android:textColor="@color/button_text_color"
+                android:paddingHorizontal="10dp"
+                android:background="@drawable/rounded_button_green" />
         </LinearLayout>
 
         <!-- Pulsante Chiudi -->
@@ -62,7 +70,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Chiudi"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginTop="12dp"
+            android:textColor="@color/button_text_color"
+            android:background="@drawable/rounded_button_blue" />
     </LinearLayout>
 
 </RelativeLayout>

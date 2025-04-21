@@ -44,6 +44,7 @@ import org.json.JSONArray
 import java.util.Properties
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.text.InputType
 import android.text.method.ScrollingMovementMethod
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -141,6 +142,12 @@ class MainActivity : AppCompatActivity() {
         val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this)
         if (resultCode != ConnectionResult.SUCCESS) {
             googleApiAvailability.makeGooglePlayServicesAvailable(this)
+        }
+
+        // Password dimenticata
+        val forgotPasswordText = findViewById<TextView>(R.id.forgotPasswordText)
+        forgotPasswordText.setOnClickListener {
+            showResetPasswordDialog()
         }
 
 
@@ -420,6 +427,12 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun registerUser(email: String, password: String, fullName: String) {
+        // Verifica che la password sia lunga almeno 6 caratteri
+        if (password.length < 6) {
+            Toast.makeText(this, "La password deve contenere almeno 6 caratteri", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val userId = auth.currentUser?.uid
@@ -430,22 +443,80 @@ class MainActivity : AppCompatActivity() {
                     "availableForChat" to false // Chat disabilitata di default
                 )
 
+                // Salvataggio dei dati utente nel database
                 userId?.let {
                     db.collection("users").document(it).set(userMap)
                         .addOnSuccessListener {
-                            Toast.makeText(this, "Registrazione completata!", Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this, DashboardActivity::class.java))
-                            finish()
+                            // Invia email di conferma
+                            auth.currentUser?.sendEmailVerification()
+                                ?.addOnCompleteListener { emailTask ->
+                                    if (emailTask.isSuccessful) {
+                                        Toast.makeText(this, "Registrazione completata! Controlla la tua email per confermare l'account.", Toast.LENGTH_LONG).show()
+                                        startActivity(Intent(this, DashboardActivity::class.java))
+                                        finish()
+                                    } else {
+                                        Toast.makeText(this, "Errore nell'invio dell'email di conferma.", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                         }
                         .addOnFailureListener { e ->
                             Log.e("Register", "Errore durante il salvataggio", e)
+                            Toast.makeText(this, "Errore durante la registrazione. Riprova.", Toast.LENGTH_SHORT).show()
                         }
                 }
             } else {
                 Log.e("Register", "Registrazione fallita", task.exception)
+                Toast.makeText(this, "Registrazione fallita: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
+    private fun resetPassword(email: String) {
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Email per il reset inviata. Controlla la tua casella di posta.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Errore: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+    }
+
+    private fun showResetPasswordDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Reimposta password")
+
+        val input = EditText(this)
+        input.inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        input.hint = "Inserisci la tua email"
+        input.setPadding(50, 40, 50, 40)
+
+        builder.setView(input)
+
+        builder.setPositiveButton("Invia") { dialog, _ ->
+            val email = input.text.toString().trim()
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Inserisci un indirizzo email", Toast.LENGTH_SHORT).show()
+            } else {
+                FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Toast.makeText(this, "Email inviata! Controlla la tua casella di posta.", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this, "Errore: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+            }
+            dialog.dismiss()
+        }
+
+        builder.setNegativeButton("Annulla") { dialog, _ ->
+            dialog.cancel()
+        }
+
+        builder.show()
+    }
+
 
 }
 

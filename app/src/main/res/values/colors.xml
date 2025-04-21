@@ -11,5 +11,8 @@
     <color name="gray">#757575</color>
     <color name="red">#fb0606</color>
     <color name="green">#13750d</color>
+    <color name="blue_button">#007BFF</color> <!-- Blu per i pulsanti -->
+    <color name="green_button">#28A745</color> <!-- Verde per Spot di volo -->
+    <color name="button_text_color">#FFFFFF</color> <!-- Bianco per il testo sui pulsanti -->
 
 </resources>

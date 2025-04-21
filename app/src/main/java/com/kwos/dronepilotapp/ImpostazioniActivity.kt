@@ -20,6 +20,7 @@ class ImpostazioniActivity : AppCompatActivity() {
     private lateinit var textEmail: TextView
     private lateinit var editFullName: EditText
     private lateinit var btnSalvaNome: Button
+    private lateinit var closeButton: Button
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private lateinit var checkboxPMR: CheckBox
@@ -53,6 +54,7 @@ class ImpostazioniActivity : AppCompatActivity() {
         editFullName = findViewById(R.id.editFullName)
         btnSalvaNome = findViewById(R.id.btnSalvaNome)
         checkboxPMR = findViewById(R.id.checkboxPMR)
+        closeButton = findViewById(R.id.close_impostazioni_button)
 
 
         val user = auth.currentUser
@@ -73,6 +75,11 @@ class ImpostazioniActivity : AppCompatActivity() {
                 .addOnFailureListener {
                     Toast.makeText(this, "Errore nel recupero dei dati", Toast.LENGTH_SHORT).show()
                 }
+        }
+
+        // Pulsante per chiudere la finestra
+        closeButton.setOnClickListener {
+            finish()
         }
 
         btnSalvaNome.setOnClickListener {

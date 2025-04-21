@@ -4,16 +4,18 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="16dp"
+        android:background="#f4f4f4"
         android:clipToPadding="false">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            style="@style/AppTextViewBold"
             android:text="Lista Piloti con volo attivo"
             android:textSize="20sp"
             android:textStyle="bold"/>
@@ -21,7 +23,20 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewPiloti"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp" />
+
+        <!-- Aggiungi un pulsante Chiudi -->
+        <Button
+            android:id="@+id/close_pilotionline_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chiudi"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/button_text_color"
+            android:background="@drawable/rounded_button_blue" />
 
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

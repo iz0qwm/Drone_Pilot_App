@@ -2,81 +2,112 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="true"
+    android:background="#f4f4f4">
 
-    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false">
 
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="#e7e1d3"
-        android:padding="16dp">
-
-        <ImageView
-            android:id="@+id/logoImage"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/logo" />
-
-        <EditText
-            android:id="@+id/fullNameField"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nome"
-            android:layout_marginTop="20dp" />
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
 
-        <EditText
-            android:id="@+id/emailField"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Email"
-            android:layout_marginTop="20dp" />
+            <ImageView
+                android:id="@+id/logoImage"
+                android:layout_width="200dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="24dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/logo" />
 
-        <EditText
-            android:id="@+id/passwordField"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Password"
-            android:inputType="textPassword" />
+            <EditText
+                android:id="@+id/fullNameField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Nome"
+                android:layout_marginTop="24dp"
+                android:padding="12dp"
+                android:background="@drawable/rounded_input"
+                android:inputType="textPersonName" />
 
-        <Button
-            android:id="@+id/loginButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Login"
-            android:layout_marginTop="20dp" />
+            <EditText
+                android:id="@+id/emailField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Email"
+                android:layout_marginTop="16dp"
+                android:padding="12dp"
+                android:background="@drawable/rounded_input"
+                android:inputType="textEmailAddress" />
 
-        <Button
-            android:id="@+id/registerButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Registrati"
-            android:layout_marginTop="20dp" />
+            <EditText
+                android:id="@+id/passwordField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Password"
+                android:layout_marginTop="16dp"
+                android:padding="12dp"
+                android:background="@drawable/rounded_input"
+                android:inputType="textPassword" />
 
-        <TextView
-            android:id="@+id/descriptionText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/description_text"
-            android:textSize="14sp"
-            android:textColor="@color/gray"
-            android:paddingTop="8dp"/>
+            <Button
+                android:id="@+id/loginButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Accedi"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#007bff"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/rounded_button_blue" />
 
-        <TextView
-            android:id="@+id/stacktraceTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:scrollbars="vertical"
-            android:visibility="gone"
-            android:background="#FFF"
-            android:textColor="#000"
-            android:padding="16dp" />
+            <Button
+                android:id="@+id/registerButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Registrati"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#28a745"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/rounded_button_green" />
+
+            <TextView
+                android:id="@+id/forgotPasswordText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hai dimenticato la password?"
+                android:textColor="#007bff"
+                android:textSize="14sp"
+                android:layout_marginTop="12dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+
+            <TextView
+                android:id="@+id/descriptionText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/description_text"
+                android:textSize="14sp"
+                android:textColor="#777777"
+                android:paddingTop="24dp" />
+
+            <TextView
+                android:id="@+id/stacktraceTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:scrollbars="vertical"
+                android:visibility="gone"
+                android:background="#FFF"
+                android:textColor="#000"
+                android:padding="16dp" />
 
         </LinearLayout>
     </ScrollView>

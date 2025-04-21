@@ -14,11 +14,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#e7e1d3"
+            android:background="#f4f4f4"
             android:padding="16dp">
 
             <TextView
                 android:id="@+id/weather_title"
+                style="@style/AppTextViewBold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Previsioni orarie e giornaliere"
@@ -119,6 +120,7 @@
 
             <TextView
                 android:id="@+id/weather_meteogram"
+                style="@style/AppTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Meteogrammi settimanali"
@@ -146,7 +148,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Chiudi"
-                android:layout_marginTop="16dp"/>
+                android:layout_marginTop="16dp"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

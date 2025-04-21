@@ -14,11 +14,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#e7e1d3"
+            android:background="#f4f4f4"
             android:padding="16dp">
 
             <TextView
                 android:id="@+id/weather_title"
+                style="@style/AppTextViewBold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Stato GPS e rete GNSS"
@@ -35,6 +36,7 @@
 
             <TextView
                 android:id="@+id/gpsStatusTextView"
+                style="@style/AppTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Stato GPS..."
@@ -44,6 +46,7 @@
 
             <TextView
                 android:id="@+id/gpsalertTextView"
+                style="@style/AppTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Messaggio di ALERT GPS"
@@ -61,6 +64,7 @@
             <!-- Aggiungi il testo per il TEC -->
             <TextView
                 android:id="@+id/tecTitleTextView"
+                style="@style/AppTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Elettroni nella ionosfera (POSIZIONE GPS)"
@@ -71,6 +75,7 @@
 
             <TextView
                 android:id="@+id/tecValueTextView"
+                style="@style/AppTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="TEC (Total Electron Content): 0 TECu"
@@ -80,6 +85,7 @@
             <!-- Aggiungi il testo che cambia colore in base al valore TEC -->
             <TextView
                 android:id="@+id/tecStatusTextView"
+                style="@style/AppTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Attività elettroni nella ionosfera..."
@@ -108,7 +114,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Chiudi"
-                android:layout_marginTop="16dp"/>
+                android:layout_marginTop="16dp"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

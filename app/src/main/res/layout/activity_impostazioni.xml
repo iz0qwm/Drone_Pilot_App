@@ -10,6 +10,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
+    android:background="#f4f4f4"
         android:clipToPadding="false">
 
         <TextView
@@ -22,21 +23,37 @@
 
         <EditText
             android:id="@+id/editFullName"
+            android:background="@drawable/rounded_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:padding="10dp"
             android:hint="Inserisci il tuo nome"/>
 
         <CheckBox
             android:id="@+id/checkboxPMR"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="Ho la radio PMR accesa sul CH4" />
 
         <Button
             android:id="@+id/btnSalvaNome"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Salva impostazioni"/>
+            android:text="Salva impostazioni"
+            android:textAllCaps="false"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/button_text_color"
+            android:background="@drawable/rounded_button_green"/>
+
+        <Button
+            android:id="@+id/close_impostazioni_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chiudi"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/button_text_color"
+            android:background="@drawable/rounded_button_blue" />
 
 
 

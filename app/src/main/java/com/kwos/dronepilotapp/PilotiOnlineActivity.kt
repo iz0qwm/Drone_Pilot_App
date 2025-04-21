@@ -11,6 +11,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import android.view.View
+import android.widget.Button
 
 class PilotiOnlineActivity : AppCompatActivity() {
 
@@ -41,6 +42,13 @@ class PilotiOnlineActivity : AppCompatActivity() {
         // fine padding
 
         supportActionBar?.hide()
+
+        val closeButton: Button = findViewById(R.id.close_pilotionline_button)
+
+        // Pulsante per chiudere la finestra
+        closeButton.setOnClickListener {
+            finish()
+        }
 
         pilotiRecyclerView = findViewById(R.id.recyclerViewPiloti)
         pilotiAdapter = PilotiAdapter(pilotiList)

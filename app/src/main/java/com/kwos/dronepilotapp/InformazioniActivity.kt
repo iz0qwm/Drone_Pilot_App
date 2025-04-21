@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -17,6 +18,13 @@ class InformazioniActivity : AppCompatActivity() {
         supportActionBar?.hide()
 
         setContentView(R.layout.activity_informazioni)
+
+        val closeButton: Button = findViewById(R.id.close_informazioni_button)
+
+        // Pulsante per chiudere la finestra
+        closeButton.setOnClickListener {
+            finish()
+        }
 
         //Fa il padding automatico (non va a coprire i tasti funzione per i
         //telefoni con immersive view

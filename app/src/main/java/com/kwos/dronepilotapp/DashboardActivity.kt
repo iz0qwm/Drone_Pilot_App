@@ -17,7 +17,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import androidx.appcompat.widget.PopupMenu
+//import androidx.appcompat.widget.PopupMenu
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -55,6 +55,9 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import android.widget.PopupMenu
+import android.view.ContextThemeWrapper
+
 // per il padding
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -358,6 +361,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
         popupMenu.show()
+
     }
 
     // Mostra messaggi dopo averli recuperati dal Broadcast
@@ -1086,8 +1090,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                         // Aggiorna l'interfaccia con il valore del lowerLimit
                         runOnUiThread {
                             findViewById<TextView>(R.id.lowerLimitTextView)?.apply {
-                                text = "Open Category fino a: $lowerLimit m\n" +
-                                        "controlla D-Flight prima di accendere il drone"
+                                text = "Open Category fino a: $lowerLimit m"
                                 visibility = View.VISIBLE
                                 setTextColor(getColor(R.color.red))
                             }

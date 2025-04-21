@@ -1,19 +1,20 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:clipToPadding="false">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
 
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#e7e1d3"
+            android:background="#f4f4f4"
             android:padding="16dp">
 
             <!-- Contenitore per il titolo e l'icona del menu -->
@@ -43,16 +44,16 @@
                     android:padding="8dp"/>
             </RelativeLayout>
 
-            <Button
-                android:id="@+id/logoutButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Logout" />
-
+            <!-- EditText per il nome del drone -->
             <EditText
                 android:id="@+id/droneField"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/rounded_input"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#ccc"
+                android:layout_marginBottom="8dp"
                 android:hint="Nome Drone" />
 
             <!-- Contenitore orizzontale per i due bottoni -->
@@ -68,6 +69,9 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:text="Inizio volo"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_blue"
                     android:layout_marginEnd="8dp"/>
 
                 <Button
@@ -75,19 +79,23 @@
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
-                    android:text="Fine volo"/>
+                    android:text="Fine volo"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_blue"/>
 
                 <Switch
                     android:id="@+id/chatToggle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Disponibile per chat"/>
+                    android:text="Disponibile per chat"
+                    android:thumbTint="@color/blue_button"
+                    android:trackTint="@color/blue_button" />
 
             </LinearLayout>
 
+            <!-- Card con la mappa -->
             <com.google.android.material.card.MaterialCardView
-                xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_width="match_parent"
                 android:layout_height="325dp"
                 android:theme="@style/Theme.MaterialComponents.Light"
@@ -102,7 +110,7 @@
                     android:layout_height="match_parent"/>
             </com.google.android.material.card.MaterialCardView>
 
-
+            <!-- Icona nuovi messaggi -->
             <LinearLayout
                 android:id="@+id/new_message_container"
                 android:layout_width="wrap_content"
@@ -110,7 +118,7 @@
                 android:orientation="horizontal"
                 android:gravity="center"
                 android:visibility="visible"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="12dp"
                 android:layout_gravity="center_horizontal">
 
                 <ImageView
@@ -130,6 +138,7 @@
                     android:paddingStart="8dp" />
             </LinearLayout>
 
+            <!-- Pulsanti per previsioni meteo e Spot di volo -->
             <LinearLayout
                 android:id="@+id/weather_info_container"
                 android:layout_width="match_parent"
@@ -139,24 +148,30 @@
                 android:gravity="center"
                 android:padding="8dp">
 
-                <!-- Pulsante per aprire le previsioni meteo -->
                 <Button
                     android:id="@+id/weather_forecast_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Previsioni Meteo e GPS"
+                    android:text="Meteo e GPS"
+                    android:textAllCaps="false"
+                    android:paddingHorizontal="10dp"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_blue"
                     android:layout_marginEnd="8dp"/>
 
-                <!-- Nuovo pulsante per Spot di volo -->
+                <!-- Pulsante Spot di Volo -->
                 <Button
                     android:id="@+id/takeoff_spots_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Spot di Volo"/>
+                    android:text="Spot di Volo"
+                    android:textAllCaps="false"
+                    android:paddingHorizontal="10dp"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_green"/>
             </LinearLayout>
 
-
-            <!-- TextView per il messaggio di piloti nelle vicinanze -->
+            <!-- TextView per i messaggi di piloti nelle vicinanze -->
             <TextView
                 android:id="@+id/pilotNearAlert"
                 android:layout_width="match_parent"
@@ -166,7 +181,7 @@
                 android:textColor="@android:color/holo_green_dark"
                 android:gravity="center"
                 android:padding="5dp"
-                android:background="#e7e1d3"/>
+                android:background="#f4f4f4"/>
 
             <TextView
                 android:id="@+id/lowerLimitTextView"
@@ -177,7 +192,15 @@
                 android:textStyle="bold"
                 android:layout_marginTop="5dp"/>
 
-
+            <!-- Pulsante Logout -->
+            <Button
+                android:id="@+id/logoutButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Logout"
+                android:textAllCaps="false"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue"/>
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

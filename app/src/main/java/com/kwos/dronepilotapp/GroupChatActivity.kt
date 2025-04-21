@@ -29,6 +29,7 @@ class GroupChatActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var messageInput: EditText
     private lateinit var sendButton: Button
+    private lateinit var closeButton: Button
     private lateinit var messagesAdapter: GroupChatAdapter
     private val messagesList = mutableListOf<Message>()
     private val firestore = FirebaseFirestore.getInstance()
@@ -62,6 +63,7 @@ class GroupChatActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerViewMessages)
         messageInput = findViewById(R.id.editTextMessage)
         sendButton = findViewById(R.id.buttonSend)
+        closeButton = findViewById(R.id.close_groupchat_button)
 
         //setContentView(R.layout.activity_dashboard)
         supportActionBar?.hide()
@@ -73,6 +75,11 @@ class GroupChatActivity : AppCompatActivity() {
         }
 
         sendButton.setOnClickListener { sendMessage() }
+
+        // Pulsante per chiudere la finestra
+        closeButton.setOnClickListener {
+            finish()
+        }
 
         listenForMessages()
     }

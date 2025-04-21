@@ -4,5 +4,14 @@
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryDark">@color/purple_700</item>
         <item name="android:textColorPrimary">@android:color/white</item>
+
+        <!-- Aggiungi il popupMenuStyle con il background personalizzato -->
+        <item name="popupMenuStyle">@style/PopupMenuStyle</item>
+    </style>
+
+    <!-- Stile personalizzato per il PopupMenu -->
+    <style name="PopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/rounded_popup_bg</item> <!-- Usa il tuo background arrotondato -->
     </style>
 </resources>
+
