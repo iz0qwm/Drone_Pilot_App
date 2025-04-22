@@ -14,7 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#f4f4f4"
+            android:background="#191970"
             android:padding="16dp">
 
             <!-- Contenitore per il titolo e l'icona del menu -->
@@ -29,8 +29,9 @@
                     android:text="Benvenuto!"
                     android:textSize="18sp"
                     android:gravity="center"
+                    android:textColor="#DCDCDC"
                     android:layout_centerHorizontal="true"
-                    android:padding="10dp"/>
+                    android:padding="8dp"/>
 
                 <ImageButton
                     android:id="@+id/menuButton"
@@ -50,49 +51,98 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/rounded_input"
-                android:padding="10dp"
+                android:padding="8dp"
                 android:textColor="#000"
                 android:textColorHint="#ccc"
-                android:layout_marginBottom="8dp"
                 android:hint="Nome Drone" />
 
-            <!-- Contenitore orizzontale per i due bottoni -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center">
+                android:gravity="center"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:paddingHorizontal="8dp">
 
+                <!-- Bottone sinistro -->
                 <Button
                     android:id="@+id/startFlightButton"
                     android:layout_width="0dp"
-                    android:layout_weight="1"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Inizio volo"
                     android:textAllCaps="false"
+                    android:paddingHorizontal="10dp"
                     android:textColor="@color/button_text_color"
                     android:background="@drawable/rounded_button_blue"
                     android:layout_marginEnd="8dp"/>
 
+                <!-- Sezione centrale: Chat + ON [switch] OFF -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginHorizontal="4dp">
+
+                    <TextView
+                        android:id="@+id/chatTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chat"
+                        android:textColor="#DCDCDC"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="4dp" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/chatLabelOn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="OFF"
+                            android:textColor="#DCDCDC"
+                            android:textSize="11sp"
+                            android:layout_marginEnd="4dp" />
+
+                        <Switch
+                            android:id="@+id/chatToggle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:thumbTint="@color/green_button"
+                            android:trackTint="@color/blue_button" />
+
+                        <TextView
+                            android:id="@+id/chatLabelOff"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ON"
+                            android:textColor="#DCDCDC"
+                            android:textSize="11sp"
+                            android:layout_marginStart="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Bottone destro -->
                 <Button
                     android:id="@+id/stopFlightButton"
                     android:layout_width="0dp"
-                    android:layout_weight="1"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Fine volo"
                     android:textAllCaps="false"
+                    android:paddingHorizontal="10dp"
                     android:textColor="@color/button_text_color"
-                    android:background="@drawable/rounded_button_blue"/>
-
-                <Switch
-                    android:id="@+id/chatToggle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Disponibile per chat"
-                    android:thumbTint="@color/blue_button"
-                    android:trackTint="@color/blue_button" />
-
+                    android:background="@drawable/rounded_button_blue"
+                    android:layout_marginStart="8dp"/>
             </LinearLayout>
+
 
             <!-- Card con la mappa -->
             <com.google.android.material.card.MaterialCardView
@@ -133,6 +183,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="...uhm nessun messaggio"
+                    android:textColor="#DCDCDC"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:paddingStart="8dp" />
@@ -181,7 +232,7 @@
                 android:textColor="@android:color/holo_green_dark"
                 android:gravity="center"
                 android:padding="5dp"
-                android:background="#f4f4f4"/>
+                android:background="@drawable/rounded_textview" />
 
             <TextView
                 android:id="@+id/lowerLimitTextView"

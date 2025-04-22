@@ -8,13 +8,14 @@
     <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="#191970"
         android:clipToPadding="false">
 
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#f4f4f4"
+            android:background="#191970"
             android:padding="16dp">
 
             <TextView
@@ -26,6 +27,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"
+                android:textColor="#DCDCDC"
                 android:paddingBottom="10dp"/>
 
             <View
@@ -42,6 +44,7 @@
                 android:text="Stato GPS..."
                 android:textStyle="bold"
                 android:textSize="16sp"
+                android:textColor="#DCDCDC"
                 android:padding="8dp" />
 
             <TextView
@@ -71,6 +74,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:gravity="center"
+                android:textColor="#DCDCDC"
                 android:layout_marginTop="16dp"/>
 
             <TextView
@@ -78,6 +82,7 @@
                 style="@style/AppTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="#DCDCDC"
                 android:text="TEC (Total Electron Content): 0 TECu"
                 android:textSize="14sp"
                 android:layout_marginTop="8dp"/>
@@ -116,7 +121,7 @@
                 android:text="Chiudi"
                 android:layout_marginTop="16dp"
                 android:textColor="@color/button_text_color"
-                android:background="@drawable/rounded_button_blue" />
+                android:background="@drawable/rounded_button_red" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

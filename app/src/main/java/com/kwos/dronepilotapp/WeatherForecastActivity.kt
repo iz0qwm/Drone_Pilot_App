@@ -57,12 +57,21 @@ class WeatherForecastActivity : AppCompatActivity() {
         // Mostro la ProgressBar prima di caricare i dati
         weatherProgressBar.visibility = View.VISIBLE
 
-        val weatherDetails: TextView = findViewById(R.id.weather_details)
+        //val weatherDetails: TextView = findViewById(R.id.weather_details)
         val closeButton: Button = findViewById(R.id.close_weather_button)
         val gpsButton: Button = findViewById(R.id.btn_gps)
         val forecastdetailsButton: Button = findViewById(R.id.btn_forecast_details)
         val locationText: TextView = findViewById(R.id.weather_location)
         val alertTextView: TextView = findViewById(R.id.alertTextView)
+
+        val temperatureMinText = findViewById<TextView>(R.id.temperatureMinText)
+        val temperatureMaxText = findViewById<TextView>(R.id.temperatureMaxText)
+        val windMinText = findViewById<TextView>(R.id.windMinText)
+        val windMeanText = findViewById<TextView>(R.id.windMeanText)
+        val windMaxText = findViewById<TextView>(R.id.windMaxText)
+        val humidityText = findViewById<TextView>(R.id.humidityText)
+        val precipitationText = findViewById<TextView>(R.id.precipitationText)
+
 
         // Recupero le coordinate passate dall'Activity principale
         val lat = intent.getDoubleExtra("LATITUDE", 0.0)
@@ -82,54 +91,78 @@ class WeatherForecastActivity : AppCompatActivity() {
         MeteoManager.getMeteoData(lat, lon) { meteoData ->
             Handler(Looper.getMainLooper()).postDelayed({
                 if (meteoData != null) {
-                    // Usa getString per evitare concatenazione manuale delle stringhe
-                    weatherDetails.text = getString(
-                        R.string.weather_info,
-                        meteoData.temperature_min,
-                        meteoData.temperature_max,
-                        meteoData.wind_speedmin,
-                        meteoData.wind_speedmean,
-                        meteoData.wind_speedmax,
-                        meteoData.humidity,
-                        meteoData.precipitation_probability
-                    )
+                    // Imposta le temperature
+                    temperatureMinText.text = "${meteoData.temperature_min}°C"
+                    temperatureMaxText.text = "${meteoData.temperature_max}°C"
 
-                    // Logica di allerta basata sul vento e precipitazioni
+                    // Imposta vento
+                    windMinText.text = "${meteoData.wind_speedmin} km/h"
+                    windMeanText.text = "${meteoData.wind_speedmean} km/h"
+                    windMaxText.text = "${meteoData.wind_speedmax} km/h"
+
+                    // Imposta umidità
+                    humidityText.text = "${meteoData.humidity}%"
+
+                    // Imposta precipitazioni
+                    precipitationText.text = "${meteoData.precipitation_probability}%"
+
+                    // Scegli l'icona meteo in base a precipitazioni e vento
+                    val isRainLikely = meteoData.precipitation_probability > 50
+                    val isWindStrong = meteoData.wind_speedmean > 15
+
+                    val emoji = when {
+                        isRainLikely -> "🌧️"
+                        isWindStrong -> "💨"
+                        else -> "☀️"
+                    }
+
+                    val descrizione = when {
+                        isRainLikely -> "Possibile pioggia"
+                        isWindStrong -> "Vento forte"
+                        else -> "Cielo sereno"
+                    }
+
+                    val weatherDescription: TextView = findViewById(R.id.weatherDescription)
+                    weatherDescription.text = "$emoji $descrizione"
+
+
+                    // Logica di allerta
                     when {
-                        meteoData.wind_speedmin > 15 || meteoData.wind_speedmean > 15 || meteoData.wind_speedmax > 15 -> {
-                            alertTextView.text = getString(R.string.alert_vento_moderato)
-                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
-                        }
-                        meteoData.wind_speedmin > 20 || meteoData.wind_speedmean > 20 || meteoData.wind_speedmax > 20 -> {
-                            alertTextView.text = getString(R.string.alert_vento_forte)
+                        meteoData.wind_speedmean > 20 || meteoData.wind_speedmax > 20 -> {
+                            alertTextView.text = "ALERT !! VENTO FORTE"
                             alertTextView.setTextColor(ContextCompat.getColor(this, R.color.red))
                         }
+                        meteoData.wind_speedmean > 15 -> {
+                            alertTextView.text = "ALLERTA VENTO MODERATO"
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
+                        }
                         meteoData.precipitation_probability > 70 && meteoData.humidity > 70 -> {
-                            alertTextView.text = getString(R.string.alert_pioggia_forte)
-                            alertTextView.setTextColor(ContextCompat.getColor(this, R.color.red)) // Rosso
+                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERÀ A BREVE"
+                            alertTextView.setTextColor(ContextCompat.getColor(this, R.color.red))
                         }
-                        meteoData.precipitation_probability > 40 && meteoData.wind_speedmean < 10 && meteoData.humidity > 70 -> {
-                            alertTextView.text = getString(R.string.alert_pioggia_moderata)
-                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
+                        meteoData.precipitation_probability > 50 -> {
+                            alertTextView.text = "STA PIOVENDO O PIOVERÀ. ATTENZIONE"
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0))
                         }
-                        meteoData.precipitation_probability > 25 && meteoData.wind_speedmean < 10 && meteoData.humidity > 70 -> {
-                            alertTextView.text = getString(R.string.alert_pioggia_leggera)
-                            alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
+                        meteoData.precipitation_probability > 25 -> {
+                            alertTextView.text = "ARIA INSTABILE. STAI ATTENTO."
+                            alertTextView.setTextColor(Color.rgb(255, 165, 0))
                         }
                         else -> {
-                            alertTextView.text = getString(R.string.alert_condizioni_ok)
+                            alertTextView.text = "LE CONDIZIONI METEO SONO BUONE"
                             alertTextView.setTextColor(ContextCompat.getColor(this, R.color.green))
                         }
                     }
-
                 } else {
-                    weatherDetails.text = getString(R.string.weather_data_not_available)
+                    // Nessun dato disponibile
+                    alertTextView.text = "Dati meteo non disponibili"
+                    alertTextView.setTextColor(ContextCompat.getColor(this, R.color.gray))
                 }
 
-                // Nascondo la ProgressBar perché i dati sono caricati
+                // Nascondi la progress bar
                 weatherProgressBar.visibility = View.GONE
 
-            }, 1000) // Ritardo di 2000ms
+            }, 1000)
         }
 
 

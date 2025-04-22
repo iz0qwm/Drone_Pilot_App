@@ -4,7 +4,10 @@
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryDark">@color/purple_700</item>
         <item name="android:textColorPrimary">@android:color/white</item>
-
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="colorSurface">@color/white</item>
+        <!-- Stile personalizzato per il dialogo -->
+        <item name="alertDialogTheme">@style/CustomAlertDialogTheme</item>
         <!-- Aggiungi il popupMenuStyle con il background personalizzato -->
         <item name="popupMenuStyle">@style/PopupMenuStyle</item>
     </style>
@@ -13,5 +16,12 @@
     <style name="PopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
         <item name="android:popupBackground">@drawable/rounded_popup_bg</item> <!-- Usa il tuo background arrotondato -->
     </style>
+
+    <!-- Stile personalizzato per i dialoghi -->
+    <style name="CustomAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:textColorPrimary">?android:attr/textColorPrimary</item>
+        <item name="android:background">?android:attr/colorBackground</item>
+    </style>
+
 </resources>
 

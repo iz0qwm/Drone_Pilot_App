@@ -8,13 +8,14 @@
     <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="#191970"
         android:clipToPadding="false">
 
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#f4f4f4"
+            android:background="#191970"
             android:padding="16dp">
 
             <TextView
@@ -26,6 +27,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"
+                android:textColor="#DCDCDC"
                 android:paddingBottom="10dp"/>
 
             <View
@@ -51,6 +53,7 @@
                     android:text="Giorno/Ora"
                     android:textStyle="bold"
                     android:gravity="center"
+                    android:textColor="#DCDCDC"
                     android:paddingEnd="8dp"/>
 
                 <TextView
@@ -61,6 +64,7 @@
                     android:text="Temp (°C)"
                     android:textStyle="bold"
                     android:gravity="center"
+                    android:textColor="#DCDCDC"
                     android:paddingEnd="8dp"/>
 
                 <TextView
@@ -71,6 +75,7 @@
                     android:text="Press (hPa)"
                     android:textStyle="bold"
                     android:gravity="center"
+                    android:textColor="#DCDCDC"
                     android:paddingEnd="8dp"/>
 
                 <TextView
@@ -81,6 +86,7 @@
                     android:text="Cop. Nuvolosa (%)"
                     android:textStyle="bold"
                     android:gravity="center"
+                    android:textColor="#DCDCDC"
                     android:paddingEnd="8dp"/>
 
                 <TextView
@@ -91,6 +97,7 @@
                     android:text="Vel. Vento (km/h)"
                     android:textStyle="bold"
                     android:gravity="center"
+                    android:textColor="#DCDCDC"
                     android:paddingEnd="8dp"/>
 
                 <TextView
@@ -100,6 +107,7 @@
                     android:layout_weight="1"
                     android:text="Vel. Raff. (km/h)"
                     android:textStyle="bold"
+                    android:textColor="#DCDCDC"
                     android:gravity="center"/>
             </LinearLayout>
 
@@ -126,6 +134,7 @@
                 android:text="Meteogrammi settimanali"
                 android:textSize="16sp"
                 android:textStyle="bold"
+                android:textColor="#DCDCDC"
                 android:layout_marginTop="16dp"/>
 
             <com.github.chrisbanes.photoview.PhotoView
@@ -150,7 +159,7 @@
                 android:text="Chiudi"
                 android:layout_marginTop="16dp"
                 android:textColor="@color/button_text_color"
-                android:background="@drawable/rounded_button_blue" />
+                android:background="@drawable/rounded_button_red" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

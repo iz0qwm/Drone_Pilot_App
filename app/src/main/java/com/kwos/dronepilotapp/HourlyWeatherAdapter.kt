@@ -36,31 +36,31 @@ class HourlyWeatherAdapter(private val forecastList: List<HourlyForecast>) :
 
         // Colore per la temperatura
         when {
-            forecast.temp <= 2 -> holder.tempTextView.setTextColor(Color.BLUE) // Blue per temperature <= 2
+            forecast.temp <= 2 -> holder.tempTextView.setTextColor(Color.parseColor("#87CEEB")) // Blue per temperature <= 2
             forecast.temp in 30.0..35.0 -> holder.tempTextView.setTextColor(Color.parseColor("#FFA500")) // Arancione per temperature tra 30 e 35
             forecast.temp > 35 -> holder.tempTextView.setTextColor(Color.RED) // Rosso per temperature > 35
-            else -> holder.tempTextView.setTextColor(Color.BLACK) // Default
+            else -> holder.tempTextView.setTextColor(Color.parseColor("#DCDCDC")) // Default
         }
 
         // Colore per la copertura nuvolosa
         when {
             forecast.clouds in 40..70 -> holder.cloudsTextView.setTextColor(Color.parseColor("#FFA500")) // Arancione per nuvolosità tra 40 e 70
             forecast.clouds > 70 -> holder.cloudsTextView.setTextColor(Color.RED) // Rosso per nuvolosità > 70
-            else -> holder.cloudsTextView.setTextColor(Color.BLACK) // Default
+            else -> holder.tempTextView.setTextColor(Color.parseColor("#DCDCDC")) // Default
         }
 
         // Colore per la velocità del vento
         when {
             forecast.windSpeed > 20 -> holder.windTextView.setTextColor(Color.RED) // Rosso per vento > 20 km/h
             forecast.windSpeed in 10..20 -> holder.windTextView.setTextColor(Color.parseColor("#FFA500")) // Arancione per vento tra 10 e 20 km/h
-            else -> holder.windTextView.setTextColor(Color.BLACK) // Default
+            else -> holder.tempTextView.setTextColor(Color.parseColor("#DCDCDC")) // Default
         }
 
         // Colore per la raffica del vento
         when {
             forecast.windGust > 20 -> holder.rainTextView.setTextColor(Color.RED) // Rosso per raffica > 20 km/h
             forecast.windGust in 10..20 -> holder.rainTextView.setTextColor(Color.parseColor("#FFA500")) // Arancione per raffica tra 10 e 20 km/h
-            else -> holder.rainTextView.setTextColor(Color.BLACK) // Default
+            else -> holder.tempTextView.setTextColor(Color.parseColor("#DCDCDC")) // Default
         }
     }
 

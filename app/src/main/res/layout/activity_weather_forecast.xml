@@ -3,18 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#191970"
     android:fitsSystemWindows="true">
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="#191970"
         android:clipToPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#f4f4f4"
+            android:background="#191970"
             android:padding="16dp">
 
             <TextView
@@ -24,6 +26,7 @@
                 android:layout_height="wrap_content"
                 android:text="Situazione meteo attuale"
                 android:gravity="center"
+                android:textColor="#DCDCDC"
                 android:paddingBottom="10dp" />
 
             <TextView
@@ -33,6 +36,7 @@
                 android:layout_height="wrap_content"
                 android:text="Località"
                 android:gravity="center"
+                android:textColor="#DCDCDC"
                 android:layout_marginBottom="10dp" />
 
             <ProgressBar
@@ -42,66 +46,223 @@
                 android:layout_gravity="center"
                 android:visibility="gone" />
 
+            <!-- Weather details section -->
             <LinearLayout
+                android:id="@+id/weather_details_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp"
+                android:background="#1E1E1E"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:elevation="4dp"
                 android:gravity="center_horizontal">
 
-                <TextView
-                    android:id="@+id/weather_details"
-                    style="@style/AppTextView"
+                <!-- Temperatura -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Caricamento dati meteo..."
-                    android:gravity="center"
-                    android:padding="8dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
 
-                <TextView
-                    android:id="@+id/alertTextView"
-                    style="@style/AppTextViewBold"
-                    android:layout_width="wrap_content"
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_temperature"
+                        android:contentDescription="Temperatura"
+                        app:tint="#FFD700" />
+
+                    <TextView
+                        android:id="@+id/temperatureMinText"
+                        style="@style/AppTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Min: --°C"
+                        android:layout_marginStart="8dp"
+                        android:textColor="#DCDCDC" />
+
+                    <TextView
+                        android:id="@+id/temperatureMaxText"
+                        style="@style/AppTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" / Max: --°C"
+                        android:layout_marginStart="8dp"
+                        android:textColor="#DCDCDC" />
+                </LinearLayout>
+
+                <!-- Vento -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Messaggio di ALERT METEO"
-                    android:gravity="center"
-                    android:padding="8dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_wind"
+                        android:contentDescription="Vento"
+                        app:tint="#87CEFA" />
+
+                    <TextView
+                        android:id="@+id/windMinText"
+                        style="@style/AppTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Min: -- km/h"
+                        android:layout_marginStart="8dp"
+                        android:textColor="#DCDCDC" />
+
+                    <TextView
+                        android:id="@+id/windMeanText"
+                        style="@style/AppTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" / Med: -- km/h"
+                        android:layout_marginStart="8dp"
+                        android:textColor="#DCDCDC" />
+
+                    <TextView
+                        android:id="@+id/windMaxText"
+                        style="@style/AppTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" / Max: -- km/h"
+                        android:layout_marginStart="8dp"
+                        android:textColor="#DCDCDC" />
+                </LinearLayout>
+
+                <!-- Umidità -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_humidity"
+                        android:contentDescription="Umidità"
+                        app:tint="#00CED1" />
+
+                    <TextView
+                        android:id="@+id/humidityText"
+                        style="@style/AppTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Umidità: --%"
+                        android:layout_marginStart="8dp"
+                        android:textColor="#DCDCDC" />
+                </LinearLayout>
+
+                <!-- Precipitazioni -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_rain"
+                        android:contentDescription="Precipitazioni"
+                        app:tint="#1E90FF" />
+
+                    <TextView
+                        android:id="@+id/precipitationText"
+                        style="@style/AppTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Pioggia: --%"
+                        android:layout_marginStart="8dp"
+                        android:textColor="#DCDCDC" />
+                </LinearLayout>
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/weatherDescription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⛅ Situazione meteo"
+                    android:textColor="#DCDCDC"
+                    android:textSize="18sp"
+                    android:gravity="center" />
+            </LinearLayout>
+
+
+            <!-- Alert Meteo -->
+            <TextView
+                android:id="@+id/alertTextView"
+                style="@style/AppTextViewBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Messaggio di ALERT METEO"
+                android:gravity="center"
+                android:padding="8dp"
+                android:textColor="#FFD700" />
+
+            <!-- Divider -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@android:color/darker_gray"
                 android:layout_marginVertical="8dp" />
 
-            <Button
-                android:id="@+id/btn_gps"
+            <!-- Pulsanti navigazione -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Stato GPS"
-                android:textAllCaps="false"
-                android:layout_marginTop="16dp"
-                android:textColor="@color/button_text_color"
-                android:background="@drawable/rounded_button_green" />
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="16dp"
+                android:gravity="center"
+                android:weightSum="2">
 
-            <Button
-                android:id="@+id/btn_forecast_details"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Previsioni"
-                android:textAllCaps="false"
-                android:layout_marginTop="16dp"
-                android:textColor="@color/button_text_color"
-                android:background="@drawable/rounded_button_green" />
+                <Button
+                    android:id="@+id/btn_gps"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Stato GPS"
+                    android:textAllCaps="false"
+                    android:layout_marginEnd="8dp"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_green" />
+
+                <Button
+                    android:id="@+id/btn_forecast_details"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Previsioni"
+                    android:textAllCaps="false"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_green" />
+            </LinearLayout>
 
             <Button
                 android:id="@+id/close_weather_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Chiudi"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="16dp"
                 android:textColor="@color/button_text_color"
-                android:background="@drawable/rounded_button_blue" />
+                android:background="@drawable/rounded_button_red" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

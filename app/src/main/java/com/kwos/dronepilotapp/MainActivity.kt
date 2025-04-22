@@ -53,6 +53,14 @@ import android.util.Base64
 //import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.security.KeyStore
 import javax.crypto.spec.GCMParameterSpec
+import android.graphics.Typeface
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -544,6 +552,7 @@ fun checkForUpdate(context: Context) {
     val TAG = "DronePilotApp"
     val url = "https://api.github.com/repos/iz0qwm/Drone_Pilot_App/releases"
     val token = getApiKey("GITHUB_TOKEN", context)
+
     if (token == null) {
         logError(TAG, "checkForUpdate: Token GitHub non trovato!")
     } else {
@@ -557,8 +566,7 @@ fun checkForUpdate(context: Context) {
         val client = OkHttpClient()
         val request = Request.Builder()
             .url(url)
-            //commentato perchè il repository GitHub è Open
-            //.addHeader("Authorization", "token $token")  // <-- Aggiunto l'header per l'autenticazione
+            //.addHeader("Authorization", "token $token") // usalo se la repo diventa privata
             .addHeader("Accept", "application/vnd.github.v3+json")
             .addHeader("X-GitHub-Api-Version", "2022-11-28")
             .build()
@@ -576,8 +584,9 @@ fun checkForUpdate(context: Context) {
 
             if (responseBody != null) {
                 val jsonArray = JSONArray(responseBody)
-                val latestRelease = jsonArray.getJSONObject(0) // Accedi al primo rilascio dell'array
+                val latestRelease = jsonArray.getJSONObject(0)
                 val latestVersion = latestRelease.optString("tag_name", "unknown")
+                val releaseNotes = latestRelease.optString("body", "Nessuna descrizione disponibile.")
                 logDebug(TAG, "UpdateCheck: Latest version: $latestVersion")
 
                 val currentVersion = BuildConfig.VERSION_NAME
@@ -587,17 +596,33 @@ fun checkForUpdate(context: Context) {
                     logDebug(TAG, "UpdateCheck: New version available: $latestVersion")
                     val assets = latestRelease.getJSONArray("assets")
                     val downloadUrl = assets.getJSONObject(0).getString("browser_download_url")
-                    // Aggiungi qui la logica per notificare l'utente o avviare il download
+
                     (context as Activity).runOnUiThread {
-                        AlertDialog.Builder(context)
-                            .setTitle("Nuovo aggiornamento disponibile")
-                            .setMessage("Scaricare la versione $latestVersion?")
+                        // Crea una SpannableString con il testo in nero
+                        val spannableMessage = SpannableString("Novità nella versione $latestVersion:\n\n$releaseNotes")
+                        spannableMessage.setSpan(
+                            ForegroundColorSpan(ContextCompat.getColor(context, R.color.black)), // Colore nero
+                            0,
+                            spannableMessage.length,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+
+                        val dialog = AlertDialog.Builder(context)
+                            .setTitle("Aggiornamento disponibile")
+                            .setMessage(spannableMessage)
                             .setPositiveButton("Scarica") { _, _ ->
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl))
                                 context.startActivity(intent)
                             }
                             .setNegativeButton("Annulla", null)
-                            .show()
+                            .create()
+
+                        dialog.show()
+
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                            ?.setTextColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                            ?.setTextColor(ContextCompat.getColor(context, R.color.gray))
                     }
                 } else {
                     logDebug(TAG, "UpdateCheck: App is up to date.")
@@ -610,3 +635,6 @@ fun checkForUpdate(context: Context) {
         }
     }
 }
+
+
+
