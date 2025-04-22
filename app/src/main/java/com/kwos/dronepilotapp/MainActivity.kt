@@ -45,20 +45,17 @@ import java.util.Properties
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.text.InputType
-import android.text.method.ScrollingMovementMethod
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import android.util.Base64
-//import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.security.KeyStore
 import javax.crypto.spec.GCMParameterSpec
-import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
-import android.text.style.StyleSpan
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import android.animation.ObjectAnimator
+import android.view.ViewTreeObserver
 
 
 
@@ -244,6 +241,29 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Compila tutti i campi", Toast.LENGTH_SHORT).show()
             }
         }
+
+        val droneImage = findViewById<ImageView>(R.id.droneImage)
+
+        // Aspetta che il layout sia pronto per calcolare la larghezza
+        droneImage.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                droneImage.viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+                val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+                val droneWidth = droneImage.width.toFloat()
+
+                val animator = ObjectAnimator.ofFloat(
+                    droneImage,
+                    "translationX",
+                    -droneWidth,
+                    screenWidth
+                )
+
+                animator.duration = 4000 // durata in millisecondi
+                animator.repeatCount = ObjectAnimator.INFINITE
+                animator.start()
+            }
+        })
 
 
     }
