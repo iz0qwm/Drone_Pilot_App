@@ -17,10 +17,10 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
-//import androidx.appcompat.widget.PopupMenu
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -44,24 +44,32 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.kwos.dronepilotapp.databinding.ActivityDashboardBinding
 import android.util.Log
 import org.json.JSONObject
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.*
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.addCallback
 import android.app.AlertDialog
+import android.widget.ImageView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import android.widget.PopupMenu
-import android.view.ContextThemeWrapper
-
+import androidx.annotation.RequiresPermission
 // per il padding
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.model.PolylineOptions
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+
+// Per Drone ID
+import com.kwos.dronepilotapp.droneid.OpenDroneIdDataManager
+import com.kwos.dronepilotapp.data.AircraftObject
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -75,6 +83,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var messageReceiver: BroadcastReceiver
     private lateinit var pilotNearAlert: TextView
     private lateinit var lowerLimitTextView: TextView
+    private lateinit var droneIdDataManager: OpenDroneIdDataManager
+    private var bluetoothReceiver: BluetoothReceiver? = null
+    private var wifiAwareReceiver: WifiAwareReceiver? = null
+    private var wifiBeaconReceiver: WifiBeaconReceiver? = null
+
 
 
     private var mapFragment: SupportMapFragment? = null
@@ -93,7 +106,13 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // variabile per messageReceiver
+    private var isMessageReceiverRegistered = false
 
+    // Markers per Drone ID
+    private var isDroneReceiverRegistered = false
+    private val droneMarkers = mutableMapOf<String, Marker>()
+    private val droneTrajectories = mutableMapOf<String, Polyline>()
 
     //Gestione ricerca piloti
     private var pilotsLoaded = false
@@ -102,6 +121,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -138,7 +158,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
-// Aggiungi il callback per gestire il tasto indietro
+        // Aggiungi il callback per gestire il tasto indietro
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 // Usa 'this@DashboardActivity' per ottenere il contesto
@@ -181,28 +201,19 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         // INIZIO BROADCAST RECEIVER
-        //Questo serve per ricevere i messaggi provenienti dalla Chat
-        // Inizializza il BroadcastReceiver
         messageReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                // Controlla se l'intent contiene il messaggio
                 val message = intent.getStringExtra("message")
                 val title = intent.getStringExtra("title")
                 val senderId = intent.getStringExtra("senderId")
                 if (message != null && title != null && senderId != null) {
+                    Log.d("DronePilotApp", "Broadcast MessageReceiver: Messaggio ricevuto: $title - $message da $senderId")
                     showNewMessageInDashboard(title, message, senderId)
                 }
             }
         }
-        // Registra il receiver per ricevere il broadcast
-        val filter = IntentFilter("com.kwos.dronepilotapp.NEW_MESSAGE")
-        // Per Android 12 e versioni successive, registriamo dinamicamente il receiver in modo sicuro
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        //    registerReceiver(messageReceiver, filter, Context.RECEIVER_EXPORTED)
-        //} else {
-            registerReceiver(messageReceiver, filter, Context.RECEIVER_EXPORTED)
-        //}
-        // Verifica e richiedi permesso per notifiche su Android 13+
+
+        // Permessi per notifiche su Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
@@ -222,10 +233,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val menuButton: ImageButton = findViewById(R.id.menuButton)
         val spotButton: Button = findViewById(R.id.takeoff_spots_button)
         //val lowerLimitTextView: TextView = findViewById(R.id.lowerLimitTextView)
-
-
         //val pilotNearAlert = findViewById<TextView>(R.id.pilotNearAlert)
-
+        val onlineUsersText = findViewById<TextView>(R.id.onlineUsersText)
+        val chatUsersText = findViewById<TextView>(R.id.chatUsersText)
+        val driLed = findViewById<ImageView>(R.id.driLed)
 
         //Partenza della mappa
         mapContainer.visibility = View.VISIBLE
@@ -323,10 +334,178 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Mostra la mappa
         showMap()
 
-        //vede se si può volare di d-flight JASON
+        //vede se si può volare di d-flight JSON
         // Verifica se la TextView esiste nel layout
         findViewById<TextView>(R.id.lowerLimitTextView)?.text = "In attesa...."
         fetchFlightLimitWithLocation()
+
+
+        //
+        // Sezione Drone ID - call back
+        //
+        droneIdDataManager = OpenDroneIdDataManager(object : OpenDroneIdDataManager.Callback {
+            override fun onNewAircraft(obj: AircraftObject) {
+                Log.d("DronePilotApp", "🆕 Nuovo drone rilevato: ${obj.connection.value?.macAddress}")
+            }
+
+            override fun onLocationUpdate(obj: AircraftObject) {
+                val mac = obj.connection.value?.macAddress ?: return
+                val location = obj.location.value ?: return
+
+                // Ricava il modello dal Basic ID
+                val modello = obj.identification1.value?.uasIdAsString ?: "Drone sconosciuto"
+                val lat = location.latitude
+                val lon = location.longitude
+                val alt = location.height.toInt() // Altezza relativa più realistica
+                val vel = location.speedHorizontal.toInt()
+                val timestamp = System.currentTimeMillis()
+
+                // Filtra valori non validi
+                if (lat == 0.0 && lon == 0.0 || alt == -1000 || vel == 255) return
+
+                Log.d("DronePilotApp", "📍 Aggiornamento posizione $mac: lat=$lat, lon=$lon, alt=$alt, vel=$vel, modello=$modello")
+
+                updateDronePosition(mac, lat, lon, alt, vel, modello) // Mostriamo solo il modello nel marker
+
+                // 🔥 Aggiorna detected_drones e completed_flights
+                processIncomingDroneData(
+                    droneId = mac,
+                    lat = lat,
+                    lon = lon,
+                    alt = alt.toDouble(),
+                    speed = vel.toDouble(),
+                    timestamp = timestamp,
+                    model = modello
+                )
+
+                // ➕ Aggiunge comunque il punto nella trajectories
+                val db = FirebaseFirestore.getInstance()
+                db.collection("trajectories")
+                    .document(mac)
+                    .collection("points")
+                    .add(mapOf(
+                        "lat" to lat,
+                        "lon" to lon,
+                        "timestamp" to timestamp
+                    ))
+                    .addOnSuccessListener {
+                        Log.d("DronePilotApp", "📍 Punto aggiunto a trajectories/$mac")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("DronePilotApp", "❌ Errore aggiunta punto in trajectories/$mac: ${e.message}", e)
+                    }
+            }
+
+            fun processIncomingDroneData(
+                droneId: String,
+                lat: Double,
+                lon: Double,
+                alt: Double,
+                speed: Double,
+                timestamp: Long,
+                model: String?
+            ) {
+                val firestore = FirebaseFirestore.getInstance()
+                val detectedDronesRef = firestore.collection("detected_drones")
+                val completedFlightsRef = firestore.collection("completed_flights")
+
+                val droneDocRef = detectedDronesRef.document(droneId)
+
+                droneDocRef.get().addOnSuccessListener { snapshot ->
+                    val lastTimestamp = snapshot.getLong("timestamp") ?: 0L
+                    val timeDiffMillis = timestamp - lastTimestamp
+
+                    if (lastTimestamp != 0L && timeDiffMillis > 60 * 60 * 1000) { // Più di 1 ora
+                        // 🛬 Salva fine volo precedente
+                        val completedData = mapOf(
+                            "droneId" to droneId,
+                            "lat" to snapshot.getDouble("lat"),
+                            "lon" to snapshot.getDouble("lon"),
+                            "altitude" to snapshot.getDouble("altitude"),
+                            "speed" to snapshot.getDouble("speed"),
+                            "timestamp" to lastTimestamp,
+                            "model" to snapshot.getString("model")
+                        )
+
+                        completedFlightsRef.add(completedData)
+                            .addOnSuccessListener {
+                                Log.d("DronePilotApp", "✅ Drone $droneId salvato in completed_flights")
+                            }
+                            .addOnFailureListener { e ->
+                                Log.w("DronePilotApp", "❌ Errore salvataggio completed_flights: ${e.message}")
+                            }
+                    }
+
+                    // ✍️ Aggiorna la posizione attuale
+                    val updatedData = mapOf(
+                        "lat" to lat,
+                        "lon" to lon,
+                        "altitude" to alt,
+                        "speed" to speed,
+                        "timestamp" to timestamp,
+                        "model" to model
+                    )
+                    droneDocRef.set(updatedData)
+                        .addOnSuccessListener {
+                            Log.d("DronePilotApp", "📍 Drone $droneId aggiornato su detected_drones")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.w("DronePilotApp", "❌ Errore aggiornamento detected_drones: ${e.message}")
+                        }
+                }.addOnFailureListener { e ->
+                    Log.w("DronePilotApp", "❌ Errore lettura detected_drones: ${e.message}")
+                }
+            }
+
+
+        })
+
+
+        bluetoothReceiver = BluetoothReceiver(this, droneIdDataManager)
+        wifiAwareReceiver = WifiAwareReceiver(this, droneIdDataManager)
+        wifiBeaconReceiver = WifiBeaconReceiver(this, droneIdDataManager, null)
+
+        //controllo DRI receiver acceso
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val droneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
+
+        if (droneIdEnabled) {
+            driLed.setImageResource(R.drawable.led_on)
+        } else {
+            driLed.setImageResource(R.drawable.led_off)
+        }
+
+        //
+        // FINE - Drone ID
+        //
+
+
+        //controllo utenti in GroupChat Realtime database
+        val connectedUsersRef = FirebaseDatabase.getInstance().getReference("connectedUsers")
+
+        connectedUsersRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val numeroUtentiInChat = snapshot.childrenCount.toInt()
+                chatUsersText.text = "In chat: $numeroUtentiInChat"
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.w("DronePilotApp", "Errore caricamento utenti in chat: ${error.message}")
+            }
+        })
+
+        //controllo utenti loggati al sistema
+        val usersRef = FirebaseFirestore.getInstance().collection("users")
+        usersRef.whereEqualTo("online", true)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.w("DronePilotApp", "Errore caricamento utenti online: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                val numeroUtentiConnessi = snapshot?.size() ?: 0
+                onlineUsersText.text = "Online: $numeroUtentiConnessi"
+            }
 
     }
 
@@ -459,6 +638,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             mMap.isMyLocationEnabled = true
             loadPilots()
             listenForChatAvailability()
+            loadDrones()
             logDebug(TAG, "📡 Chat Listener per chat attivato")
         }
     }
@@ -561,6 +741,169 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
     }
 
+    //
+// Sezione Drone ID
+//
+    private fun loadDrones() {
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val droneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
+
+        if (!droneIdEnabled) return
+
+        val db = FirebaseFirestore.getInstance()
+
+        // 📡 1) Carica i droni attivi dalla raccolta "detected_drones"
+        db.collection("detected_drones")
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val droneId = document.id
+                    val lat = document.getDouble("lat") ?: 0.0
+                    val lon = document.getDouble("lon") ?: 0.0
+                    val alt = document.getLong("altitude")?.toInt() ?: 0
+                    val vel = document.getDouble("speed") ?: 0.0
+                    val modello = document.getString("model") ?: "Modello sconosciuto"
+
+                    val pos = LatLng(lat, lon)
+
+                    // Aggiungi o aggiorna il marker per il drone attivo
+                    if (droneMarkers.containsKey(droneId)) {
+                        droneMarkers[droneId]?.position = pos
+                        droneMarkers[droneId]?.snippet = "ID: $droneId\nAlt: $alt m, Vel: $vel m/s"
+                    } else {
+                        val marker = mMap.addMarker(
+                            MarkerOptions()
+                                .position(pos)
+                                .title(modello)
+                                .snippet("ID: $droneId, Alt: $alt m, Vel: $vel m/s")
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)) // icona gialla per droni attivi
+                        )
+                        droneMarkers[droneId] = marker!!
+                    }
+
+                    // 📈 Carica la traiettoria del drone attivo
+                    db.collection("trajectories")
+                        .document(droneId)
+                        .collection("points")
+                        .get()
+                        .addOnSuccessListener { trajectoryResult ->
+                            val points = mutableListOf<LatLng>()
+                            for (pointDocument in trajectoryResult) {
+                                val pointLat = pointDocument.getDouble("lat") ?: 0.0
+                                val pointLon = pointDocument.getDouble("lon") ?: 0.0
+                                points.add(LatLng(pointLat, pointLon))
+                            }
+
+                            if (points.isNotEmpty()) {
+                                mMap.addPolyline(
+                                    PolylineOptions()
+                                        .addAll(points)
+                                        .color(Color.BLUE) // Colore della traiettoria attiva
+                                        .width(5f)
+                                )
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("DronePilotApp", "Errore nel caricamento delle traiettorie per il drone $droneId: $e")
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("DronePilotApp", "Errore nel caricamento dei droni: $e")
+            }
+
+        // 🛬 2) Carica i droni atterrati dalla raccolta "completed_flights"
+        db.collection("completed_flights")
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val flightId = document.id
+                    val lat = document.getDouble("lat") ?: 0.0
+                    val lon = document.getDouble("lon") ?: 0.0
+                    val modello = document.getString("model") ?: "Modello sconosciuto"
+
+                    val pos = LatLng(lat, lon)
+
+                    // Aggiungi marker per il drone atterrato
+                    if (!droneMarkers.containsKey(flightId)) {
+                        val marker = mMap.addMarker(
+                            MarkerOptions()
+                                .position(pos)
+                                .title("$modello (Atterrato)")
+                                .snippet("Volo completato")
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)) // icona azzurra per droni atterrati
+                        )
+                        droneMarkers[flightId] = marker!!
+                    }
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("DronePilotApp", "Errore nel caricamento dei droni atterrati: $e")
+            }
+    }
+
+
+    private val droneDataReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val droneId = intent.getStringExtra("droneId")
+            val lat = intent.getDoubleExtra("lat", 0.0)
+            val lon = intent.getDoubleExtra("lon", 0.0)
+            val altitude = intent.getIntExtra("altitude", 0)
+            val speed = intent.getIntExtra("speed", 0)
+            val modello = intent.getStringExtra("modello") ?: "Drone sconosciuto"
+
+            // Aggiorna la mappa con i dati ricevuti
+            updateDronePosition(droneId.toString(), lat, lon, altitude, speed, modello)
+        }
+    }
+
+    // Funzione per aggiungere o aggiornare un marker del drone sulla mappa
+    fun updateDronePosition(droneId: String?, lat: Double, lon: Double, altitude: Int, speed: Int, modello: String) {
+        val id = droneId ?: "Drone sconosciuto"
+        val position = LatLng(lat, lon)
+
+        // Controlla se il drone è già sulla mappa
+        val existingMarker = droneMarkers[id]
+
+        if (existingMarker != null) {
+            // Se il marker esiste già, aggiorna la sua posizione
+            existingMarker.position = position
+            existingMarker.title = modello
+            existingMarker.snippet = "ID: $droneId, Alt.: $altitude m, Vel.: $speed m/s"
+        } else {
+            // Altrimenti, crea un nuovo marker
+            val marker = mMap.addMarker(
+                MarkerOptions()
+                    .position(position)
+                    .title(modello)
+                    .snippet("ID: $droneId, Alt.: $altitude m, Vel.: $speed m/s")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))
+            )
+
+            // Aggiungi il marker alla mappa
+            droneMarkers[id] = marker as Marker
+        }
+
+        // Aggiungi il punto alla traiettoria
+        val trajectory = droneTrajectories[id]
+        if (trajectory != null) {
+            // Aggiungi il punto alla polilinea esistente
+            trajectory.points.add(LatLng(lat, lon))
+        } else {
+            // Se non esiste, crea una nuova polilinea
+            val newTrajectory = mMap.addPolyline(
+                PolylineOptions()
+                    .add(LatLng(lat, lon))
+                    .color(Color.BLUE)
+                    .width(5f)
+            )
+            droneTrajectories[id] = newTrajectory
+        }
+    }
+    //
+    // FINE - Sezione Drone ID
+    //
+
 
     private fun listenForChatAvailability() {
         logDebug(TAG, "🟢 ChatAvail: Inizializzazione listener per stato chat")
@@ -613,7 +956,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     // Evita di processare i marker di chi non è in volo
                     if (!inVolo) {
-                        logDebug(TAG, "🚫 Chat: $userId non è in volo, marker ignorato")
+                        //logDebug(TAG, "🚫 Chat: $userId non è in volo, marker ignorato")
                         return@forEach
                     }
 
@@ -911,7 +1254,19 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // Salva lo stato di online per contare il numero di utenti connessi al sistema
+    fun saveOnlineStatus(isOnline: Boolean) {
+        val userId = auth.currentUser?.uid ?: return
+        val userRef = FirebaseFirestore.getInstance().collection("users").document(userId)
 
+        userRef.update("online", isOnline)
+            .addOnSuccessListener {
+                Log.d(TAG, "saveOnlineStatus: Stato online aggiornato a $isOnline")
+            }
+            .addOnFailureListener { e ->
+                Log.w(TAG, "saveOnlineStatus: Errore aggiornamento stato online", e)
+            }
+    }
 
     private fun logout() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -929,6 +1284,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 usersListener = null
                 pilotsListener?.remove()
                 pilotsListener = null
+                saveOnlineStatus(false) // mette a true lo stato di online
                 logDebug(TAG, "logout: Rimuovo i listener per $userId.")
                 // Fa il logout
                 FirebaseAuth.getInstance().signOut()
@@ -992,6 +1348,67 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }.addOnFailureListener { e ->
             logError(TAG, "❌ onStart Dashboard: Errore nel recupero dello stato di volo: ${e.message}")
         }
+        // Broadcast receiver message
+        if (!isMessageReceiverRegistered) {
+            val filter = IntentFilter("com.kwos.dronepilotapp.NEW_MESSAGE")
+            registerReceiver(messageReceiver, filter, Context.RECEIVER_EXPORTED)
+            isMessageReceiverRegistered = true
+            Log.d("DronePilotApp", "onStart Dashboard: MessageReceiver registrato in onStart()")
+        }
+
+        // Drone ID receiver broadcast
+
+        if (!isDroneReceiverRegistered) {
+            val droneDataFilter = IntentFilter("com.example.DRONE_DATA")
+
+            // Usa sempre la nuova API con flag di sicurezza
+            registerReceiver(
+                droneDataReceiver,
+                droneDataFilter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+
+            isDroneReceiverRegistered = true
+            Log.d("DronePilotApp", "onStart Dashboard: DroneDataReceiver registrato (not exported)")
+        }
+
+
+        // Attiva i receiver per il rilevamento Drone ID se abilitato dalle impostazioni
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val droneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
+        val driLed = findViewById<ImageView>(R.id.driLed)
+
+        if (droneIdEnabled) {
+            driLed.setImageResource(R.drawable.led_on)
+        } else {
+            driLed.setImageResource(R.drawable.led_off)
+        }
+
+        if (droneIdEnabled) {
+            val hasLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasBluetoothScan = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+            } else true
+            val hasNearbyWifi = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(this, Manifest.permission.NEARBY_WIFI_DEVICES) == PackageManager.PERMISSION_GRANTED
+            } else true
+
+            if (hasLocation && hasBluetoothScan && hasNearbyWifi) {
+                //bluetoothReceiver?.startScanning()
+                //wifiAwareReceiver?.startSession()
+                wifiBeaconReceiver?.startScan()
+                Log.d("DronePilotApp", "onStart Dashboard: Receiver Drone ID attivati")
+            } else {
+                Log.w("DronePilotApp", "onStart Dashboard: Permessi insufficienti per avviare i receiver")
+            }
+        } else {
+            //bluetoothReceiver?.stopScanning()
+            //wifiAwareReceiver?.stopSession()
+            wifiBeaconReceiver?.stopScan()
+            Log.d("DronePilotApp", "onStart Dashboard: Drone ID disattivato nelle preferenze")
+        }
+
+
     }
 
     private fun recuperaDatiPilota() {
@@ -1183,17 +1600,39 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+
     override fun onStop() {
         super.onStop()
         // Ferma gli aggiornamenti della posizione quando l'attività è in stop
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
+
+        // Message broadcast receiver
+        if (isMessageReceiverRegistered) {
+            try {
+                unregisterReceiver(messageReceiver)
+                Log.d("DronePilotApp", "DashboardActivity: MessageReceiver deregistrato in onStop()")
+            } catch (e: IllegalArgumentException) {
+                Log.e("DronePilotApp", "DashboardActivity: Errore nella deregistrazione del receiver: ${e.message}")
+            }
+            isMessageReceiverRegistered = false
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        unregisterReceiver(messageReceiver)
+        // Message broadcast receiver
+        if (isMessageReceiverRegistered) {
+            try {
+                unregisterReceiver(messageReceiver)
+                Log.d("DronePilotApp", "DashboardActivity: MessageReceiver deregistrato in onPause()")
+            } catch (e: IllegalArgumentException) {
+                Log.e("DronePilotApp", "DashboardActivity: Errore nella deregistrazione del receiver: ${e.message}")
+            }
+            isMessageReceiverRegistered = false
+        }
+
         // Ferma il refresh dell'handler di loadpilots quando l'app è in pausa
         handler.removeCallbacks(refreshRunnable)
     }
@@ -1227,6 +1666,22 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Ricarica la lista dei piloti quando l'app torna in primo piano, utilizzando l'handler
         handler.post(refreshRunnable) // Avvia il refresh quando l'app torna attiva
 
+        // Per caricare Drone ID
+        // Se la mappa è già pronta
+        if (::mMap.isInitialized) {
+            val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+            val droneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
+
+            if (droneIdEnabled) {
+                loadDrones()
+            } else {
+                // Rimuove eventuali marker dei droni
+                for (marker in droneMarkers.values) {
+                    marker.remove()
+                }
+                droneMarkers.clear()
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -1250,8 +1705,27 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         usersListener = null
         pilotsListener?.remove()
         pilotsListener = null
-        // Unregister the receiver when the activity is destroyed
-        //unregisterReceiver(messageReceiver)
+        saveOnlineStatus(false) // mette a true lo stato di online
+        // Sezione Drone ID Broadcast receiver
+        if (isDroneReceiverRegistered) {
+            try {
+                unregisterReceiver(droneDataReceiver)
+                isDroneReceiverRegistered = false
+                Log.d("DronePilotApp", "DashboardActivity: DroneDataReceiver deregistrato in onDestroy()")
+            } catch (e: IllegalArgumentException) {
+                Log.e("DronePilotApp", "DashboardActivity: Receiver non registrato: ${e.message}")
+            }
+        }
+
+        try {
+            //bluetoothReceiver?.stopScanning()
+            //wifiAwareReceiver?.stopSession()
+            wifiBeaconReceiver?.stopScan()
+            Log.d("DronePilotApp", "onDestroy Dashboard: Receiver Drone ID fermati")
+        } catch (e: SecurityException) {
+            Log.w("DronePilotApp", "onDestroy Dashboard: Permessi insufficienti per fermare i receiver: ${e.message}")
+        }
+
         logout()
     }
 

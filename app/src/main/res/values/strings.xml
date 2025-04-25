@@ -29,5 +29,7 @@
     <string name="alert_condizioni_ok">LE CONDIZIONI METEOROLOGICHE PERMETTONO DI FAR VOLARE L\'UAS</string>
     <string name="weather_data_not_available">Dati meteo non disponibili</string>
 
+    <string name="unknown">Unknown</string>
+
 </resources>
 

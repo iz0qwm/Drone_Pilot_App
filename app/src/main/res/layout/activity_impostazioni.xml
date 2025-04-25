@@ -4,58 +4,98 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#f4f4f4"
-        android:clipToPadding="false">
-
-        <TextView
-            android:id="@+id/textEmail"
+        <LinearLayout
+            android:id="@+id/settingsContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Email: "
-            android:textSize="16sp"
-            android:padding="8dp"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="#f4f4f4"
+            android:clipToPadding="false">
 
-        <EditText
-            android:id="@+id/editFullName"
-            android:background="@drawable/rounded_input"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:hint="Inserisci il tuo nome"/>
+                <TextView
+                    android:id="@+id/textEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Email: "
+                    android:textSize="16sp"
+                    android:padding="8dp"/>
 
-        <CheckBox
-            android:id="@+id/checkboxPMR"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Ho la radio PMR accesa sul CH4" />
+                <EditText
+                    android:id="@+id/editFullName"
+                    android:background="@drawable/rounded_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:hint="Inserisci il tuo nome"/>
 
-        <Button
-            android:id="@+id/btnSalvaNome"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Salva impostazioni"
-            android:textAllCaps="false"
-            android:layout_marginTop="16dp"
-            android:textColor="@color/button_text_color"
-            android:background="@drawable/rounded_button_green"/>
+                <CheckBox
+                    android:id="@+id/checkboxPMR"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Ho la radio PMR accesa sul CH4" />
 
-        <Button
-            android:id="@+id/close_impostazioni_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Chiudi"
-            android:layout_marginTop="16dp"
-            android:textColor="@color/button_text_color"
-            android:background="@drawable/rounded_button_blue" />
+                <!-- Switch per attivare la ricezione Drone ID -->
+                <TextView
+                    android:id="@+id/textDroneId"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Rilevamento droni nelle vicinanze (DRI)"
+                    android:textSize="16sp"
+                    android:layout_marginTop="24dp"
+                    android:paddingBottom="4dp" />
 
+                <Switch
+                    android:id="@+id/switchDroneId"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Attiva Direct Remote ID"
+                    android:textSize="16sp"
+                    android:padding="4dp"/>
 
+                <!-- Stato supporto Bluetooth e WiFi Aware -->
+                <TextView
+                    android:id="@+id/textBluetoothStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Bluetooth LE: ..."
+                    android:textSize="14sp"
+                    android:paddingTop="8dp" />
 
-</LinearLayout>
+                <TextView
+                    android:id="@+id/textWifiAwareStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="WiFi Aware: ..."
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textWifiBeaconStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="WiFi Aware: ..."
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <Button
+                    android:id="@+id/btnSalvaNome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Salva impostazioni"
+                    android:textAllCaps="false"
+                    android:layout_marginTop="16dp"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_green"/>
+
+                <Button
+                    android:id="@+id/close_impostazioni_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Chiudi"
+                    android:layout_marginTop="16dp"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_blue" />
+        </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

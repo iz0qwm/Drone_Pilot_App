@@ -56,7 +56,7 @@ import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.animation.ObjectAnimator
 import android.view.ViewTreeObserver
-
+import com.google.firebase.firestore.SetOptions
 
 
 class MainActivity : AppCompatActivity() {
@@ -154,28 +154,6 @@ class MainActivity : AppCompatActivity() {
         forgotPasswordText.setOnClickListener {
             showResetPasswordDialog()
         }
-
-
-        // Verifica e richiedi permesso per notifiche su Android 13+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
-            }
-        }
-
-
-        // SOLO PER VERDE MARCO ---- DA RIMUOVERE - STACKTRACE -
-        // Trova il TextView dove verrà mostrato lo stacktrace
-        //val stacktraceTextView = findViewById<TextView>(R.id.stacktraceTextView)
-
-        // Se ci sono extra nell'intent, mostra lo stacktrace
-        //val stackTrace = intent.getStringExtra("stacktrace")
-        //if (stackTrace != null) {
-        //    stacktraceTextView.text = stackTrace
-        //    stacktraceTextView.visibility = View.VISIBLE
-        //    stacktraceTextView.setMovementMethod(ScrollingMovementMethod()) // Per scorrere
-        //}
-        //
 
 
 
@@ -403,32 +381,76 @@ class MainActivity : AppCompatActivity() {
                         cancellaTokens(userId) // Cancella i token dell'utente senza crearne uno nuovo
                     }
 
-                    //salvaLogin(email) // Salva il login nelle Shared Preferences
-                    //savePasswordToKeystore(password)  // Salva la password nel Keystore
-                    // Login riuscito, procedi con l'ottenimento del token FCM
-                    FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
-                        if (tokenTask.isSuccessful) {
-                            val token = tokenTask.result
-                            logDebug(TAG, "loginUser: Nuovo Token FCM: $token")
-                            saveTokenToServer(token) // Salva il token nel database
-                            salvaLogin(email) // Salva il login nelle Shared Preferences
-                            savePasswordToKeystore(password)  // Salva la password nel Keystore
+                    // Dopo login riuscito, controlliamo il permesso notifiche
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                            // ✅ Permesso concesso, otteniamo il token FCM
+                            ottieniTokenECreaSessione(email, password)
                         } else {
-                            logError(TAG, "loginUser: Errore nel recuperare il token FCM")
+                            // 🚫 Permesso negato, avvisiamo
+                            Toast.makeText(this, "Permesso notifiche negato. Il servizio chat potrebbe non funzionare correttamente.", Toast.LENGTH_LONG).show()
+                            // Procediamo comunque senza token
+                            salvaLogin(email)
+                            savePasswordToKeystore(password)
+                            saveOnlineStatus(true)
+                            Toast.makeText(this, "Login riuscito!", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, DashboardActivity::class.java))
+                            finish()
                         }
+                    } else {
+                        // Versioni Android precedenti: procedi normalmente
+                        ottieniTokenECreaSessione(email, password)
                     }
-                    Toast.makeText(this, "Login riuscito!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, DashboardActivity::class.java))
-                    finish()
                 } else {
                     Toast.makeText(this, "Errore: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }
     }
 
+
+    private fun ottieniTokenECreaSessione(email: String, password: String) {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
+            if (tokenTask.isSuccessful) {
+                val token = tokenTask.result
+                logDebug(TAG, "loginUser: Nuovo Token FCM: $token")
+                saveTokenToServer(token)
+                salvaLogin(email)
+                savePasswordToKeystore(password)
+                saveOnlineStatus(true)
+                Toast.makeText(this, "Login riuscito!", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, DashboardActivity::class.java))
+                finish()
+            } else {
+                logError(TAG, "loginUser: Errore nel recuperare il token FCM")
+                // Anche se fallisce, portiamo comunque l'utente nella Dashboard
+                salvaLogin(email)
+                savePasswordToKeystore(password)
+                saveOnlineStatus(true)
+                Toast.makeText(this, "Login riuscito!", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, DashboardActivity::class.java))
+                finish()
+            }
+        }
+    }
+
+
     fun salvaLogin(email: String) {
         val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
         prefs.edit().putString("user_email", email).apply()
+    }
+
+    // Salva lo stato di online per contare il numero di utenti connessi al sistema
+    fun saveOnlineStatus(isOnline: Boolean) {
+        val userId = auth.currentUser?.uid ?: return
+        val userRef = FirebaseFirestore.getInstance().collection("users").document(userId)
+
+        userRef.set(mapOf("online" to isOnline), SetOptions.merge())
+            .addOnSuccessListener {
+                Log.d(TAG, "MainActivity - saveOnlineStatus: Stato online aggiornato a $isOnline")
+            }
+            .addOnFailureListener { e ->
+                Log.w(TAG, "MainActivity - saveOnlineStatus: Errore aggiornamento stato online", e)
+            }
     }
 
     private fun saveTokenToServer(token: String) {
