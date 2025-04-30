@@ -20,4 +20,11 @@ Questa applicazione consente ai piloti di droni di:
 - **OpenWeather API** e **MeteoBlue** per i dati meteo
 - **OpenDroneID** per la ricezione delle posizioni e informazioni sui droni tramite Direct Remote ID (DRI)
 
----
+## 📚 Documentazione
+
+Per istruzioni complete sull’uso della Web App, consulta la nostra Wiki:
+
+[📖 Vai alla Wiki](https://github.com/raffaello/DronePilotApp/wiki)
+
+[![Wiki](https://img.shields.io/badge/Wiki-Documentazione-blue?logo=github)](https://github.com/raffaello/DronePilotApp/wiki)
+
