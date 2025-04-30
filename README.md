@@ -8,6 +8,7 @@ Questa applicazione consente ai piloti di droni di:
 - 💬 Chattare in tempo reale in una stanza di gruppo
 - 🌦️ Consultare le condizioni meteo e delle costellazioni GNSS aggiornate
 - 📍 Inserire e consultare gli spot di volo
+- 📰 Leggere le ultime news nel mondo dei droni
 
 
 ## 🛠️ Dettagli Tecnici
