@@ -294,15 +294,41 @@
                 android:textStyle="bold"
                 android:layout_marginTop="5dp"/>
 
-            <!-- Pulsante Logout -->
-            <Button
-                android:id="@+id/logoutButton"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Logout"
-                android:textAllCaps="false"
-                android:textColor="@color/button_text_color"
-                android:background="@drawable/rounded_button_blue"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp">
+
+                <!-- Iconcina per Dronezine -->
+                <ImageButton
+                    android:id="@+id/dronezineButton"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_dronezine"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Apri Dronezine"
+                    android:padding="8dp" />
+
+                <!-- Pulsante Logout che occupa tutto lo spazio rimanente -->
+                <Button
+                    android:id="@+id/logoutButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Logout"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_blue"
+                    android:layout_marginStart="8dp"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp"
+                    android:minHeight="40dp"
+                    android:textSize="14sp"/>
+            </LinearLayout>
+
+
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

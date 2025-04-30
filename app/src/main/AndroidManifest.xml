@@ -87,6 +87,8 @@
             <!-- Puoi aggiungere eventuali intent-filter o altre configurazioni se necessarie -->
         </activity>
 
+        <activity android:name=".WebViewActivity" />
+
         <activity
             android:name=".FullScreenImageActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"/>

@@ -256,6 +256,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val onlineUsersText = findViewById<TextView>(R.id.onlineUsersText)
         val chatUsersText = findViewById<TextView>(R.id.chatUsersText)
         val driLed = findViewById<ImageView>(R.id.driLed)
+        val dronezineButton = findViewById<ImageButton>(R.id.dronezineButton)
 
         // layer trasparente davanti alla mappa per intercettare il tocco di due dita
         // e non passarlo alla scroll view
@@ -318,6 +319,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             } else {
                 Toast.makeText(this, "Caricamento nome pilota in corso o nome drone mancante", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        // Apertura News Dronezine
+        dronezineButton.setOnClickListener {
+            val intent = Intent(this, WebViewActivity::class.java)
+            startActivity(intent)
         }
 
         //Tasto Stop Flight
