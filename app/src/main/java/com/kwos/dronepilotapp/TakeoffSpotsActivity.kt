@@ -214,7 +214,7 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
                                         longitude = lng
                                     }
 
-                                    if (newLocation.distanceTo(locationDb) <= 500) {
+                                    if (newLocation.distanceTo(locationDb) <= 100) {
                                         nearbySpotId = document.id
                                         break
                                     }

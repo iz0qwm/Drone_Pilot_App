@@ -68,21 +68,23 @@ class Identification : MessageData() {
         get() {
             return when (idType) {
                 IdTypeEnum.Serial_Number, IdTypeEnum.CAA_Registration_ID -> {
-                    if (uasId.any { it.toInt() <= 31 || it.toInt() >= 127 && it != 0.toByte() }) {
-                        "Invalid ID String"
+                    // Filtra solo byte ASCII stampabili
+                    val asciiBytes = uasId.takeWhile { it in 32..126 }
+                    if (asciiBytes.isNotEmpty()) {
+                        String(asciiBytes.toByteArray()).trim()
                     } else {
-                        String(uasId)
+                        // fallback esadecimale se non è leggibile
+                        "0x" + uasId.joinToString("") { String.format("%02X", it) }
                     }
                 }
                 IdTypeEnum.UTM_Assigned_ID, IdTypeEnum.Specific_Session_ID -> {
-                    buildString {
-                        append("0x")
-                        uasId.forEach { append(String.format("%02X", it)) }
-                    }
+                    "0x" + uasId.joinToString("") { String.format("%02X", it) }
                 }
                 else -> ""
             }
         }
+
+
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

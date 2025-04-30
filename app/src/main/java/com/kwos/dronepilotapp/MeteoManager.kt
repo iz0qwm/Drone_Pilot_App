@@ -13,14 +13,17 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 data class MeteoData(
-    val temperature_min: Double,
-    val temperature_max: Double,
-    val wind_speedmean: Double,
-    val wind_speedmax: Double,
-    val wind_speedmin: Double,
-    val humidity: Double,
-    val precipitation_probability: Double
+    val temperature: Int,
+    val temperature_min: Int,
+    val temperature_max: Int,
+    val wind_speedmean: Int,
+    val wind_speedmax: Int,
+    val wind_speedmin: Int,
+    val humidity: Int,
+    val precipitation_probability: Int,
+    val convective_precipitation: Int
 )
+
 
 
 data class TecData(
@@ -46,10 +49,14 @@ object MeteoManager {
 
     fun getMeteoData(lat: Double, lon: Double, callback: (MeteoData?) -> Unit) {
         val url = "$BASE_URL?windspeed=kmh&lat=$lat&lon=$lon&tz=Europe/Zurich&format=json&apikey=$API_KEY"
+        val urlCurrent = "https://my.meteoblue.com/packages/current?windspeed=kmh&lat=$lat&lon=$lon&tz=Europe/Zurich&format=json&apikey=$API_KEY"
+
         val client = OkHttpClient()
         val request = Request.Builder().url(url).build()
 
         logDebug(TAG, "MeteoManager URL: $url")
+        logDebug(TAG, "MeteoManager URL Current: $urlCurrent")
+
         Thread {
             try {
                 val response = client.newCall(request).execute()
@@ -57,21 +64,41 @@ object MeteoManager {
                 logDebug(TAG, "MeteoManager Lunghezza responseData: ${responseData?.length}")
                 logDebug(TAG, "MeteoManager Risposta API: $responseData")
                 if (!response.isSuccessful || responseData == null) {
-                    logError(TAG, "MeteoManager Errore risposta")
+                    logError(TAG, "MeteoManager Errore risposta Data")
                     callback(null)
                     return@Thread
                 }
 
                 val jsonObject = JSONObject(responseData)
                 val dataDay = jsonObject.getJSONObject("data_day")
-                val temperatureMin = dataDay.optJSONArray("temperature_min").getDouble(0)
-                val temperatureMax = dataDay.optJSONArray("temperature_max").getDouble(0)
-                val windSpeedmean = dataDay.optJSONArray("windspeed_mean").getDouble(0)
-                val windSpeedmax = dataDay.optJSONArray("windspeed_max").getDouble(0)
-                val windSpeedmin = dataDay.optJSONArray("windspeed_min").getDouble(0)
-                val humidity = dataDay.optJSONArray("relativehumidity_mean").getDouble(0)
-                val precipitationprobability = dataDay.optJSONArray("precipitation_probability").getDouble(0)
+                val temperatureMin = dataDay.optJSONArray("temperature_min").getDouble(0).toInt()
+                val temperatureMax = dataDay.optJSONArray("temperature_max").getDouble(0).toInt()
+                val windSpeedmean = dataDay.optJSONArray("windspeed_mean").getDouble(0).toInt()
+                val windSpeedmax = dataDay.optJSONArray("windspeed_max").getDouble(0).toInt()
+                val windSpeedmin = dataDay.optJSONArray("windspeed_min").getDouble(0).toInt()
+                val humidity = dataDay.optJSONArray("relativehumidity_mean").getDouble(0).toInt()
+                val precipitationprobability = dataDay.optJSONArray("precipitation_probability").getDouble(0).toInt()
+                val convectiveprecipitation = dataDay.optJSONArray("convective_precipitation").getDouble(0).toInt()
 
+
+                // Seconda richiesta: Current
+                val responseCurrent = client.newCall(Request.Builder().url(urlCurrent).build()).execute()
+                val responseDataCurrent = responseCurrent.body?.string()
+                logDebug(TAG, "MeteoManager Lunghezza responseData: ${responseDataCurrent?.length}")
+                logDebug(TAG, "MeteoManager Risposta API: $responseDataCurrent")
+
+                if (!responseCurrent.isSuccessful || responseDataCurrent == null) {
+                    logError(TAG, "Errore nella risposta CURRENT")
+                    callback(null)
+                    return@Thread
+                }
+
+                val currentObject = JSONObject(responseDataCurrent)
+                val dataCurrent = currentObject.getJSONObject("data_current")
+                val temperature = dataCurrent.optDouble("temperature", Double.NaN).toInt()
+
+
+                logDebug(TAG, "MeteoManager Temperature: $temperature")
                 logDebug(TAG, "MeteoManager temperatureMin: $temperatureMin")
                 logDebug(TAG, "MeteoManager temperatureMax: $temperatureMax")
                 logDebug(TAG, "MeteoManager windSpeedmax: $windSpeedmax")
@@ -79,8 +106,9 @@ object MeteoManager {
                 logDebug(TAG, "MeteoManager windSpeedmin: $windSpeedmin")
                 logDebug(TAG, "MeteoManager humidity: $humidity")
                 logDebug(TAG, "MeteoManager precipitation_probability: $precipitationprobability")
+                logDebug(TAG, "MeteoManager convective precipitation: $convectiveprecipitation")
 
-                val meteoData = MeteoData(temperatureMin, temperatureMax, windSpeedmean, windSpeedmax, windSpeedmin, humidity, precipitationprobability)
+                val meteoData = MeteoData(temperature, temperatureMin, temperatureMax, windSpeedmean, windSpeedmax, windSpeedmin, humidity, precipitationprobability, convectiveprecipitation)
                 callback(meteoData)
             } catch (e: Exception) {
                 logError(TAG, "MeteoManager Errore nel parsing JSON: ${e.message}")
@@ -154,5 +182,34 @@ object MeteoManager {
         return "https://my.meteoblue.com/images/meteogram?windspeed=kmh&lat=$lat&lon=$lon&tz=Europe/Zurich&apikey=$API_KEY"
     }
 
+    // ---- NUOVA funzione per l'alba e tramonto ----
+    fun getDaylightData(lat: Double, lon: Double, callback: (JSONObject?) -> Unit) {
+        val url = "https://api.sunrise-sunset.org/json?lat=$lat&lng=$lon&date=today&tzid=Europe/Rome"
+        val request = Request.Builder().url(url).build()
+        val client = OkHttpClient()
 
+        logDebug(TAG, "MeteoManager URL Alba/Tramonto: $url")
+
+        Thread {
+            try {
+                val response = client.newCall(request).execute()
+                val responseData = response.body?.string()
+
+                if (!response.isSuccessful || responseData == null) {
+                    logError(TAG, "Errore nella risposta alba/tramonto")
+                    callback(null)
+                    return@Thread
+                }
+
+                val jsonObject = JSONObject(responseData)
+                val results = jsonObject.getJSONObject("results")
+                callback(results)
+
+            } catch (e: Exception) {
+                logError(TAG, "Errore parsing JSON alba/tramonto: ${e.message}")
+                e.printStackTrace()
+                callback(null)
+            }
+        }.start()
+    }
 }

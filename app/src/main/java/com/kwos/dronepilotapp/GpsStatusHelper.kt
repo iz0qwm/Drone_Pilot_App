@@ -46,10 +46,10 @@ class GpsStatusHelper(
                 1f,    // distanza minima in metri
                 object : android.location.LocationListener {
                     override fun onLocationChanged(location: android.location.Location) {
-                        logDebug(
-                            "DronePilotApp",
-                            "Posizione aggiornata: lat=${location.latitude}, lon=${location.longitude}"
-                        )
+                        //logDebug(
+                        //    "DronePilotApp",
+                        //    "Posizione aggiornata: lat=${location.latitude}, lon=${location.longitude}"
+                        //)
                     }
 
                     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}

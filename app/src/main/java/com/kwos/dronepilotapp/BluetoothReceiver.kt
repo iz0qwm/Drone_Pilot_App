@@ -8,29 +8,44 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
+import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
-import com.kwos.dronepilotapp.droneid.OpenDroneIdDataManager
 import com.kwos.dronepilotapp.data.LogMessageEntry
-import java.util.Locale
+import com.kwos.dronepilotapp.data.LogWriter
+import com.kwos.dronepilotapp.droneid.OpenDroneIdDataManager
+import java.util.*
 
 class BluetoothReceiver(
     private val context: Context,
-    private val dataManager: OpenDroneIdDataManager
+    private val dataManager: OpenDroneIdDataManager,
+    private val logger: LogWriter? = null
 ) {
 
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private val bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
+    private val handler = Handler(Looper.getMainLooper())
+    private var isScanning = false
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             result?.let {
+                val macAddress = it.device.address.uppercase(Locale.US)
+
+                // ATTENZIONE FUNZIONA SOLO CON I DRONETAG
+                val allowedPrefixes = listOf("D0:EA:26")
+
+                if (allowedPrefixes.none { macAddress.startsWith(it) }) {
+                    return
+                }
+
+
                 val scanRecord = it.scanRecord
                 val bytes = scanRecord?.bytes ?: return
 
                 val logMessageEntry = LogMessageEntry()
+                val timeNano = SystemClock.elapsedRealtimeNanos()
 
                 val transportType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                     bluetoothAdapter?.isLeCodedPhySupported() == true &&
@@ -43,16 +58,20 @@ class BluetoothReceiver(
 
                 dataManager.receiveDataBluetooth(bytes, it, logMessageEntry, transportType)
 
-                val logStr = String.format(
-                    Locale.US,
-                    "scan: addr=%s rssi=%d, len=%d",
-                    it.device.address,
-                    it.rssi,
-                    bytes.size
+                logger?.logBluetooth(
+                    logMessageEntry.msgVersion,
+                    it,
+                    transportType,
+                    logMessageEntry.messageLogEntry
                 )
-                //Log.w("DronePilotApp", logStr)
-                //Log.w("DronePilotApp", "BluetoothReceiver -- bytes: ${dumpBytes(bytes)}")
+
+                //Log.d("DronePilotApp", String.format(
+                //    Locale.US,
+                //    "✅ BluetoothReceiver: Pacchetto valido da MAC=%s rssi=%d len=%d",
+                //    macAddress, it.rssi, bytes.size
+                //))
             }
+
         }
 
         override fun onScanFailed(errorCode: Int) {
@@ -72,18 +91,49 @@ class BluetoothReceiver(
             return
         }
 
-        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            bluetoothLeScanner?.startScan(scanCallback)
-            Log.d("DronePilotApp", "BluetoothReceiver: Bluetooth LE scan started")
-        } else {
-            Log.w("DronePilotApp", "BluetoothReceiver: Missing BLUETOOTH_SCAN permission")
+        if (bluetoothAdapter?.isEnabled != true) {
+            Log.w("DronePilotApp", "BluetoothReceiver: Bluetooth non abilitato")
+            return
         }
+
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED && !isScanning) {
+            bluetoothLeScanner?.startScan(scanCallback)
+            isScanning = true
+            Log.d("DronePilotApp", "BluetoothReceiver: Bluetooth LE scan started")
+
+            handler.postDelayed(scanRestartRunnable, 10000) // ogni 10 secondi
+        } else {
+            Log.w("DronePilotApp", "BluetoothReceiver: Missing BLUETOOTH_SCAN permission or already scanning")
+        }
+    }
+
+    private val scanRestartRunnable = object : Runnable {
+        override fun run() {
+            if (isScanning) {
+                val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
+
+                if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                    bluetoothLeScanner?.stopScan(scanCallback)
+                    bluetoothLeScanner?.startScan(scanCallback)
+                    Log.d("DronePilotApp", "BluetoothReceiver: Bluetooth LE scan restarted")
+                } else {
+                    Log.w("DronePilotApp", "BluetoothReceiver: Permission BLUETOOTH_SCAN non concessa al riavvio scan")
+                }
+
+                handler.postDelayed(this, 10000)
+            }
+        }
+
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun stopScanning() {
-        bluetoothLeScanner?.stopScan(scanCallback)
-        Log.d("DronePilotApp", "BluetoothReceiver: Bluetooth LE scan stopped")
+        if (isScanning) {
+            bluetoothLeScanner?.stopScan(scanCallback)
+            handler.removeCallbacks(scanRestartRunnable)
+            isScanning = false
+            Log.d("DronePilotApp", "BluetoothReceiver: Bluetooth LE scan stopped")
+        }
     }
 
     private fun dumpBytes(bytes: ByteArray): String {

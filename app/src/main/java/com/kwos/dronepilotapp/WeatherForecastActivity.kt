@@ -20,10 +20,13 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import java.util.Locale
 
 class WeatherForecastActivity : AppCompatActivity() {
-
+    private val TAG = "DronePilotApp"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +67,7 @@ class WeatherForecastActivity : AppCompatActivity() {
         val locationText: TextView = findViewById(R.id.weather_location)
         val alertTextView: TextView = findViewById(R.id.alertTextView)
 
+        val temperatureText = findViewById<TextView>(R.id.temperatureText)
         val temperatureMinText = findViewById<TextView>(R.id.temperatureMinText)
         val temperatureMaxText = findViewById<TextView>(R.id.temperatureMaxText)
         val windMinText = findViewById<TextView>(R.id.windMinText)
@@ -83,7 +87,9 @@ class WeatherForecastActivity : AppCompatActivity() {
 
         //Prendo il nome del luogo
         getLocationName(this, lat, lon) { locationName ->
-            locationText.text = locationName
+            Handler(Looper.getMainLooper()).postDelayed({
+                locationText.text = locationName
+            }, 500)
         }
 
 
@@ -92,19 +98,20 @@ class WeatherForecastActivity : AppCompatActivity() {
             Handler(Looper.getMainLooper()).postDelayed({
                 if (meteoData != null) {
                     // Imposta le temperature
-                    temperatureMinText.text = "${meteoData.temperature_min}°C"
-                    temperatureMaxText.text = "${meteoData.temperature_max}°C"
+                    temperatureText.text = "Ora: ${meteoData.temperature}"
+                    temperatureMinText.text = "Min: ${meteoData.temperature_min}"
+                    temperatureMaxText.text = "Max: ${meteoData.temperature_max}°C"
 
                     // Imposta vento
-                    windMinText.text = "${meteoData.wind_speedmin} km/h"
-                    windMeanText.text = "${meteoData.wind_speedmean} km/h"
-                    windMaxText.text = "${meteoData.wind_speedmax} km/h"
+                    windMinText.text = "Min: ${meteoData.wind_speedmin}"
+                    windMeanText.text = "Med: ${meteoData.wind_speedmean}"
+                    windMaxText.text = "Max: ${meteoData.wind_speedmax} km/h"
 
                     // Imposta umidità
                     humidityText.text = "${meteoData.humidity}%"
 
                     // Imposta precipitazioni
-                    precipitationText.text = "${meteoData.precipitation_probability}%"
+                    precipitationText.text = "${meteoData.precipitation_probability}% - Previsti: ${meteoData.convective_precipitation} mm"
 
                     // Scegli l'icona meteo in base a precipitazioni e vento
                     val isRainLikely = meteoData.precipitation_probability > 50
@@ -137,7 +144,7 @@ class WeatherForecastActivity : AppCompatActivity() {
                             alertTextView.setTextColor(Color.rgb(255, 165, 0)) // Arancione
                         }
                         meteoData.precipitation_probability > 70 && meteoData.humidity > 70 -> {
-                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERÀ A BREVE"
+                            alertTextView.text = "ALERT !! STA PIOVENDO O PIOVERÀ"
                             alertTextView.setTextColor(ContextCompat.getColor(this, R.color.red))
                         }
                         meteoData.precipitation_probability > 50 -> {
@@ -164,6 +171,22 @@ class WeatherForecastActivity : AppCompatActivity() {
 
             }, 1000)
         }
+
+        // Recupera dati alba e tramonto
+        MeteoManager.getDaylightData(lat, lon) { results ->
+            if (results != null) {
+                Handler(Looper.getMainLooper()).post {
+                    findViewById<TextView>(R.id.sunriseText).text = "☀️ Alba: ${results.getString("sunrise")}"
+                    findViewById<TextView>(R.id.sunsetText).text = "🌇 Tramonto: ${results.getString("sunset")}"
+                    findViewById<TextView>(R.id.civilTwilightBeginText).text = "🌅 Inizio Crepuscolo: ${results.getString("civil_twilight_begin")}"
+                    findViewById<TextView>(R.id.civilTwilightEndText).text = "🌆 Fine Crepuscolo: ${results.getString("civil_twilight_end")}"
+                }
+            } else {
+                logError(TAG, "Errore caricamento orari luce giorno")
+            }
+        }
+
+
 
 
         gpsButton.setOnClickListener {
@@ -194,6 +217,7 @@ class WeatherForecastActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
     }
+
 }
 
 private fun getLocationName(activity: WeatherForecastActivity, lat: Double, lon: Double, callback: (String) -> Unit) {
@@ -242,6 +266,8 @@ private fun getLocationName(activity: WeatherForecastActivity, lat: Double, lon:
             }
         }.start()
     }
+
+
 
 }
 

@@ -8,18 +8,18 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="#e7e1d3"
+        android:background="#f4f4f4"
         android:padding="10dp"
         android:clipToPadding="false">
 
         <!-- Aggiungi questa TextView in cima per il nome del pilota -->
         <TextView
             android:id="@+id/chattingWithText"
+            style="@style/AppTextViewBold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Stai chattando con: [Nome Pilota]"
             android:textSize="18sp"
-            android:textColor="@android:color/black"
             android:padding="8dp"
             android:gravity="center"/>
 
@@ -41,13 +41,31 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:hint="Scrivi un messaggio" />
+                android:background="@drawable/rounded_input"
+                android:hint="Scrivi un messaggio"
+                android:inputType="textMultiLine|textCapSentences"
+                android:minLines="2"
+                android:maxLines="6"
+                android:gravity="top|start"
+                android:scrollbars="vertical"
+                android:padding="10dp" />
 
             <Button
                 android:id="@+id/sendButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_green"
                 android:text="Invia"/>
         </LinearLayout>
+
+        <Button
+            android:id="@+id/close_chat_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chiudi"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/button_text_color"
+            android:background="@drawable/rounded_button_blue"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

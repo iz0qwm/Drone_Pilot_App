@@ -36,6 +36,8 @@ class OpenDroneIdDataManager(private val callback: Callback) {
 
         val message = parseData(data, 6, result.timestampNanos, logMessageEntry, lastKnownDeviceLocation) ?: return
 
+        //Log.d("DronePilotApp", "🔄 Chiamo receiveData da Bluetooth per MAC=$macAddress")
+
         receiveData(
             result.timestampNanos, macAddress, macAddressLong, result.rssi,
             message, logMessageEntry, transportType
@@ -64,8 +66,13 @@ class OpenDroneIdDataManager(private val callback: Callback) {
     }
 
     private fun receiveData(
-        timeNano: Long, macAddress: String, macAddressLong: Long, rssi: Int,
-        message: Message<*>, logMessageEntry: LogMessageEntry, transportType: String?
+        timeNano: Long,
+        macAddress: String,
+        macAddressLong: Long,
+        rssi: Int,
+        message: Message<*>,
+        logMessageEntry: LogMessageEntry,
+        transportType: String?
     ) {
         val currentTime = System.currentTimeMillis()
         val ac = aircraft.getOrPut(macAddressLong) {
@@ -83,6 +90,42 @@ class OpenDroneIdDataManager(private val callback: Callback) {
             this.msgVersion = message.header.version
         }
 
+        val payload = message.payload
+        //Log.d("DronePilotApp", "OpenDroneIdManager: 🔍 Tipo payload = ${payload?.javaClass?.simpleName}")
+
+        // ✅ SALVATAGGIO ID LEGGIBILE (solo se valido)
+        try {
+            if (payload is BasicId) {
+                val uasIdBytes = payload.uasId
+                val hexString = uasIdBytes.joinToString("") { "%02X".format(it) }
+
+                val uasIdString = uasIdBytes
+                    .takeWhile { it in 32..126 } // tronca ai caratteri validi
+                    .map { it.toInt().toChar() }
+                    .joinToString("")
+                    .trim()
+
+                //Log.d("DronePilotApp", "🧪 BasicId ricevuto (HEX): $hexString")
+                //Log.d("DronePilotApp", "🧪 BasicId interpretato: $uasIdString")
+
+                if (uasIdString.matches(Regex("^[A-Za-z0-9\\-_:]{5,}.*")) &&
+                    ac.uasIdString.value.isNullOrBlank()
+                ) {
+                    ac.uasIdString.value = uasIdString
+                    Log.d("DronePilotApp", "✅ ID leggibile salvato: $uasIdString")
+
+                    if (ac.location.value != null) {
+                        callback.onLocationUpdate(ac)
+                    }
+                } else {
+                    //Log.d("DronePilotApp", "❌ ID NON salvato: non leggibile o già presente (HEX: $hexString)")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("DronePilotApp", "⚠️ Errore durante parsing BasicId: ${e.message}")
+        }
+
+
         ac.connection.postValue(ac.connection.value)
 
         if (message.header.type == Type.MESSAGE_PACK) {
@@ -94,11 +137,19 @@ class OpenDroneIdDataManager(private val callback: Callback) {
             handleMessages(ac, message)
         }
 
+        // ✅ Verifica se possiamo notificare aggiornamento completo
+        if (!ac.uasIdString.value.isNullOrBlank() && ac.location.value != null) {
+            callback.onLocationUpdate(ac)
+        }
+
         logMessageEntry.msgVersion = ac.connection.value?.msgVersion ?: 0
     }
 
+
+
     private fun createNewAircraft(macAddress: String, macAddressLong: Long): AircraftObject {
         return AircraftObject(macAddressLong).apply {
+            macAddressString = macAddress // 👈 memorizziamo la stringa per uso futuro
             connection.value = Connection().apply {
                 firstSeen = System.currentTimeMillis()
                 this.macAddress = macAddress
@@ -112,6 +163,7 @@ class OpenDroneIdDataManager(private val callback: Callback) {
             operatorid.value = OperatorIdData()
         }
     }
+
 
     private fun handleMessages(ac: AircraftObject, message: Message<*>) {
         when (message.header.type) {

@@ -49,12 +49,14 @@ import java.net.URL
 import kotlinx.coroutines.*
 import androidx.activity.OnBackPressedCallback
 import android.app.AlertDialog
+import android.view.MotionEvent
 import android.widget.ImageView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import android.widget.PopupMenu
+import android.widget.ScrollView
 import androidx.annotation.RequiresPermission
 // per il padding
 import androidx.core.view.ViewCompat
@@ -71,6 +73,17 @@ import com.google.firebase.database.ValueEventListener
 import com.kwos.dronepilotapp.droneid.OpenDroneIdDataManager
 import com.kwos.dronepilotapp.data.AircraftObject
 
+// Per le icone a Marker
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
+import android.graphics.Bitmap
+import android.graphics.Typeface
+import android.graphics.drawable.Drawable
+import android.widget.LinearLayout
+import androidx.cardview.widget.CardView
+
+
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var db: FirebaseFirestore
@@ -84,6 +97,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var pilotNearAlert: TextView
     private lateinit var lowerLimitTextView: TextView
     private lateinit var droneIdDataManager: OpenDroneIdDataManager
+
+    // Mapper per riconoscere Costruttore e modello di drone
+    private lateinit var prefixMap: Map<String, String>
+    private lateinit var modelMap: Map<String, String>
+
     private var bluetoothReceiver: BluetoothReceiver? = null
     private var wifiAwareReceiver: WifiAwareReceiver? = null
     private var wifiBeaconReceiver: WifiBeaconReceiver? = null
@@ -228,6 +246,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val stopFlightButton = findViewById<Button>(R.id.stopFlightButton)
         val droneField = findViewById<EditText>(R.id.droneField)
         val mapContainer = findViewById<FrameLayout>(R.id.mapContainer)
+        val scrollView = findViewById<ScrollView>(R.id.scrollView)
         //val weatherInfoText = findViewById<TextView>(R.id.weather_info_text)
         val weatherButton: Button = findViewById(R.id.weather_forecast_button)
         val menuButton: ImageButton = findViewById(R.id.menuButton)
@@ -238,8 +257,18 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val chatUsersText = findViewById<TextView>(R.id.chatUsersText)
         val driLed = findViewById<ImageView>(R.id.driLed)
 
+        // layer trasparente davanti alla mappa per intercettare il tocco di due dita
+        // e non passarlo alla scroll view
+        val touchInterceptor = findViewById<TransparentTouchView>(R.id.touchInterceptor)
+
+        touchInterceptor.onTouchInterceptListener = { disallow ->
+            scrollView.requestDisallowInterceptTouchEvent(disallow)
+        }
+
         //Partenza della mappa
         mapContainer.visibility = View.VISIBLE
+
+
 
         //Aggiorna le posizioni
         locationCallback = object : LocationCallback() {
@@ -334,6 +363,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Mostra la mappa
         showMap()
 
+
         //vede se si può volare di d-flight JSON
         // Verifica se la TextView esiste nel layout
         findViewById<TextView>(R.id.lowerLimitTextView)?.text = "In attesa...."
@@ -343,17 +373,38 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         //
         // Sezione Drone ID - call back
         //
+
+        // Inizializziamo le mappe per il riconoscimento costruttore e modello di drone
+        initDroneMaps()
+
         droneIdDataManager = OpenDroneIdDataManager(object : OpenDroneIdDataManager.Callback {
             override fun onNewAircraft(obj: AircraftObject) {
                 Log.d("DronePilotApp", "🆕 Nuovo drone rilevato: ${obj.connection.value?.macAddress}")
             }
 
             override fun onLocationUpdate(obj: AircraftObject) {
-                val mac = obj.connection.value?.macAddress ?: return
+                //Log.d("DronePilotApp", "📌 ID attuale = ${obj.uasIdString.value} su MAC=${obj.macAddress}")
+
+                val mac = obj.macAddressString
                 val location = obj.location.value ?: return
 
                 // Ricava il modello dal Basic ID
-                val modello = obj.identification1.value?.uasIdAsString ?: "Drone sconosciuto"
+                //val uasId = obj.identification1.value?.uasIdAsString
+                //val uasId = obj.uasIdString.value
+                val uasId = obj.uasIdString.value
+                    ?: obj.identification1.value?.uasIdAsString
+
+                val modello = if (!uasId.isNullOrBlank()) {
+                    val (manufacturer, model) = parseUasId(uasId, prefixMap, modelMap)
+                    if (model != "Modello sconosciuto" && manufacturer != "Costruttore sconosciuto") {
+                        "$model ($manufacturer)"
+                    } else {
+                        uasId
+                    }
+                } else {
+                    "Drone sconosciuto"
+                }
+
                 val lat = location.latitude
                 val lon = location.longitude
                 val alt = location.height.toInt() // Altezza relativa più realistica
@@ -366,6 +417,9 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 Log.d("DronePilotApp", "📍 Aggiornamento posizione $mac: lat=$lat, lon=$lon, alt=$alt, vel=$vel, modello=$modello")
 
                 updateDronePosition(mac, lat, lon, alt, vel, modello) // Mostriamo solo il modello nel marker
+
+                // Aggiorna le polilinee del drone ma mano che si sposta
+                updatePolyline(mac, lat, lon)
 
                 // 🔥 Aggiorna detected_drones e completed_flights
                 processIncomingDroneData(
@@ -389,7 +443,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                         "timestamp" to timestamp
                     ))
                     .addOnSuccessListener {
-                        Log.d("DronePilotApp", "📍 Punto aggiunto a trajectories/$mac")
+                        //Log.d("DronePilotApp", "📍 Punto aggiunto a trajectories/$mac")
                     }
                     .addOnFailureListener { e ->
                         Log.e("DronePilotApp", "❌ Errore aggiunta punto in trajectories/$mac: ${e.message}", e)
@@ -415,7 +469,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     val lastTimestamp = snapshot.getLong("timestamp") ?: 0L
                     val timeDiffMillis = timestamp - lastTimestamp
 
+                    //Log.d("DronePilotApp", "🕒 processIncomingDroneData: droneId=$droneId")
+                    //Log.d("DronePilotApp", "🕒 lastTimestamp=$lastTimestamp, currentTimestamp=$timestamp, diffMillis=$timeDiffMillis")
+
                     if (lastTimestamp != 0L && timeDiffMillis > 60 * 60 * 1000) { // Più di 1 ora
+                        Log.d("DronePilotApp", "🛬 Più di 1 ora trascorsa. Salvo volo precedente e resetto traiettoria.")
+
                         // 🛬 Salva fine volo precedente
                         val completedData = mapOf(
                             "droneId" to droneId,
@@ -434,9 +493,28 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                             .addOnFailureListener { e ->
                                 Log.w("DronePilotApp", "❌ Errore salvataggio completed_flights: ${e.message}")
                             }
+
+                        // 🗑️ Cancella tutti i punti della traiettoria precedente
+                        val trajectoryPointsRef = firestore.collection("trajectories").document(droneId).collection("points")
+
+                        trajectoryPointsRef.get().addOnSuccessListener { pointsSnapshot ->
+                            for (pointDoc in pointsSnapshot.documents) {
+                                pointDoc.reference.delete()
+                            }
+                            Log.d("DronePilotApp", "🗑️ Traiettoria vecchia cancellata per il drone $droneId")
+
+                            // 🧼 Rimuovi anche la polyline dalla mappa (SOLO SE usi una mappa delle polilinee)
+                            droneTrajectories[droneId]?.remove()  // <-- Questo rimuove la Polyline dalla mappa
+                            droneTrajectories.remove(droneId)     // <-- Questo rimuove il riferimento dalla Map
+
+                        }.addOnFailureListener { e ->
+                            Log.w("DronePilotApp", "❌ Errore cancellazione traiettoria per il drone $droneId: ${e.message}")
+                        }
+                    } else {
+                        //Log.d("DronePilotApp", "⏳ Meno di 1 ora trascorsa o primo volo. Non salvo completed_flights.")
                     }
 
-                    // ✍️ Aggiorna la posizione attuale
+                    // ✍️ Aggiorna la posizione attuale su detected_drones
                     val updatedData = mapOf(
                         "lat" to lat,
                         "lon" to lon,
@@ -447,7 +525,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     )
                     droneDocRef.set(updatedData)
                         .addOnSuccessListener {
-                            Log.d("DronePilotApp", "📍 Drone $droneId aggiornato su detected_drones")
+                            //Log.d("DronePilotApp", "📍 Drone $droneId aggiornato su detected_drones")
                         }
                         .addOnFailureListener { e ->
                             Log.w("DronePilotApp", "❌ Errore aggiornamento detected_drones: ${e.message}")
@@ -459,7 +537,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         })
-
 
         bluetoothReceiver = BluetoothReceiver(this, droneIdDataManager)
         wifiAwareReceiver = WifiAwareReceiver(this, droneIdDataManager)
@@ -511,6 +588,112 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     /// INIZIO FUNZIONI
+
+    //
+    // Drone ID - Mappe Costruttori - Modelli
+    //
+    private fun initDroneMaps() {
+        prefixMap = mapOf(
+            "1581F" to "DJI",
+            "1581E" to "DJI",
+            "1234A" to "Parrot",
+            "5678B" to "Autel",
+            "1748F" to "Autel",
+            "1748C" to "Autel",
+            "1596"  to "Dronetag"
+        )
+
+        modelMap = mapOf(
+            "1ZP" to "Mavic 2 Pro",
+            "163" to "Mavic 2 Pro",
+            "1KP" to "Mavic 2 Zoom",
+            "0ZP" to "Mavic Air 2",
+            "0M6" to "Mavic 2 Zoom",
+            "1WN" to "Mavic Air 2",
+            "3ZP" to "Phantom 4 Pro V2.0",
+            "2ZP" to "Phantom 4 Advanced",
+            "3N3" to "Mavic Air 2",
+            "5ZP" to "Inspire 2",
+            "446" to "Agras T30",
+            "4GC" to "Mavic 2E",
+            "4ZP" to "Mavic Mini",
+            "45T" to "Mavic 3",
+            "4QW" to "Avata",
+            "4QZ" to "Mavic 3 Cine",
+            "4XF" to "Mini 3 Pro",
+            "5YH" to "Mini 3",
+            "574" to "Agras T40",
+            "6BU" to "Agras T50",
+            "6Z9" to "Mini 4 Pro",
+            "67P" to "Mavic 3 Classic",
+            "67Q" to "Mavic 3 Pro",
+            "6N8" to "Air 3",
+            "6W8" to "Avata 2",
+            "7ZP" to "Air 2S",
+            "3YT" to "Air 2S",
+            "8ZP" to "Mini 2",
+            "895" to "Air 3S",
+            "7FV" to "Matrice 4E",
+            "7K3" to "Matrice 4T",
+            "8HH" to "Matrice 4D",
+            "8HG" to "Matrice 4 TD",
+
+            "JD2" to "Dragonfish Lite",
+            "JD3" to "Dragonfish Pro",
+            "JD1" to "Dragonfish Std",
+            "EV2" to "EVO II V3",
+            "EV3" to "EVO Max",
+            "V4A" to "Autel Alpha",
+
+            "A34" to "Beacon"
+
+        )
+    }
+
+    private fun parseUasId(uasId: String, prefixMap: Map<String, String>, modelMap: Map<String, String>): Pair<String, String> {
+        if (uasId.length < 7) return Pair("Costruttore sconosciuto", "Modello sconosciuto")
+
+        // Cerca il prefisso più lungo corrispondente
+        val manufacturerEntry = prefixMap.entries
+            .firstOrNull { uasId.startsWith(it.key) }
+
+        val manufacturer = manufacturerEntry?.value ?: "Costruttore sconosciuto"
+        val prefixLength = manufacturerEntry?.key?.length ?: 0
+
+        val serialPart = uasId.drop(prefixLength)
+        val modelKey = serialPart.take(3).uppercase()
+
+        val model = modelMap[modelKey] ?: "Modello sconosciuto"
+
+        return Pair(manufacturer, model)
+    }
+
+    private fun updatePolyline(droneId: String, lat: Double, lon: Double) {
+        runOnUiThread {
+            val latLng = LatLng(lat, lon)
+
+            val existingPolyline = droneTrajectories[droneId]
+            if (existingPolyline != null) {
+                // ➕ Aggiunge il nuovo punto alla polyline esistente
+                val points = existingPolyline.points.toMutableList()
+                points.add(latLng)
+                existingPolyline.points = points
+            } else {
+                // ✨ Crea una nuova polyline
+                val newPolyline = mMap.addPolyline(
+                    PolylineOptions()
+                        .add(latLng)
+                        .width(5f)
+                        .geodesic(true)
+                )
+                droneTrajectories[droneId] = newPolyline
+            }
+        }
+    }
+
+    //
+    // FINE:  Drone ID - Mappe Costruttori - Modelli
+    //
 
     // Mostra il menu in Popup
     private fun showPopupMenu(view: View) {
@@ -604,6 +787,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 .commitNow()
         }
         mapFragment!!.getMapAsync(this)
+
     }
 
     //Fa aprire la Chat con il mittente (receiver) se si clicca sul messaggio ricevuto
@@ -622,14 +806,60 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.uiSettings.isZoomControlsEnabled = true
         mMap.uiSettings.isMyLocationButtonEnabled = true
 
-        // Imposta il listener per il click sulla stringa
         mMap.setOnInfoWindowClickListener { marker ->
-            val userId = marker.tag as? String  // Recupera l'ID del pilota
+            val userId = marker.tag as? String
             if (userId != null) {
-                // Avvia la chat con il pilota usando l'ID
                 openChatWithPilot(userId)
             }
         }
+
+        // Permette di fare un InfoWindow che gestisce gli a capo
+        // Infowindow con bordi smussati
+        mMap.setInfoWindowAdapter(object : GoogleMap.InfoWindowAdapter {
+            override fun getInfoWindow(marker: Marker): View? {
+                return null
+            }
+
+            override fun getInfoContents(marker: Marker): View {
+                val context = this@DashboardActivity
+
+                // Crea un CardView per il bordo smussato
+                val cardView = CardView(context).apply {
+                    radius = 16f * context.resources.displayMetrics.density // Angoli smussati
+                    setCardBackgroundColor(Color.WHITE)
+                    cardElevation = 8f * context.resources.displayMetrics.density
+                    useCompatPadding = true
+                    setContentPadding(16, 16, 16, 16)
+                }
+
+                // Layout interno verticale
+                val layout = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                }
+
+                // Titolo (nome drone o pilota)
+                val title = TextView(context).apply {
+                    text = marker.title
+                    setTextColor(Color.BLACK)
+                    setTypeface(null, Typeface.BOLD)
+                    textSize = 16f
+                }
+
+                // Snippet (info extra)
+                val snippet = TextView(context).apply {
+                    text = marker.snippet
+                    setTextColor(Color.DKGRAY)
+                    textSize = 14f
+                }
+
+                layout.addView(title)
+                layout.addView(snippet)
+
+                cardView.addView(layout)
+
+                return cardView
+            }
+        })
 
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -642,6 +872,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             logDebug(TAG, "📡 Chat Listener per chat attivato")
         }
     }
+
+
 
 
     private fun loadPilots() {
@@ -666,7 +898,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 userDocs.forEach { userDoc ->
                     val userId = userDoc.id
 
-                    // Ora cerchiamo le coordinate nella collezione "piloti"
                     db.collection("piloti").document(userId)
                         .get()
                         .addOnSuccessListener { pilotDoc ->
@@ -676,24 +907,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                 val name = pilotDoc.getString("name") ?: "Sconosciuto"
                                 val drone = pilotDoc.getString("drone") ?: "N/D"
                                 val radioPMR = userDoc.getBoolean("radioPMR") ?: false
+                                val availableForChat = userDoc.getBoolean("availableForChat") ?: false
 
                                 if (lat != null && lng != null) {
                                     val position = LatLng(lat, lng)
-
-                                    val markerOptions = MarkerOptions().position(position).title("$name - $drone")
-
-
-                                    logDebug(TAG, "🔄 loadPilots: Aggiungendo/aggiornando marker per $userId")
-
-                                    val availableForChat = userDoc.getBoolean("availableForChat") ?: false // Aggiungi questa riga per recuperare la disponibilità per la chat
-                                    val radioPMR = userDoc.getBoolean("radioPMR") ?: false
-
-                                    //Controllo lo stato della chat
-                                    val markerIcon = when {
-                                        radioPMR -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-                                        availableForChat -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-                                        else -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-                                    }
 
                                     val snippetText = buildString {
                                         if (availableForChat) {
@@ -702,30 +919,56 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                             append("❌ Chat OFF")
                                         }
                                         if (radioPMR) {
-                                            append(" | 📻 PMR CH4")
+                                            append("\n📻 PMR CH4")
                                         }
                                     }
 
-                                    // Aggiungi un marker o aggiorna il marker esistente
-                                    val existingMarker = pilotMarkers[userId]
-                                    if (existingMarker == null) {
-                                        val marker = mMap.addMarker(markerOptions)!!
-                                        marker.tag = userId
-                                        marker.setIcon(markerIcon) // Imposta il colore corretto
-                                        marker.snippet = snippetText
-                                        pilotMarkers[userId] = marker
-                                        logDebug(TAG, "✅ Marker aggiunto per $userId")
-                                    } else {
-                                        existingMarker.position = position
-                                        //existingMarker.title = "$name - $drone"
-                                        existingMarker.setIcon(markerIcon) // Imposta il colore corretto
-                                        existingMarker.snippet = snippetText
-                                        logDebug(TAG, "✅ loadPilots: Marker esistente aggiornato per $userId")
+                                    val iconUrl = when {
+                                        radioPMR -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_pmr_mini.png"
+                                        availableForChat -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_android_mini.png"
+                                        else -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_drone_mini.png"
                                     }
+
+                                    // Carica immagine da URL e crea marker
+                                    val density = resources.displayMetrics.density
+                                    val sizeInPx = (32 * density).toInt()
+
+                                    Glide.with(this@DashboardActivity)
+                                        .asBitmap()
+                                        .load(iconUrl)
+                                        .override(sizeInPx, sizeInPx)
+                                        .into(object : CustomTarget<Bitmap>() {
+                                            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                                val customIcon = BitmapDescriptorFactory.fromBitmap(resource)
+
+                                                val markerOptions = MarkerOptions()
+                                                    .position(position)
+                                                    .title("$name - $drone")
+                                                    .snippet(snippetText)
+                                                    .icon(customIcon)
+
+                                                val existingMarker = pilotMarkers[userId]
+                                                if (existingMarker == null) {
+                                                    val marker = mMap.addMarker(markerOptions)!!
+                                                    marker.tag = userId
+                                                    pilotMarkers[userId] = marker
+                                                    logDebug(TAG, "✅ Marker aggiunto per $userId")
+                                                } else {
+                                                    existingMarker.position = position
+                                                    existingMarker.setIcon(customIcon)
+                                                    existingMarker.snippet = snippetText
+                                                    logDebug(TAG, "✅ Marker aggiornato per $userId")
+                                                }
+                                            }
+
+                                            override fun onLoadCleared(placeholder: Drawable?) {
+                                                // Optional: gestione del caso in cui l'immagine venga cancellata
+                                            }
+                                        })
                                 } else {
                                     pilotMarkers[userId]?.remove()
                                     pilotMarkers.remove(userId)
-                                    logDebug(TAG, "❌ loadPilots: Marker rimosso per $userId")
+                                    logDebug(TAG, "❌ Marker rimosso per $userId")
                                 }
                             } else {
                                 logWarning(TAG, "⚠️ loadPilots: Nessun dato trovato in 'piloti' per $userId verrà rimesso in inVolo:false dal server")
@@ -734,21 +977,21 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                         .addOnFailureListener { err ->
                             logWarning(TAG, "❌ loadPilots: Errore nel recupero delle coordinate per $userId", err)
                         }
-                    // Aggiungi il log per confermare che i piloti sono stati caricati
                     logDebug(TAG, "✅ loadPilots: Piloti caricati, impostazione di pilotsLoaded a true")
                     pilotsLoaded = true
                 }
+
             }
     }
 
     //
-// Sezione Drone ID
-//
+    // Sezione Drone ID
+    //
     private fun loadDrones() {
-        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
-        val droneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
+        //val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        //val droneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
 
-        if (!droneIdEnabled) return
+        //if (!droneIdEnabled) return
 
         val db = FirebaseFirestore.getInstance()
 
@@ -766,25 +1009,46 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     val pos = LatLng(lat, lon)
 
-                    // Aggiungi o aggiorna il marker per il drone attivo
                     if (droneMarkers.containsKey(droneId)) {
                         droneMarkers[droneId]?.position = pos
-                        droneMarkers[droneId]?.snippet = "ID: $droneId\nAlt: $alt m, Vel: $vel m/s"
+                        droneMarkers[droneId]?.snippet = "ID: $droneId\nAlt: $alt m\nVel: $vel m/s"
                     } else {
-                        val marker = mMap.addMarker(
-                            MarkerOptions()
-                                .position(pos)
-                                .title(modello)
-                                .snippet("ID: $droneId, Alt: $alt m, Vel: $vel m/s")
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)) // icona gialla per droni attivi
-                        )
-                        droneMarkers[droneId] = marker!!
+                        val iconUrl = "https://www.kwos.org/appoggio/droni/dronepilotapp/drone_icon.png"
+
+                        val density = resources.displayMetrics.density
+                        val sizeInPx = (32 * density).toInt()
+                        Glide.with(this@DashboardActivity)
+                            .asBitmap()
+                            .load(iconUrl)
+                            .override(sizeInPx, sizeInPx)
+                            .into(object : CustomTarget<Bitmap>() {
+                                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                    val customIcon = BitmapDescriptorFactory.fromBitmap(resource)
+
+                                    val marker = mMap.addMarker(
+                                        MarkerOptions()
+                                            .position(pos)
+                                            .title(modello)
+                                            .snippet("ID: $droneId\nAlt: $alt m\nVel: $vel m/s")
+                                            .icon(customIcon)
+                                    )
+                                    if (marker != null) {
+                                        droneMarkers[droneId] = marker
+                                    }
+                                }
+
+                                override fun onLoadCleared(placeholder: Drawable?) {
+                                    // opzionale: gestione in caso di clear
+                                }
+                            })
                     }
+
 
                     // 📈 Carica la traiettoria del drone attivo
                     db.collection("trajectories")
                         .document(droneId)
                         .collection("points")
+                        .orderBy("timestamp")
                         .get()
                         .addOnSuccessListener { trajectoryResult ->
                             val points = mutableListOf<LatLng>()
@@ -824,17 +1088,37 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     val pos = LatLng(lat, lon)
 
-                    // Aggiungi marker per il drone atterrato
                     if (!droneMarkers.containsKey(flightId)) {
-                        val marker = mMap.addMarker(
-                            MarkerOptions()
-                                .position(pos)
-                                .title("$modello (Atterrato)")
-                                .snippet("Volo completato")
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)) // icona azzurra per droni atterrati
-                        )
-                        droneMarkers[flightId] = marker!!
+                        val iconUrl = "https://www.kwos.org/appoggio/droni/dronepilotapp/drone_icon_landed.png"
+
+                        val density = resources.displayMetrics.density
+                        val sizeInPx = (32 * density).toInt()
+                        Glide.with(this@DashboardActivity)
+                            .asBitmap()
+                            .load(iconUrl)
+                            .override(sizeInPx, sizeInPx)
+                            .into(object : CustomTarget<Bitmap>() {
+                                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                    val customIcon = BitmapDescriptorFactory.fromBitmap(resource)
+
+                                    val marker = mMap.addMarker(
+                                        MarkerOptions()
+                                            .position(pos)
+                                            .title("$modello (Atterrato)")
+                                            .snippet("Volo completato")
+                                            .icon(customIcon)
+                                    )
+                                    if (marker != null) {
+                                        droneMarkers[flightId] = marker
+                                    }
+                                }
+
+                                override fun onLoadCleared(placeholder: Drawable?) {
+                                    // opzionale: gestione del clear
+                                }
+                            })
                     }
+
                 }
             }
             .addOnFailureListener { e ->
@@ -869,20 +1153,40 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             // Se il marker esiste già, aggiorna la sua posizione
             existingMarker.position = position
             existingMarker.title = modello
-            existingMarker.snippet = "ID: $droneId, Alt.: $altitude m, Vel.: $speed m/s"
+            existingMarker.snippet = "ID: $droneId\nAlt.: $altitude m\nVel.: $speed m/s"
         } else {
-            // Altrimenti, crea un nuovo marker
-            val marker = mMap.addMarker(
-                MarkerOptions()
-                    .position(position)
-                    .title(modello)
-                    .snippet("ID: $droneId, Alt.: $altitude m, Vel.: $speed m/s")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))
-            )
+            val iconUrl = "https://www.kwos.org/appoggio/droni/dronepilotapp/drone_icon.png"
 
-            // Aggiungi il marker alla mappa
-            droneMarkers[id] = marker as Marker
+            val density = resources.displayMetrics.density
+            val sizeInPx = (32 * density).toInt() // Qui decidi tu quanto grande deve essere, ad es. 48dp
+
+            Glide.with(this@DashboardActivity)
+                .asBitmap()
+                .load(iconUrl)
+                .override(sizeInPx, sizeInPx)
+                .into(object : CustomTarget<Bitmap>() {
+                    override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                        val customIcon = BitmapDescriptorFactory.fromBitmap(resource)
+
+                        val marker = mMap.addMarker(
+                            MarkerOptions()
+                                .position(position)
+                                .title(modello)
+                                .snippet("ID: $droneId\nAlt.: $altitude m\nVel.: $speed m/s")
+                                .icon(customIcon)
+                        )
+
+                        if (marker != null) {
+                            droneMarkers[id] = marker
+                        }
+                    }
+
+                    override fun onLoadCleared(placeholder: Drawable?) {
+                        // opzionale: gestione se l'immagine viene cancellata
+                    }
+                })
         }
+
 
         // Aggiungi il punto alla traiettoria
         val trajectory = droneTrajectories[id]
@@ -966,28 +1270,46 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     // Recuperiamo il marker e aggiorniamo l'icona e lo snippet
                     val existingMarker = pilotMarkers[userId]
                     if (existingMarker != null) {
-                        val markerIcon = when {
-                            radioPMR -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-                            availableForChat -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-                            else -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                        val iconUrl = when {
+                            radioPMR -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_pmr_mini.png"
+                            availableForChat -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_android_mini.png"
+                            else -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_drone_mini.png"
                         }
-                        existingMarker.setIcon(markerIcon)
 
-                        val snippetText = buildString {
-                            if (availableForChat) {
-                                append("💬 Chat ON")
-                            } else {
-                                append("❌ Chat OFF")
-                            }
-                            if (radioPMR) {
-                                append(" | 📻 PMR CH4")
-                            }
-                        }
-                        existingMarker.snippet = snippetText
-                        logDebug(TAG, "✅ ChatAvail: Marker aggiornato per $userId")
+                        val density = resources.displayMetrics.density
+                        val sizeInPx = (32 * density).toInt() // 48dp dinamico
+
+                        Glide.with(this@DashboardActivity)
+                            .asBitmap()
+                            .load(iconUrl)
+                            .override(sizeInPx, sizeInPx)
+                            .into(object : CustomTarget<Bitmap>() {
+                                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                    val customIcon = BitmapDescriptorFactory.fromBitmap(resource)
+                                    existingMarker.setIcon(customIcon)
+
+                                    val snippetText = buildString {
+                                        if (availableForChat) {
+                                            append("💬 Chat ON")
+                                        } else {
+                                            append("❌ Chat OFF")
+                                        }
+                                        if (radioPMR) {
+                                            append("\n📻 PMR CH4")
+                                        }
+                                    }
+                                    existingMarker.snippet = snippetText
+                                    logDebug(TAG, "✅ ChatAvail: Marker aggiornato per $userId")
+                                }
+
+                                override fun onLoadCleared(placeholder: Drawable?) {
+                                    // gestione opzionale
+                                }
+                            })
                     } else {
                         logWarning(TAG, "⚠️ ChatAvail: Questo $userId non ha un marker attivo, verrà resettato lo stato dal server")
                     }
+
                 }
             }
     }
@@ -1032,13 +1354,39 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 val userPosition = LatLng(location.latitude, location.longitude)
 
 
-                val marker = mMap.addMarker(MarkerOptions()
-                    .position(userPosition)
-                    .title("$userName - $droneName")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))  // Inizialmente rosso
-                )!!
+                val iconUrl = "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_drone_mini.png"
 
-                pilotMarkers[userId] = marker  // Salva il marker
+                val density = resources.displayMetrics.density
+                val sizeInPx = (32 * density).toInt() // oppure la dimensione che preferisci
+
+                Glide.with(this@DashboardActivity)
+                    .asBitmap()
+                    .load(iconUrl)
+                    .override(sizeInPx, sizeInPx)
+                    .into(object : CustomTarget<Bitmap>() {
+                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            val customIcon = BitmapDescriptorFactory.fromBitmap(resource)
+
+                            val marker = mMap.addMarker(
+                                MarkerOptions()
+                                    .position(userPosition)
+                                    .title("$userName - $droneName")
+                                    .icon(customIcon)
+                            )
+
+                            if (marker != null) {
+                                pilotMarkers[userId] = marker
+                                logDebug(TAG, "✅ Marker personale creato per utente $userId")
+                            }
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            // opzionale: gestione del clear
+                        }
+                    })
+
+
+                //pilotMarkers[userId] = marker  // Salva il marker
 
                 logDebug(TAG, "✅ startFlight: Attivato il volo per: $userId - $userName - $droneName")
                 startLocationUpdates(userId, userName, droneName)
@@ -1229,30 +1577,47 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         logDebug(TAG, "✅ aggiornaMarker: sono in aggiornaMarker")
         val existingMarker = pilotMarkers[userId]
         if (existingMarker != null) {
-            val markerIcon = when {
-                radioPMR -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-                availableForChat -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-                else -> BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-            }
-            existingMarker.setIcon(markerIcon)
-
-            val snippetText = buildString {
-                if (availableForChat) {
-                    append("💬 Chat ON")
-                } else {
-                    append("❌ Chat OFF")
-                }
-                if (radioPMR) {
-                    append(" | 📻 PMR CH4")
-                }
+            val iconUrl = when {
+                radioPMR -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_pmr_mini.png"
+                availableForChat -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_android_mini.png"
+                else -> "https://www.kwos.org/appoggio/droni/dronepilotapp/marker_drone_mini.png"
             }
 
-            existingMarker.snippet = snippetText
-            logDebug(TAG, "✅ Marker aggiornato per $userId")
+            val density = resources.displayMetrics.density
+            val sizeInPx = (32 * density).toInt() // adesso icona ridotta, più proporzionata
+
+            Glide.with(this@DashboardActivity)
+                .asBitmap()
+                .load(iconUrl)
+                .override(sizeInPx, sizeInPx)
+                .into(object : CustomTarget<Bitmap>() {
+                    override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                        val customIcon = BitmapDescriptorFactory.fromBitmap(resource)
+                        existingMarker.setIcon(customIcon)
+
+                        val snippetText = buildString {
+                            if (availableForChat) {
+                                append("💬 Chat ON")
+                            } else {
+                                append("❌ Chat OFF")
+                            }
+                            if (radioPMR) {
+                                append("\n📻 PMR CH4")
+                            }
+                        }
+                        existingMarker.snippet = snippetText
+                        logDebug(TAG, "✅ Marker aggiornato per $userId")
+                    }
+
+                    override fun onLoadCleared(placeholder: Drawable?) {
+                        // opzionale: gestione del clear
+                    }
+                })
         } else {
             logWarning(TAG, "⚠️ Nessun marker trovato per $userId")
         }
     }
+
 
     // Salva lo stato di online per contare il numero di utenti connessi al sistema
     fun saveOnlineStatus(isOnline: Boolean) {
@@ -1394,7 +1759,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             } else true
 
             if (hasLocation && hasBluetoothScan && hasNearbyWifi) {
-                //bluetoothReceiver?.startScanning()
+                bluetoothReceiver?.startScanning()
                 //wifiAwareReceiver?.startSession()
                 wifiBeaconReceiver?.startScan()
                 Log.d("DronePilotApp", "onStart Dashboard: Receiver Drone ID attivati")
@@ -1402,7 +1767,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 Log.w("DronePilotApp", "onStart Dashboard: Permessi insufficienti per avviare i receiver")
             }
         } else {
-            //bluetoothReceiver?.stopScanning()
+            bluetoothReceiver?.stopScanning()
             //wifiAwareReceiver?.stopSession()
             wifiBeaconReceiver?.stopScan()
             Log.d("DronePilotApp", "onStart Dashboard: Drone ID disattivato nelle preferenze")
@@ -1609,29 +1974,29 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         // Message broadcast receiver
-        if (isMessageReceiverRegistered) {
-            try {
-                unregisterReceiver(messageReceiver)
-                Log.d("DronePilotApp", "DashboardActivity: MessageReceiver deregistrato in onStop()")
-            } catch (e: IllegalArgumentException) {
-                Log.e("DronePilotApp", "DashboardActivity: Errore nella deregistrazione del receiver: ${e.message}")
-            }
-            isMessageReceiverRegistered = false
-        }
+        //if (isMessageReceiverRegistered) {
+        //    try {
+        //        unregisterReceiver(messageReceiver)
+        //        Log.d("DronePilotApp", "DashboardActivity: MessageReceiver deregistrato in onStop()")
+        //    } catch (e: IllegalArgumentException) {
+        //        Log.e("DronePilotApp", "DashboardActivity: Errore nella deregistrazione del receiver: ${e.message}")
+        //    }
+        //    isMessageReceiverRegistered = false
+        //}
     }
 
     override fun onPause() {
         super.onPause()
         // Message broadcast receiver
-        if (isMessageReceiverRegistered) {
-            try {
-                unregisterReceiver(messageReceiver)
-                Log.d("DronePilotApp", "DashboardActivity: MessageReceiver deregistrato in onPause()")
-            } catch (e: IllegalArgumentException) {
-                Log.e("DronePilotApp", "DashboardActivity: Errore nella deregistrazione del receiver: ${e.message}")
-            }
-            isMessageReceiverRegistered = false
-        }
+        //if (isMessageReceiverRegistered) {
+        //    try {
+        //        unregisterReceiver(messageReceiver)
+        //        Log.d("DronePilotApp", "DashboardActivity: MessageReceiver deregistrato in onPause()")
+        //    } catch (e: IllegalArgumentException) {
+        //        Log.e("DronePilotApp", "DashboardActivity: Errore nella deregistrazione del receiver: ${e.message}")
+        //    }
+        //    isMessageReceiverRegistered = false
+        //}
 
         // Ferma il refresh dell'handler di loadpilots quando l'app è in pausa
         handler.removeCallbacks(refreshRunnable)
@@ -1656,6 +2021,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         // FINE BROADCAST RECEIVER
 
+        if (::mMap.isInitialized) {
+            loadDrones()  // ✅ Ora sempre valido, a prescindere dallo switch
+        }
+
         checkForNewMessages() // Controlla se ci sono nuovi messaggi
         val userId = auth.currentUser?.uid
         if (userId != null && userName != null && droneName != null) {
@@ -1666,22 +2035,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Ricarica la lista dei piloti quando l'app torna in primo piano, utilizzando l'handler
         handler.post(refreshRunnable) // Avvia il refresh quando l'app torna attiva
 
-        // Per caricare Drone ID
-        // Se la mappa è già pronta
-        if (::mMap.isInitialized) {
-            val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
-            val droneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
-
-            if (droneIdEnabled) {
-                loadDrones()
-            } else {
-                // Rimuove eventuali marker dei droni
-                for (marker in droneMarkers.values) {
-                    marker.remove()
-                }
-                droneMarkers.clear()
-            }
-        }
     }
 
     override fun onDestroy() {
@@ -1718,7 +2071,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         try {
-            //bluetoothReceiver?.stopScanning()
+            bluetoothReceiver?.stopScanning()
             //wifiAwareReceiver?.stopSession()
             wifiBeaconReceiver?.stopScan()
             Log.d("DronePilotApp", "onDestroy Dashboard: Receiver Drone ID fermati")

@@ -14,6 +14,9 @@ class AircraftObject(val macAddress: Long) {
     val selfid = MutableLiveData<SelfIdData?>()
     val system = MutableLiveData<SystemData?>()
     val operatorid = MutableLiveData<OperatorIdData?>()
+    var macAddressString: String = ""
+    val uasIdString = MutableLiveData<String?>()
+
 
     private var authLastPageIndexSave = 0
     private var authLengthSave = 0

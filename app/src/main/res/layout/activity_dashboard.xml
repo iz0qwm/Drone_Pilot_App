@@ -6,6 +6,7 @@
     android:fitsSystemWindows="true">
 
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false">
@@ -180,7 +181,6 @@
             </LinearLayout>
 
 
-            <!-- Card con la mappa -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="325dp"
@@ -190,11 +190,26 @@
                 app:strokeWidth="4dp"
                 app:strokeColor="@color/black">
 
+                <!-- Contenitore per mappa + touch view -->
                 <FrameLayout
-                    android:id="@+id/mapContainer"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent">
+
+                    <!-- QUI la tua mappa -->
+                    <FrameLayout
+                        android:id="@+id/mapContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+
+                    <!-- QUI sopra, la touch interceptor view -->
+                    <com.kwos.dronepilotapp.TransparentTouchView
+                        android:id="@+id/touchInterceptor"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/transparent"/>
+                </FrameLayout>
             </com.google.android.material.card.MaterialCardView>
+
 
             <!-- Icona nuovi messaggi -->
             <LinearLayout

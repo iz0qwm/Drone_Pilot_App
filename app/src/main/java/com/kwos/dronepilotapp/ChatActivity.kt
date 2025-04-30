@@ -33,6 +33,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var messageInput: EditText
     private lateinit var sendButton: Button
+    private lateinit var closeButton: Button
     private lateinit var messagesListView: RecyclerView
     private lateinit var messagesAdapter: ChatAdapter
     private lateinit var receiverId: String
@@ -94,6 +95,7 @@ class ChatActivity : AppCompatActivity() {
         chattingWithText = findViewById(R.id.chattingWithText)
         messageInput = findViewById(R.id.messageInput)
         sendButton = findViewById(R.id.sendButton)
+        closeButton = findViewById(R.id.close_chat_button)
         messagesListView = findViewById(R.id.messagesListView)
         messagesAdapter = ChatAdapter(this, mutableListOf())
 
@@ -101,6 +103,11 @@ class ChatActivity : AppCompatActivity() {
         messagesListView.adapter = messagesAdapter
 
         sendButton.setOnClickListener { sendMessage() }
+
+        // Pulsante per chiudere la finestra
+        closeButton.setOnClickListener {
+            finish()
+        }
 
         loadReceiverName()
         listenForMessages()

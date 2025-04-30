@@ -32,12 +32,15 @@
             <TextView
                 android:id="@+id/weather_location"
                 style="@style/AppTextView"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Località"
                 android:gravity="center"
                 android:textColor="#DCDCDC"
-                android:layout_marginBottom="10dp" />
+                android:layout_marginBottom="10dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textSize="18sp" />
 
             <ProgressBar
                 android:id="@+id/weatherProgressBar"
@@ -60,6 +63,7 @@
                 android:gravity="center_horizontal">
 
                 <!-- Temperatura -->
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -73,6 +77,15 @@
                         android:src="@drawable/ic_temperature"
                         android:contentDescription="Temperatura"
                         app:tint="#FFD700" />
+
+                    <TextView
+                        android:id="@+id/temperatureText"
+                        style="@style/AppTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ora: --°C"
+                        android:layout_marginStart="8dp"
+                        android:textColor="#DCDCDC" />
 
                     <TextView
                         android:id="@+id/temperatureMinText"
@@ -222,6 +235,70 @@
                 android:background="@android:color/darker_gray"
                 android:layout_marginVertical="8dp" />
 
+            <!-- Sezione Luce Giorno -->
+            <TextView
+                android:id="@+id/daylightTitle"
+                style="@style/AppTextViewBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🌞 Luce del Giorno"
+                android:gravity="center"
+                android:padding="8dp"
+                android:textColor="#FFD700"
+                android:textSize="20sp" />
+
+            <LinearLayout
+                android:id="@+id/daylightInfoLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:padding="8dp">
+
+                <TextView
+                    android:id="@+id/sunriseText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="☀️ Alba: --:--"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:padding="4dp"/>
+
+                <TextView
+                    android:id="@+id/sunsetText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌇 Tramonto: --:--"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:padding="4dp"/>
+
+                <TextView
+                    android:id="@+id/civilTwilightBeginText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌅 Inizio Crepuscolo: --:--"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:padding="4dp"/>
+
+                <TextView
+                    android:id="@+id/civilTwilightEndText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌆 Fine Crepuscolo: --:--"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:padding="4dp"/>
+
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
             <!-- Pulsanti navigazione -->
             <LinearLayout
                 android:layout_width="match_parent"
