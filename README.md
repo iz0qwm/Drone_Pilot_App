@@ -24,7 +24,7 @@ Questa applicazione consente ai piloti di droni di:
 
 Per istruzioni complete sull’uso della Web App, consulta la nostra Wiki:
 
-[📖 Vai alla Wiki](https://github.com/raffaello/DronePilotApp/wiki)
+[📖 Vai alla Wiki](https://github.com/iz0qwm/Drone_Pilot_App/wiki)
 
-[![Wiki](https://img.shields.io/badge/Wiki-Documentazione-blue?logo=github)](https://github.com/raffaello/DronePilotApp/wiki)
+[![Wiki](https://img.shields.io/badge/Wiki-Documentazione-blue?logo=github)](https://github.com/iz0qwm/Drone_Pilot_App/wiki)
 
