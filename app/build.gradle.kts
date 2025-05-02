@@ -85,6 +85,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.0.0")
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-storage:20.3.0")
 
 
     implementation(libs.play.services.maps)

@@ -3,16 +3,16 @@
 
     <item
         android:id="@+id/menu_piloti_online"
-        android:title="Piloti attivi" />
+        android:title="🧑‍✈️ Piloti attivi" />
     <item
         android:id="@+id/menu_impostazioni"
-        android:title="Impostazioni" />
+        android:title="⚙️ Impostazioni" />
     <item
         android:id="@+id/menu_informazioni"
-        android:title="Informazioni" />
+        android:title="ℹ️ Informazioni" />
     <item
         android:id="@+id/menu_group_chat"
-        android:title="Group Chat"
+        android:title="💬 Group Chat"
         android:icon="@drawable/ic_chat"
         app:showAsAction="never"/>
 

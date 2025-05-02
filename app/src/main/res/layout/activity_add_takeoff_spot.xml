@@ -1,0 +1,106 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#191970"
+    android:fitsSystemWindows="true">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Titolo pagina -->
+            <TextView
+                android:id="@+id/addSpotTitle"
+                style="@style/AppTextViewBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aggiungi Spot di Volo"
+                android:gravity="center"
+                android:textColor="#f4f4f4"
+                android:padding="10dp" />
+
+            <!-- Campo Nome Spot -->
+            <EditText
+                android:id="@+id/spot_name_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_input"
+                android:hint="Nome dello spot"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp" />
+
+            <!-- Campo Descrizione -->
+            <EditText
+                android:id="@+id/spot_description_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_input"
+                android:hint="Descrizione dello spot"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp"
+                android:minLines="3" />
+
+            <!-- Bottone Seleziona o Scatta Foto -->
+            <Button
+                android:id="@+id/select_photo_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🖼️ Seleziona o 📷 scatta una foto"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_green"
+                android:textAllCaps="false"
+                android:layout_marginTop="12dp" />
+
+            <!-- Anteprima Foto -->
+            <ImageView
+                android:id="@+id/photo_preview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <!-- Mini Mappa -->
+            <fragment
+                android:id="@+id/mini_map_fragment"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="12dp" />
+
+            <!-- Bottone Invia Spot -->
+            <Button
+                android:id="@+id/submit_spot_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📍 Invia Spot"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue"
+                android:textAllCaps="false"
+                android:layout_marginTop="12dp" />
+
+            <!-- Bottone Chiudi -->
+            <Button
+                android:id="@+id/close_addspot_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="❌ Chiudi"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

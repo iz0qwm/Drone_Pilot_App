@@ -1,5 +1,7 @@
 package com.kwos.dronepilotapp
 
+
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.webkit.WebView
@@ -11,7 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 
-class WebViewActivity : AppCompatActivity() {
+class WebViewdflightActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -36,31 +38,21 @@ class WebViewActivity : AppCompatActivity() {
         supportActionBar?.hide()
 
         overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-        setContentView(R.layout.activity_web_view)
+        setContentView(R.layout.activity_web_viewdflight)
 
         val webView = findViewById<WebView>(R.id.webView)
         val closeButton = findViewById<Button>(R.id.closeButton)
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
-        val backButton = findViewById<Button>(R.id.backButton)
-        val forwardButton = findViewById<Button>(R.id.forwardButton)
 
-
-        val url = intent.getStringExtra("url") ?: "https://www.dronezine.it"
-
-        backButton.setOnClickListener {
-            if (webView.canGoBack()) {
-                webView.goBack()
-            }
-        }
-
-        forwardButton.setOnClickListener {
-            if (webView.canGoForward()) {
-                webView.goForward()
-            }
-        }
+        val url = intent.getStringExtra("url") ?: "https://www.d-flight.it/web-app/"
 
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
+        webView.settings.saveFormData = true
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_YES
+        }
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {

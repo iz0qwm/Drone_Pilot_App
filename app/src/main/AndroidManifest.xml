@@ -88,7 +88,9 @@
         </activity>
 
         <activity android:name=".WebViewActivity" />
-
+        <activity android:name=".WebViewdflightActivity" />
+        <activity android:name=".AddTakeoffSpotActivity" />
+        <activity android:name=".SpotDetailsActivity" />
         <activity
             android:name=".FullScreenImageActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"/>

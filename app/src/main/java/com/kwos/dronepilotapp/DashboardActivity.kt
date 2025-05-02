@@ -257,6 +257,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val chatUsersText = findViewById<TextView>(R.id.chatUsersText)
         val driLed = findViewById<ImageView>(R.id.driLed)
         val dronezineButton = findViewById<ImageButton>(R.id.dronezineButton)
+        val dflightButton = findViewById<ImageButton>(R.id.dflightButton)
 
         // layer trasparente davanti alla mappa per intercettare il tocco di due dita
         // e non passarlo alla scroll view
@@ -324,6 +325,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Apertura News Dronezine
         dronezineButton.setOnClickListener {
             val intent = Intent(this, WebViewActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Apertura News d-flight
+        dflightButton.setOnClickListener {
+            val intent = Intent(this, WebViewdflightActivity::class.java)
             startActivity(intent)
         }
 

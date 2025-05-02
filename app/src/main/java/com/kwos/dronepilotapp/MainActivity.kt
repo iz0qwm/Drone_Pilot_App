@@ -55,7 +55,9 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.animation.ObjectAnimator
+import android.app.ProgressDialog
 import android.view.ViewTreeObserver
+import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.firestore.SetOptions
 
 
@@ -477,11 +479,15 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun registerUser(email: String, password: String, fullName: String) {
-        // Verifica che la password sia lunga almeno 6 caratteri
         if (password.length < 6) {
             Toast.makeText(this, "La password deve contenere almeno 6 caratteri", Toast.LENGTH_SHORT).show()
             return
         }
+
+        val progressDialog = ProgressDialog(this)
+        progressDialog.setMessage("Registrazione in corso...")
+        progressDialog.setCancelable(false)
+        progressDialog.show()
 
         auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -490,16 +496,23 @@ class MainActivity : AppCompatActivity() {
                     "uid" to userId,
                     "email" to email,
                     "fullName" to fullName,
-                    "availableForChat" to false // Chat disabilitata di default
+                    "availableForChat" to false
                 )
 
-                // Salvataggio dei dati utente nel database
                 userId?.let {
                     db.collection("users").document(it).set(userMap)
                         .addOnSuccessListener {
-                            // Invia email di conferma
-                            auth.currentUser?.sendEmailVerification()
+                            // Prepara ActionCodeSettings con URL della tua pagina di verifica
+                            val actionCodeSettings = ActionCodeSettings.newBuilder()
+                                .setUrl("https://www.tuosito.it/verify.html") // <<< Cambia con il tuo dominio reale
+                                .setHandleCodeInApp(false)
+                                .build()
+
+                            // Invia email di verifica
+                            auth.currentUser?.sendEmailVerification(actionCodeSettings)
                                 ?.addOnCompleteListener { emailTask ->
+                                    progressDialog.dismiss() // Chiudiamo il dialog
+
                                     if (emailTask.isSuccessful) {
                                         Toast.makeText(this, "Registrazione completata! Controlla la tua email per confermare l'account.", Toast.LENGTH_LONG).show()
                                         startActivity(Intent(this, DashboardActivity::class.java))
@@ -510,11 +523,13 @@ class MainActivity : AppCompatActivity() {
                                 }
                         }
                         .addOnFailureListener { e ->
+                            progressDialog.dismiss() // Chiudiamo il dialog
                             Log.e("Register", "Errore durante il salvataggio", e)
                             Toast.makeText(this, "Errore durante la registrazione. Riprova.", Toast.LENGTH_SHORT).show()
                         }
                 }
             } else {
+                progressDialog.dismiss() // Chiudiamo il dialog
                 Log.e("Register", "Registrazione fallita", task.exception)
                 Toast.makeText(this, "Registrazione fallita: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
             }

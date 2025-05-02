@@ -118,7 +118,7 @@
                 android:id="@+id/close_gps_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Chiudi"
+                android:text="❌ Chiudi"
                 android:layout_marginTop="16dp"
                 android:textColor="@color/button_text_color"
                 android:background="@drawable/rounded_button_red" />

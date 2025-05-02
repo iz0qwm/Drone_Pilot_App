@@ -1,0 +1,38 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/rounded_input"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:id="@+id/titleDialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📸 Scegli un'opzione"
+        android:textSize="20sp"
+        android:textColor="#000000"
+        android:layout_marginBottom="24dp"
+        android:textStyle="bold"/>
+
+    <Button
+        android:id="@+id/btnCamera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📷 Scatta Foto"
+        android:textColor="@color/button_text_color"
+        android:background="@drawable/rounded_button_green"
+        android:layout_marginBottom="16dp"
+        android:textAllCaps="false"/>
+
+    <Button
+        android:id="@+id/btnGallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🖼️ Seleziona Galleria"
+        android:textColor="@color/button_text_color"
+        android:background="@drawable/rounded_button_blue"
+        android:textAllCaps="false"/>
+
+</LinearLayout>

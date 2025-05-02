@@ -1,0 +1,109 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#191970"
+    android:fitsSystemWindows="true">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Foto Spot -->
+            <ImageView
+                android:id="@+id/spot_photo"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:contentDescription="Foto Spot"
+                android:layout_marginBottom="16dp"/>
+
+
+
+            <!-- Titolo Spot -->
+            <TextView
+                android:id="@+id/spot_title"
+                style="@style/AppTextViewBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nome Spot"
+                android:textSize="20sp"
+                android:textColor="#f4f4f4"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Descrizione Spot -->
+            <TextView
+                android:id="@+id/spot_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Descrizione dello spot"
+                android:textSize="16sp"
+                android:textColor="#555"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Mini mappa -->
+            <FrameLayout
+                android:id="@+id/map_card_container"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginBottom="16dp">
+
+                <fragment
+                    android:id="@+id/mini_map_spot"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+            </FrameLayout>
+
+            <!-- Bottoni Share e Naviga -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="8dp">
+
+                <Button
+                    android:id="@+id/share_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📤 Condividi"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_green"
+                    android:layout_marginEnd="8dp"
+                    android:paddingHorizontal="16dp"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/navigate_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🚗 Naviga"
+                    android:textColor="@color/button_text_color"
+                    android:background="@drawable/rounded_button_blue"
+                    android:paddingHorizontal="16dp"
+                    android:textAllCaps="false" />
+            </LinearLayout>
+
+            <!-- Bottone Chiudi -->
+            <Button
+                android:id="@+id/close_spotdetails_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="❌ Chiudi"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue"
+                android:layout_marginTop="16dp"
+                android:textAllCaps="false"/>
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
