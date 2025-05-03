@@ -57,6 +57,7 @@ import android.text.style.ForegroundColorSpan
 import android.animation.ObjectAnimator
 import android.app.ProgressDialog
 import android.view.ViewTreeObserver
+import android.widget.ProgressBar
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.firestore.SetOptions
 
@@ -374,40 +375,99 @@ class MainActivity : AppCompatActivity() {
     private fun loginUser(email: String, password: String) {
         logDebug(TAG, "loginUser: Sto per inserire $email e $password")
 
+        val progressDialog = showProgressDialog("Accesso in corso...")
+
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
+                progressDialog.dismiss()
+
                 if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid
+                    val user = auth.currentUser
 
-                    if (userId != null) {
-                        cancellaTokens(userId) // Cancella i token dell'utente senza crearne uno nuovo
-                    }
-
-                    // Dopo login riuscito, controlliamo il permesso notifiche
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                            // ✅ Permesso concesso, otteniamo il token FCM
-                            ottieniTokenECreaSessione(email, password)
-                        } else {
-                            // 🚫 Permesso negato, avvisiamo
-                            Toast.makeText(this, "Permesso notifiche negato. Il servizio chat potrebbe non funzionare correttamente.", Toast.LENGTH_LONG).show()
-                            // Procediamo comunque senza token
-                            salvaLogin(email)
-                            savePasswordToKeystore(password)
-                            saveOnlineStatus(true)
-                            Toast.makeText(this, "Login riuscito!", Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this, DashboardActivity::class.java))
-                            finish()
-                        }
+                    if (user != null && !user.isEmailVerified) {
+                        AlertDialog.Builder(this)
+                            .setTitle("Email non verificata")
+                            .setMessage("Devi verificare il tuo indirizzo email prima di poter accedere.")
+                            .setPositiveButton("Invia nuova email") { _, _ ->
+                                user.sendEmailVerification()
+                                    .addOnCompleteListener { resendTask ->
+                                        if (resendTask.isSuccessful) {
+                                            Toast.makeText(this, "Nuova email inviata! Controlla la tua casella di posta.", Toast.LENGTH_LONG).show()
+                                        } else {
+                                            Toast.makeText(this, "Errore nell'invio della nuova email.", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                            }
+                            .setNegativeButton("Annulla", null)
+                            .show()
                     } else {
-                        // Versioni Android precedenti: procedi normalmente
-                        ottieniTokenECreaSessione(email, password)
+                        // Email verificata: procediamo al login normale
+                        val userId = auth.currentUser?.uid
+
+                        if (userId != null) {
+                            cancellaTokens(userId)
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                                ottieniTokenECreaSessione(email, password)
+                            } else {
+                                Toast.makeText(this, "Permesso notifiche negato. Il servizio chat potrebbe non funzionare correttamente.", Toast.LENGTH_LONG).show()
+                                salvaLogin(email)
+                                savePasswordToKeystore(password)
+                                saveOnlineStatus(true)
+                                Toast.makeText(this, "Login riuscito!", Toast.LENGTH_SHORT).show()
+                                startActivity(Intent(this, DashboardActivity::class.java))
+                                finish()
+                            }
+                        } else {
+                            ottieniTokenECreaSessione(email, password)
+                        }
                     }
+
                 } else {
-                    Toast.makeText(this, "Errore: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    val exception = task.exception
+                    logError(TAG, "Errore di login", exception)
+
+                    when (exception?.message) {
+                        "The email address is badly formatted." -> {
+                            Toast.makeText(this, "Indirizzo email non valido.", Toast.LENGTH_SHORT).show()
+                        }
+                        "There is no user record corresponding to this identifier. The user may have been deleted." -> {
+                            Toast.makeText(this, "Nessun account trovato con questa email.", Toast.LENGTH_SHORT).show()
+                        }
+                        "The password is invalid or the user does not have a password." -> {
+                            Toast.makeText(this, "Password errata. Riprova.", Toast.LENGTH_SHORT).show()
+                        }
+                        "A network error (such as timeout, interrupted connection or unreachable host) has occurred." -> {
+                            Toast.makeText(this, "Problema di rete. Controlla la connessione.", Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {
+                            Toast.makeText(this, "Errore di accesso: ${exception?.localizedMessage}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
     }
+
+    private fun showProgressDialog(message: String): AlertDialog {
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        val dialogLayout = inflater.inflate(R.layout.progress_dialog, null)
+
+        val messageTextView = dialogLayout.findViewById<TextView>(R.id.progressMessage)
+        messageTextView.text = message
+
+        builder.setView(dialogLayout)
+        builder.setCancelable(false)
+
+        val dialog = builder.create()
+        dialog.show()
+
+        return dialog
+    }
+
+
 
 
     private fun ottieniTokenECreaSessione(email: String, password: String) {

@@ -12,9 +12,11 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation" />
 
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:enableOnBackInvokedCallback="true"
@@ -88,7 +90,7 @@
         </activity>
 
         <activity android:name=".WebViewActivity" />
-        <activity android:name=".WebViewdflightActivity" />
+        <activity android:name=".WebViewWindyActivity" />
         <activity android:name=".AddTakeoffSpotActivity" />
         <activity android:name=".SpotDetailsActivity" />
         <activity
@@ -115,5 +117,17 @@
             android:name="firebase_crashlytics_collection_enabled"
             android:value="true" />
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.kwos.dronepilotapp.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
     </application>
+
+
 </manifest>

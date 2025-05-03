@@ -80,7 +80,9 @@ import com.bumptech.glide.request.transition.Transition
 import android.graphics.Bitmap
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.widget.LinearLayout
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
 
 
@@ -131,6 +133,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private var isDroneReceiverRegistered = false
     private val droneMarkers = mutableMapOf<String, Marker>()
     private val droneTrajectories = mutableMapOf<String, Polyline>()
+    private val lastUpdateMap = mutableMapOf<String, Long>()
+
 
     //Gestione ricerca piloti
     private var pilotsLoaded = false
@@ -330,8 +334,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Apertura News d-flight
         dflightButton.setOnClickListener {
-            val intent = Intent(this, WebViewdflightActivity::class.java)
-            startActivity(intent)
+            val url = "https://www.d-flight.it/web-app/"
+            val customTabsIntent = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .setToolbarColor(ContextCompat.getColor(this, R.color.midnight_blue))
+                .build()
+            customTabsIntent.launchUrl(this, Uri.parse(url))
         }
 
         //Tasto Stop Flight
@@ -429,6 +437,17 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 if (lat == 0.0 && lon == 0.0 || alt == -1000 || vel == 255) return
 
                 Log.d("DronePilotApp", "📍 Aggiornamento posizione $mac: lat=$lat, lon=$lon, alt=$alt, vel=$vel, modello=$modello")
+
+                val now = System.currentTimeMillis()
+                val lastUpdate = lastUpdateMap[mac] ?: now
+                if (now - lastUpdate > 30_000) {
+                    Log.d("DronePilotApp", "⚡ Più di 30 secondi senza aggiornamenti: resetto traiettoria per $mac")
+                    droneTrajectories[mac]?.remove()
+                    droneTrajectories.remove(mac)
+                    // 🎨 Cambia colore
+                    colorIndex = (colorIndex + 1) % trajectoryColors.size
+                }
+                lastUpdateMap[mac] = now
 
                 updateDronePosition(mac, lat, lon, alt, vel, modello) // Mostriamo solo il modello nel marker
 
@@ -549,7 +568,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
 
-
         })
 
         bluetoothReceiver = BluetoothReceiver(this, droneIdDataManager)
@@ -602,6 +620,24 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     /// INIZIO FUNZIONI
+
+    // Traiettorie di diverso colore per voli droni
+    private fun getColorFromHue(hue: Float): Int {
+        val hsv = floatArrayOf(hue, 1f, 1f)
+        return Color.HSVToColor(hsv)
+    }
+
+    private val trajectoryColors = listOf(
+        BitmapDescriptorFactory.HUE_BLUE,
+        BitmapDescriptorFactory.HUE_GREEN,
+        BitmapDescriptorFactory.HUE_ORANGE,
+        BitmapDescriptorFactory.HUE_ROSE,
+        BitmapDescriptorFactory.HUE_VIOLET,
+        BitmapDescriptorFactory.HUE_YELLOW,
+        BitmapDescriptorFactory.HUE_CYAN,
+        BitmapDescriptorFactory.HUE_MAGENTA
+    )
+    private var colorIndex = 0
 
     //
     // Drone ID - Mappe Costruttori - Modelli
@@ -682,28 +718,26 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         return Pair(manufacturer, model)
     }
 
-    private fun updatePolyline(droneId: String, lat: Double, lon: Double) {
-        runOnUiThread {
-            val latLng = LatLng(lat, lon)
+    private fun updatePolyline(mac: String, lat: Double, lon: Double) {
+        val dronePolyline = droneTrajectories[mac]
 
-            val existingPolyline = droneTrajectories[droneId]
-            if (existingPolyline != null) {
-                // ➕ Aggiunge il nuovo punto alla polyline esistente
-                val points = existingPolyline.points.toMutableList()
-                points.add(latLng)
-                existingPolyline.points = points
-            } else {
-                // ✨ Crea una nuova polyline
-                val newPolyline = mMap.addPolyline(
-                    PolylineOptions()
-                        .add(latLng)
-                        .width(5f)
-                        .geodesic(true)
-                )
-                droneTrajectories[droneId] = newPolyline
-            }
+        if (dronePolyline == null) {
+            // Non esiste ancora, la creiamo nuova colorata
+            val polylineOptions = PolylineOptions()
+                .add(LatLng(lat, lon))
+                .width(5f)
+                .color(getColorFromHue(trajectoryColors[colorIndex]))
+
+            val newPolyline = mMap.addPolyline(polylineOptions)
+            droneTrajectories[mac] = newPolyline
+        } else {
+            // Esiste già -> aggiorniamo
+            val points = dronePolyline.points.toMutableList()
+            points.add(LatLng(lat, lon))
+            dronePolyline.points = points
         }
     }
+
 
     //
     // FINE:  Drone ID - Mappe Costruttori - Modelli
@@ -1072,14 +1106,50 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                 points.add(LatLng(pointLat, pointLon))
                             }
 
-                            if (points.isNotEmpty()) {
-                                mMap.addPolyline(
-                                    PolylineOptions()
-                                        .addAll(points)
-                                        .color(Color.BLUE) // Colore della traiettoria attiva
-                                        .width(5f)
-                                )
+                            if (trajectoryResult.documents.isNotEmpty()) {
+                                var lastTimestamp: Long? = null
+                                var segmentPoints = mutableListOf<LatLng>()
+
+                                for (pointDocument in trajectoryResult) {
+                                    val pointLat = pointDocument.getDouble("lat") ?: continue
+                                    val pointLon = pointDocument.getDouble("lon") ?: continue
+                                    val timestamp = pointDocument.getLong("timestamp") ?: continue
+                                    val point = LatLng(pointLat, pointLon)
+
+                                    if (lastTimestamp != null) {
+                                        val timeDiff = timestamp - lastTimestamp!!
+                                        if (timeDiff > 30_000) {
+                                            // 🧹 Più di 30 secondi: disegna la traiettoria precedente
+                                            if (segmentPoints.isNotEmpty()) {
+                                                mMap.addPolyline(
+                                                    PolylineOptions()
+                                                        .addAll(segmentPoints)
+                                                        .color(getColorFromHue(trajectoryColors[colorIndex]))
+                                                        .width(5f)
+                                                )
+                                                // 🎨 Cambia colore per il prossimo segmento
+                                                colorIndex = (colorIndex + 1) % trajectoryColors.size
+                                                segmentPoints.clear()
+                                            }
+                                        }
+                                    }
+
+                                    segmentPoints.add(point)
+                                    lastTimestamp = timestamp
+                                }
+
+                                // Disegna l'ultimo segmento rimasto
+                                if (segmentPoints.isNotEmpty()) {
+                                    mMap.addPolyline(
+                                        PolylineOptions()
+                                            .addAll(segmentPoints)
+                                            .color(getColorFromHue(trajectoryColors[colorIndex]))
+                                            .width(5f)
+                                    )
+                                    colorIndex = (colorIndex + 1) % trajectoryColors.size
+                                }
                             }
+
                         }
                         .addOnFailureListener { e ->
                             Log.e("DronePilotApp", "Errore nel caricamento delle traiettorie per il drone $droneId: $e")

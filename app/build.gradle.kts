@@ -16,8 +16,8 @@ android {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 23
-        versionName = "1.9.1"
+        versionCode = 25
+        versionName = "1.9.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -86,6 +86,8 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-storage:20.3.0")
+    implementation("androidx.browser:browser:1.7.0")
+
 
 
     implementation(libs.play.services.maps)

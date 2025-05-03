@@ -187,6 +187,11 @@ class WeatherForecastActivity : AppCompatActivity() {
         }
 
 
+        val windyButton = findViewById<Button>(R.id.windyButton)
+        windyButton.setOnClickListener {
+            val intent = Intent(this, WebViewWindyActivity::class.java)
+            startActivity(intent)
+        }
 
 
         gpsButton.setOnClickListener {

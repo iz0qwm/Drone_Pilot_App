@@ -11,6 +11,8 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.*
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -34,6 +36,7 @@ class AddTakeoffSpotActivity : AppCompatActivity() {
     private lateinit var backButton: ImageButton
     private lateinit var closeButton: Button
     private lateinit var loadingDialog: ProgressDialog
+    private lateinit var cameraPermissionLauncher: ActivityResultLauncher<String>
 
 
     private var photoUri: Uri? = null
@@ -49,6 +52,18 @@ class AddTakeoffSpotActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_takeoff_spot)
+
+        // Launcher fotocamera
+        cameraPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (isGranted) {
+                openCamera()
+            } else {
+                Toast.makeText(this, "Permesso Fotocamera Negato", Toast.LENGTH_SHORT).show()
+            }
+        }
+
 
         loadingDialog = ProgressDialog(this)
         loadingDialog.setMessage("Caricamento in corso...")
@@ -198,9 +213,7 @@ class AddTakeoffSpotActivity : AppCompatActivity() {
     }
 
     private fun openCamera() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), REQUEST_PERMISSION)
-        } else {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             if (takePictureIntent.resolveActivity(packageManager) != null) {
                 val photoFile: File? = try {
@@ -215,8 +228,14 @@ class AddTakeoffSpotActivity : AppCompatActivity() {
                     startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAMERA)
                 }
             }
+        } else {
+            // Chiede il permesso usando il launcher nuovo
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
+
+
+
 
     @Throws(IOException::class)
     private fun createImageFile(): File {
@@ -250,7 +269,7 @@ class AddTakeoffSpotActivity : AppCompatActivity() {
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults) // <-- aggiunto!
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (requestCode == REQUEST_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

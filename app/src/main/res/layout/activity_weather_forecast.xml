@@ -307,7 +307,7 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="16dp"
                 android:gravity="center"
-                android:weightSum="2">
+                android:weightSum="3">
 
                 <Button
                     android:id="@+id/btn_gps"
@@ -319,6 +319,22 @@
                     android:layout_marginEnd="8dp"
                     android:textColor="@color/button_text_color"
                     android:background="@drawable/rounded_button_green" />
+
+                <Button
+                    android:id="@+id/windyButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Windy"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:background="#191970"
+                    android:drawableStart="@drawable/ic_windysite"
+                    android:padding="12dp"
+                    android:textSize="16sp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp" />
+
 
                 <Button
                     android:id="@+id/btn_forecast_details"

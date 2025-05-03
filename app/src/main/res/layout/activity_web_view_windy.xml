@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="#191970">
 
-    <!-- Barra titolo con icona e testo -->
+    <!-- Barra titolo -->
     <LinearLayout
         android:id="@+id/titleBar"
         android:layout_width="match_parent"
@@ -16,18 +16,18 @@
         android:padding="12dp">
 
         <ImageView
-            android:id="@+id/newsIcon"
+            android:id="@+id/windyIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_dronezine"
-            android:contentDescription="Logo Dronezine"
+            android:src="@drawable/ic_windysite"
+            android:contentDescription="Icona Windy"
             android:layout_marginEnd="8dp" />
 
         <TextView
-            android:id="@+id/newsTitle"
+            android:id="@+id/windyTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="News"
+            android:text="Windy"
             android:textSize="20sp"
             android:textColor="#FFFFFF" />
     </LinearLayout>
@@ -69,10 +69,9 @@
             android:textColor="#FFFFFF"
             android:background="@android:color/transparent"
             android:layout_margin="8dp" />
-
     </LinearLayout>
 
-    <!-- Tasto "Chiudi" in basso -->
+    <!-- Tasto "Chiudi" -->
     <Button
         android:id="@+id/closeButton"
         android:layout_width="match_parent"
@@ -85,7 +84,7 @@
         android:textSize="16sp"
         android:layout_alignParentBottom="true" />
 
-    <!-- ProgressBar centrata -->
+    <!-- ProgressBar -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleLarge"
