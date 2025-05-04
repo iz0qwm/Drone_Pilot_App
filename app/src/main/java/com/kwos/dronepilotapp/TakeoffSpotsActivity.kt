@@ -32,6 +32,9 @@ import android.view.LayoutInflater
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.google.firebase.firestore.FieldValue
+import com.google.maps.android.clustering.ClusterManager
+import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
+
 //per il padding
 import androidx.core.view.ViewCompat
 import android.view.View
@@ -45,6 +48,7 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var currentLocation: Location
+    private lateinit var clusterManager: ClusterManager<TakeoffSpotItem>
     private var selectedMarker: Marker? = null
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1000
@@ -110,30 +114,52 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        map.setOnMarkerClickListener { marker ->
-            selectedMarker = marker
-            marker.showInfoWindow()
-            true
+        // Inizializza il ClusterManager
+        clusterManager = ClusterManager(this, map)
+        clusterManager.renderer = TakeoffSpotRenderer(this, map, clusterManager)
+        clusterManager.algorithm = com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm<TakeoffSpotItem>().apply {
+            setMaxDistanceBetweenClusteredItems(150) // 🎯 distanza più sensata
         }
 
-        map.setOnInfoWindowClickListener { marker ->
-            val spotData = marker.tag as? HashMap<String, Any>
-            if (spotData != null) {
-                val intent = Intent(this, SpotDetailsActivity::class.java).apply {
-                    putExtra("name", spotData["name"] as? String ?: "")
-                    putExtra("description", spotData["description"] as? String ?: "")
-                    putExtra("photoUrl", spotData["photoUrl"] as? String ?: "")
-                    putExtra("lat", marker.position.latitude)
-                    putExtra("lng", marker.position.longitude)
-                }
-                startActivity(intent)
-            } else {
-                Toast.makeText(this, "Dati spot non disponibili", Toast.LENGTH_SHORT).show()
+        map.setOnCameraIdleListener(clusterManager)
+        map.setOnMarkerClickListener(clusterManager)
+
+        // Gestisci il click sui singoli spot
+        clusterManager.setOnClusterItemClickListener { item ->
+            val intent = Intent(this, SpotDetailsActivity::class.java).apply {
+                putExtra("name", item.title)
+                putExtra("description", item.snippet)
+                putExtra("photoUrl", item.photoUrl)
+                putExtra("lat", item.position.latitude)
+                putExtra("lng", item.position.longitude)
             }
+            startActivity(intent)
+            true // Indica che abbiamo gestito il click
         }
 
+        clusterManager.setOnClusterClickListener { cluster ->
+            val boundsBuilder = com.google.android.gms.maps.model.LatLngBounds.Builder()
+            for (item in cluster.items) {
+                boundsBuilder.include(item.position)
+            }
+            val bounds = boundsBuilder.build()
+
+            try {
+                map.animateCamera(
+                    CameraUpdateFactory.newLatLngBounds(bounds, 100)
+                )
+            } catch (e: Exception) {
+                // Se qualcosa va male nel calcolo dei bounds (tipo cluster troppo piccolo)
+                map.animateCamera(CameraUpdateFactory.zoomIn())
+            }
+
+            true // Indica che il click sul cluster è stato gestito
+        }
+
+        // Gestione InfoWindow se vuoi personalizzarla (opzionale)
         map.setInfoWindowAdapter(CustomInfoWindowAdapter(this))
 
+        // Carica gli spot
         loadTakeoffSpots()
         getCurrentLocation()
     }
@@ -159,57 +185,58 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
         val db = FirebaseFirestore.getInstance()
         val iconUrl = "https://www.kwos.org/appoggio/droni/dronepilotapp/icons8-drone-takeoff-96.png"
 
+        // Prima svuota il clusterManager se hai già elementi caricati
+        clusterManager.clearItems()
+
         db.collection("takeoff_spots")
             .get()
             .addOnSuccessListener { result ->
-                for (document in result) {
-                    val lat = document.getDouble("lat") ?: continue
-                    val lng = document.getDouble("lng") ?: continue
-                    val count = document.getLong("count") ?: 1
-                    val name = document.getString("name") ?: "Senza nome"
-                    val description = document.getString("description") ?: "Nessuna descrizione"
-                    val photoUrl = document.getString("photoUrl") ?: ""
-
-                    val position = LatLng(lat, lng)
-
-                    // 🔥 Crea uno snippet che include anche il numero di segnalazioni
-                    //val snippetText = "$description\nSegnalato $count volt${if (count > 1) "e" else "a"}"
-                    val snippetText = "Segnalato $count volt${if (count > 1) "e" else "a"}\nClicca per informazioni"
-
+                if (!result.isEmpty) {
+                    // Prima scarichiamo l'icona del drone
                     Glide.with(this)
                         .asBitmap()
                         .load(iconUrl)
-                        .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE) // 🚀 Non usa cache su disco
-                        .skipMemoryCache(true) // 🚀 Salta la cache in memoria
+                        .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
                         .into(object : CustomTarget<Bitmap>(64, 64) {
                             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                                 val icon = BitmapDescriptorFactory.fromBitmap(resource)
 
-                                val marker = map.addMarker(
-                                    MarkerOptions()
-                                        .position(position)
-                                        .title(name)          // 👉 Mostri il NOME nello spazio del titolo
-                                        .snippet(snippetText)  // 👉 Mostri descrizione + quante volte segnalato
-                                        .icon(icon)
-                                )
+                                for (document in result) {
+                                    val lat = document.getDouble("lat") ?: continue
+                                    val lng = document.getDouble("lng") ?: continue
+                                    val count = document.getLong("count") ?: 1
+                                    val name = document.getString("name") ?: "Senza nome"
+                                    val description = document.getString("description") ?: "Nessuna descrizione"
+                                    val photoUrl = document.getString("photoUrl") ?: ""
 
-                                // 👉 Associa i dati completi dello spot al marker
-                                val spotData = hashMapOf<String, Any>(
-                                    "name" to name,
-                                    "description" to description,
-                                    "photoUrl" to photoUrl
-                                )
+                                    val position = LatLng(lat, lng)
 
-                                marker?.tag = spotData
+                                    //val snippetText = "Segnalato $count volt${if (count > 1) "e" else "a"}\nClicca per informazioni"
+                                    val snippetText = "$description\nSegnalato $count volt${if (count > 1) "e" else "a"}"
+
+                                    val item = TakeoffSpotItem(
+                                        lat = position.latitude,
+                                        lng = position.longitude,
+                                        title = name,
+                                        snippet = snippetText,
+                                        iconBitmap = icon,
+                                        photoUrl = photoUrl
+                                    )
+
+                                    clusterManager.addItem(item)
+                                }
+
+                                clusterManager.cluster() // 🚀 Importantissimo: disegna i marker raggruppati
+                                Toast.makeText(this@TakeoffSpotsActivity, "Mappa aggiornata!", Toast.LENGTH_SHORT).show()
                             }
 
                             override fun onLoadCleared(placeholder: Drawable?) {}
                         })
+                } else {
+                    Toast.makeText(this, "Nessuno spot trovato.", Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(this, "Mappa aggiornata!", Toast.LENGTH_SHORT).show()
-                map.animateCamera(CameraUpdateFactory.zoomBy(0.0f))
             }
-
             .addOnFailureListener { exception ->
                 Toast.makeText(this, "Errore nel caricamento degli spot: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
@@ -217,7 +244,7 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
-     private fun removeSpot() {
+    private fun removeSpot() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
 
