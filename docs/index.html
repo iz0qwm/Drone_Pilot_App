@@ -6,10 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Guida utente per l'app Drone Pilot">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/themes/vue.css" />
+  <style>
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: auto;
+    }
+  </style>
+
 </head>
 <body>
   <div id="app">📘 Caricamento del manuale...</div>
-
+  <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js"></script>
   <script>
     window.$docsify = {
       name: 'Drone Pilot App',
@@ -19,7 +28,10 @@
       auto2top: true,
       search: 'auto',
       coverpage: false,
-      loadFooter: 'footer.md'
+      loadFooter: 'footer.md',
+      mounted() {
+        mediumZoom('img');
+      }
     };
   </script>
 

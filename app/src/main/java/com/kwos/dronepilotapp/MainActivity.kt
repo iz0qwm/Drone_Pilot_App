@@ -158,6 +158,9 @@ class MainActivity : AppCompatActivity() {
             showResetPasswordDialog()
         }
 
+        // Rendiamo cliccabili i link sulla pagina
+        val descriptionText = findViewById<TextView>(R.id.descriptionText)
+        descriptionText.movementMethod = android.text.method.LinkMovementMethod.getInstance()
 
 
         // Controllo presenza della registrazione email nelle SharedPreferences

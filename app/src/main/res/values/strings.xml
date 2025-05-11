@@ -2,17 +2,22 @@
     <string name="app_name">Drone Pilot App</string>
     <string name="dashboard_activity_label">Dashboard</string>
     <string name="description_text"><![CDATA[
-        <b>Drone Pilot</b> è la App e la Web App per i piloti di droni nata da una idea<br/>
-        della Community <b>Tutto sui droni by Raffaello</b>.<br/><br/>
+    <h3 style="color:#ffffff;">📱 Drone Pilot App</h3>
 
-        Se vuoi conoscere le funzionalità vai su:<br/>
-        <a data-fr-linked="true" href="https://github.com/iz0qwm/Drone_Pilot_App/wiki">https://github.com/iz0qwm/Drone_Pilot_App/wiki</a><br/><br/>
+    <p><b>Drone Pilot</b> è l\'app e la web app per piloti di droni,<br/>
+    creata dalla Community <b>Tutto sui droni by Raffaello</b>.</p>
 
-        Se sei già registrato, entra solo con <b><font color=\'#FF5733\'>email e password</font></b>,
-        non sarà più necessario inserire il <i>nome</i>, che invece è <i>obbligatorio per la prima registrazione</i>.
-        <br/><br/>Per maggiori informazioni <b>iscriviti</b> al gruppo <b>Telegram: dronepilotapp</b>
-        <br/><br/>Copyright<br/><i>@2025 Raffaello Di Martino KWOS</i>
-    ]]></string>
+    <p>🔹 Vuoi sapere come usarla?<br/>
+    Leggi il <a href="https://iz0qwm.github.io/Drone_Pilot_App">manuale d\'uso 📘</a></p>
+
+    <p>🔹 Se sei già registrato, entra con la tua <b><font color="#FF5733">email e password</font></b>.<br/>
+    Alla prima registrazione è <i>obbligatorio indicare il nome</i>.</p>
+
+    <p>🔹 Per ricevere aggiornamenti e parlare con altri utenti,<br/>
+    iscriviti al gruppo <a href="https://t.me/DronePilotApp">Telegram 🚁</a></p>
+
+    <br/><i style="color:#999999;">© 2025 Raffaello Di Martino - KWOS - IZ0QWM</i>
+]]></string>
 
     <string name="weather_info">
     Temp. Min: %.1f°C - Max: %.1f°C\n
