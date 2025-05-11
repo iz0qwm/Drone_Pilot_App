@@ -14,7 +14,7 @@ Nella schermata **Piloti attivi** sono presenti i piloti con UAS in volo, quindi
 
 ## ⚙️ Impostazioni
 
-La pagina delle **Impostazioni** viene descritta in un'altra sezione del manuale: [Impostazioni](06-‐-Impostazioni)
+La pagina delle **Impostazioni** viene descritta in un'altra sezione del manuale: [Impostazioni](06 Impostazioni)
 <p align="center">
   <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="impostazioni" width="20%" height="20%" >
 </p>
@@ -30,4 +30,4 @@ Si possono leggere le informazioni riguardanti l'App, il suo funzionamento e inf
 
 ## 💬 Group chat
 
-La pagina della **Group chat** viene descritta in un'altra sezione del manuale: [Group Chat](07-‐-Group-Chat)
+La pagina della **Group chat** viene descritta in un'altra sezione del manuale: [Group Chat](07 Group-Chat)
