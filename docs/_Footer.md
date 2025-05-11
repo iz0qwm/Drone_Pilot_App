@@ -6,4 +6,4 @@
 
 ✈️ **DronePilotApp - Wiki**  
 📅 Aggiornato al 2025  
-📖 A project of community Tutto sui droni by Raffaello
+📖 A project of community Tutto sui droni by Raffaello 

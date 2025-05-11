@@ -13,7 +13,7 @@ Questa sotto sezione di permetterà di:
 
 Una volta cambiata qualsiasi impostazione è necessario cliccare su **Salva Impostazioni**
 
-# 📻 Radio PMR446
+# 📻 Radio PMR446 
 
 Se hai una radio PMR puoi dichiarare qui di averla accesa sul canale 4 e chiunque si troverà nelle tue vicinanze, potrà provare a chiamarti leggendo il tuo nome dall'applicazione.
 

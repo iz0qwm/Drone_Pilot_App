@@ -14,7 +14,7 @@ Per farti capire meglio, ti do qualche informazione in più:
 
 > Il drone trasmette il numero dell'operatore, la posizione geografica (latitudine e longitudine), la velocità e la rotta, e altre informazioni importanti. 
 
-🧰 **Come si implementa**:
+🧰 **Come si implementa**: 
 
 > Il Remote ID può essere implementato tramite un modulo integrato nel drone o come dispositivo esterno (Add-On). 
 

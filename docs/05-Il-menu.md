@@ -18,7 +18,7 @@ La pagina delle **Impostazioni** viene descritta in un'altra sezione del manuale
 <p align="center">
   <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="impostazioni" width="20%" height="20%" >
 </p>
-
+ 
 
 ## ℹ️ Informazioni
 

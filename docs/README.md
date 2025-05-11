@@ -10,7 +10,7 @@ Questa applicazione consente ai piloti di droni di:
 - 📍 Inserire e consultare gli spot di volo
 - 📰 Leggere le ultime news nel mondo dei droni
 
-## ⚙️ Requisiti
+## ⚙️ Requisiti 
 
 - Browser: **Chrome**, **Firefox**, **Safari** (ultime versioni)
 - Oppure **Android** se scarichi l'Apk

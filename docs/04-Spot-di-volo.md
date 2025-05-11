@@ -19,3 +19,4 @@ Se segnalerai uno spot che si trova in un raggio di 100m da uno già segnalato, 
 Se vuoi cancellare un marker fatto per sbaglio, ti basta cliccare sopra e poi cliccare su **Rimuovi Spot**.
 
 _Lo potrai rimuovere solo se lo avrai creato tu e nessun altro lo avrà già segnalato. Quindi deve essere scritto: Segnalato 1 volta._
+ 

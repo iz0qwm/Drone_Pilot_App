@@ -16,7 +16,7 @@ _NB: questa informazione viene presa dal sito d-flight.it ma prima di far volare
 
 <p align="center">
   <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/schermata_principale_new.jpeg" alt="Dashboard principale" width="20%" height="20%" >
-</p>
+</p> 
 
 
 ## ✈️ 📭 In volo - senza messaggi

@@ -10,4 +10,4 @@ Se non hai ancora stipulato la tua **assicurazione** per far volare il tuo drone
 
 <p align="center">
   <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/news.jpeg" alt="In Chat" width="20%" height="20%" >
-</p>
+</p> 
