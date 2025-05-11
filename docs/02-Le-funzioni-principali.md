@@ -45,7 +45,7 @@ Quando deciderai che qualcuno potrà contattarti tramite messaggi privati, potra
 La tua icona cambierà marker e la InfoWindow mostrerà il tuo stato.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/involo_chat_new.jpeg" alt="In volo chat"  >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/involo_chat_new.jpeg" alt="In volo chat" width="360" >
 </p>
 
 A questo punto, _chi vorrà inviarti un messaggio potrà farlo cliccando sulla InfoWindow del marker_.
@@ -61,6 +61,6 @@ Se sarai nella schermata principale, **avrai una notifica di messaggio ricevuto*
 **Per leggere il messaggio** ed aprire la chat, **devi cliccare sul messaggio che vedi sotto la mappa**.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_received_new.jpeg" alt="Messaggio ricevuto" >
-<img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_received_note_new.jpeg" alt="Messaggio ricevuto 2"  >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_received_new.jpeg" alt="Messaggio ricevuto" width="360">
+<img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_received_note_new.jpeg" alt="Messaggio ricevuto 2" width="360" >
 </p>
