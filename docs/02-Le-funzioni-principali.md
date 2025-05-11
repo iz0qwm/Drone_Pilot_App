@@ -14,9 +14,20 @@ Nella schermata principale:
 
 _NB: questa informazione viene presa dal sito d-flight.it ma prima di far volare il drone devi comunque consultarlo_
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/schermata_principale_new.jpeg" alt="Dashboard principale">
-</p> 
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/schermata_principale_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/schermata_principale_new_wa_01.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/schermata_principale_new_wa_02.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+</div>
 
 
 ## ✈️ 📭 In volo - senza messaggi
