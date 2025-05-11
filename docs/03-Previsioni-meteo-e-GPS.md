@@ -3,7 +3,7 @@
 Cliccando sul tasto **Meteo e GPS** si aprirà una schermata come quella che vedete qui sotto.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/meteo_attuale_new.jpeg" alt="Meteo attuale" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/meteo_attuale_new.jpeg" alt="Meteo attuale" >
 </p>
 
 _Non è possibile selezionare un altro luogo per le previsioni. Saranno disponibili solo quelle del luogo in cui vi trovate._

@@ -6,7 +6,7 @@
 * [📋 Il menu](05-Il-menu.md)
 * [⚙️ Impostazioni](06-Impostazioni.md)
 * [💬 Group Chat](07-Group-Chat.md)
-* [📡 Direct Remote ID (DRI)](08-Direct-Remote-ID-DRI.md)
+* [📡 Direct Remote ID (DRI)](08-Direct-Remote-ID-(DRI).md)
 * [📰 Notizie](09-Notizie.md)
 * [🚪 Logout](10-Logout.md)
  

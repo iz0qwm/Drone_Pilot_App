@@ -25,7 +25,7 @@ In alto c'è un campo in cui dovrai inserire il nome del drone che utilizzerai.
 La tua posizione sulla mappa non sarà presente fino a quando non premerai sul tasto **Inizio volo** e rimarrà tale fino a quando non verrà premuto il tasto **Fine volo** .
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/involo_nochat_new.jpeg" alt="In volo no chat" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/involo_nochat_new.jpeg" alt="In volo no chat"  >
 </p>
 
 ## ✈️ 💬 In volo - messaggi privati
@@ -34,7 +34,7 @@ Quando deciderai che qualcuno potrà contattarti tramite messaggi privati, potra
 La tua icona cambierà marker e la InfoWindow mostrerà il tuo stato.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/involo_chat_new.jpeg" alt="In volo chat" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/involo_chat_new.jpeg" alt="In volo chat"  >
 </p>
 
 A questo punto, _chi vorrà inviarti un messaggio potrà farlo cliccando sulla InfoWindow del marker_.
@@ -42,7 +42,7 @@ A questo punto, _chi vorrà inviarti un messaggio potrà farlo cliccando sulla I
 Gli si aprirà una finestra di chat.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_new.jpeg" alt="Messaggio diretto" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_new.jpeg" alt="Messaggio diretto"  >
 </p>
 
 Se sarai nella schermata principale, **avrai una notifica di messaggio ricevuto**, sia di sistema che sulla schermata principale.
@@ -50,6 +50,6 @@ Se sarai nella schermata principale, **avrai una notifica di messaggio ricevuto*
 **Per leggere il messaggio** ed aprire la chat, **devi cliccare sul messaggio che vedi sotto la mappa**.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_received_new.jpeg" alt="Messaggio ricevuto" width="20%" height="20%" >
-<img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_received_note_new.jpeg" alt="Messaggio ricevuto 2" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_received_new.jpeg" alt="Messaggio ricevuto" >
+<img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/direct_chat_received_note_new.jpeg" alt="Messaggio ricevuto 2"  >
 </p>
