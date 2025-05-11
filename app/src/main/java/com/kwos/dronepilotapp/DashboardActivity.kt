@@ -81,9 +81,16 @@ import android.graphics.Bitmap
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.net.Uri
+
+// Per l'assistente
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
+import java.util.Locale
 
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -103,6 +110,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     // Mapper per riconoscere Costruttore e modello di drone
     private lateinit var prefixMap: Map<String, String>
     private lateinit var modelMap: Map<String, String>
+
+    // Assistente vocale
+    private lateinit var assistant: FlightZoneAssistant
+    private lateinit var speechRecognizer: SpeechRecognizer
+    private lateinit var speechIntent: Intent
 
     private var bluetoothReceiver: BluetoothReceiver? = null
     private var wifiAwareReceiver: WifiAwareReceiver? = null
@@ -262,6 +274,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val driLed = findViewById<ImageView>(R.id.driLed)
         val dronezineButton = findViewById<ImageButton>(R.id.dronezineButton)
         val dflightButton = findViewById<ImageButton>(R.id.dflightButton)
+        val voiceBtn = findViewById<Button>(R.id.voiceZoneButton)
+
 
         // layer trasparente davanti alla mappa per intercettare il tocco di due dita
         // e non passarlo alla scroll view
@@ -352,6 +366,21 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 Toast.makeText(this, "Non posso fermare un volo inesistente", Toast.LENGTH_SHORT).show()
             }
         }
+
+        //
+        // Tasto Assistente
+        //
+        voiceBtn.setOnClickListener {
+            checkAudioPermissionAndStartListening()
+        }
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+
+        speechIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Parla ora…")
+        }
+
 
         // Recupera lo stato della disponibilità alla chat da Firestore al login
         auth.currentUser?.uid?.let { userId ->
@@ -2163,8 +2192,112 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.w("DronePilotApp", "onDestroy Dashboard: Permessi insufficienti per fermare i receiver: ${e.message}")
         }
 
+        if (::assistant.isInitialized) {
+            assistant.shutdown()
+        }
+
         logout()
     }
 
+    //
+    // ASSISTENTE DI VOLO
+    //
+    private fun getCurrentLocationAndAskFlightZone(assistant: FlightZoneAssistant) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.e("VoiceCommand", "Permessi di localizzazione non concessi")
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            location?.let {
+                // ✅ usa l'assistant già pronto, che include hideVoiceFeedback()
+                assistant.askPermissionToFly(it.latitude, it.longitude)
+            } ?: Log.e("VoiceCommand", "Nessuna posizione disponibile")
+        }
+    }
+
+
+
+
+    private fun checkAudioPermissionAndStartListening() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 2)
+        } else {
+            startListening()
+        }
+    }
+
+    private fun startListening() {
+        startMicAnimation()
+
+        speechRecognizer.setRecognitionListener(object : RecognitionListener {
+            override fun onResults(results: Bundle) {
+                stopMicAnimation()
+                val matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                matches?.firstOrNull()?.let { spokenText ->
+                    showVoiceFeedback("📢 Hai detto: \"$spokenText\"")
+
+                    if (spokenText.contains("può volare", ignoreCase = true)) {
+                        // Dopo 600 ms cambia il messaggio ed esegui l'assistente
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            showVoiceFeedback("📡 Recupero le informazioni...")
+                            val assistant = FlightZoneAssistant(this@DashboardActivity) {
+                                hideVoiceFeedback()
+                            }
+                            getCurrentLocationAndAskFlightZone(assistant)
+                        }, 1500)
+                    } else {
+                        // Comando non riconosciuto, resta visibile per 3s
+                        Handler(Looper.getMainLooper()).postDelayed({ hideVoiceFeedback() }, 3000)
+                    }
+                }
+            }
+
+
+            override fun onError(error: Int) {
+                stopMicAnimation()
+                showVoiceFeedback("❌ Errore nel riconoscimento vocale")
+                Handler(Looper.getMainLooper()).postDelayed({ hideVoiceFeedback() }, 3000)
+            }
+
+            override fun onBeginningOfSpeech() {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onReadyForSpeech(params: Bundle?) {}
+            override fun onRmsChanged(rmsdB: Float) {}
+        })
+
+        speechRecognizer.startListening(speechIntent)
+    }
+
+
+    private fun startMicAnimation() {
+        val micButton = findViewById<Button>(R.id.voiceZoneButton)
+        micButton.setBackgroundResource(R.drawable.rounded_button_listening) // se vuoi cambiare colore
+
+        val animation = AnimationUtils.loadAnimation(this, R.anim.mic_pulse_in)
+        micButton.startAnimation(animation)
+    }
+
+    private fun stopMicAnimation() {
+        val micButton = findViewById<Button>(R.id.voiceZoneButton)
+        micButton.clearAnimation()
+        micButton.setBackgroundResource(R.drawable.rounded_button_green)
+    }
+
+    private fun showVoiceFeedback(message: String) {
+        val feedbackText = findViewById<TextView>(R.id.voiceFeedbackText)
+        feedbackText.text = message
+        feedbackText.visibility = View.VISIBLE
+    }
+
+    private fun hideVoiceFeedback() {
+        val feedbackText = findViewById<TextView>(R.id.voiceFeedbackText)
+        feedbackText.visibility = View.GONE
+    }
 
 }

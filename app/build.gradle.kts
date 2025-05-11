@@ -88,6 +88,8 @@ dependencies {
     implementation("com.google.firebase:firebase-storage:20.3.0")
     implementation("androidx.browser:browser:1.7.0")
     implementation("com.google.maps.android:android-maps-utils:2.3.0")
+    implementation("org.jsoup:jsoup:1.15.3")
+
 
 
 
