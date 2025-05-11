@@ -47,43 +47,94 @@ class InformazioniActivity : AppCompatActivity() {
         // Recupera la versione dell'app
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName
 
-        // Crea una stringa HTML dinamica
         val htmlContent = """
 <!DOCTYPE html>
-<html>
-
+<html lang="it">
 <head>
-    <title>Informazioni</title>
+  <meta charset="UTF-8">
+  <title>Informazioni</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+      color: #333;
+      padding: 20px;
+      line-height: 1.6;
+      background-color: #fdfdfd;
+    }
+    h2 {
+      color: #007bff;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .manual-box {
+      background-color: #f0f8ff;
+      border-left: 5px solid #007bff;
+      padding: 12px;
+      margin-top: 24px;
+      font-size: 16px;
+    }
+    .footer {
+      margin-top: 32px;
+      font-style: italic;
+      color: #666;
+    }
+  </style>
 </head>
-
 <body>
-    <h2>App per il pilota remoto</h2>
-    <p><strong>Stai utilizzando la versione:</strong>&nbsp;$versionName</p>
-    <p><span style="font-family: Arial, Helvetica, sans-serif;">Questa app &egrave; dedicata ai piloti remoti di UAS, denominati anche &quot;piloti di droni&quot;.</span></p>
-    <p><span style="font-family: Arial, Helvetica, sans-serif;"><strong><span style="color: rgb(184, 49, 47);">Per far volare un drone &egrave; necessario conoscere delle informazioni basilari:</span></strong></span></p>
-    <ul>
-        <li style="font-family: Arial, Helvetica, sans-serif;">ogni pilota deve aver stipulato una assicurazione per danni contro terzi</li>
-        <li style="font-family: Arial, Helvetica, sans-serif;">ogni pilota deve essere registrato come operatore presso il sito: <a href="http://www.d-flight.it">http://www.d-flight.it</a></li>
-        <li style="font-family: Arial, Helvetica, sans-serif;">dopo la registrazione si potr&agrave; scaricare un QRCode da applicare sul drone</li>
-        <li style="font-family: Arial, Helvetica, sans-serif;">se il drone pesa pi&ugrave; di 250g sar&agrave; necessario conseguire un attestato OPEN A1/A3</li>
-        <li style="font-family: Arial, Helvetica, sans-serif;">non &egrave; possibile far volare il drone ovunque, per capire dove, bisogna utilizzare la mappa di D-Flight.</li>
-    </ul>
-    <p><span style="font-family: Arial, Helvetica, sans-serif;"><strong>La presente app sar&agrave; solo di ausilio al pilota che ne vorr&agrave; far uso, indicando dove sta operando e facendo conoscere la propria posizione agli altri piloti.</strong></span></p>
-    <p><br><br><span style="font-family: 'Arial Black', Gadget, sans-serif;">IL MANUALE LO TROVI SU: <a data-fr-linked="true" href="https://github.com/iz0qwm/Drone_Pilot_App/wiki">https://github.com/iz0qwm/Drone_Pilot_App/wiki</a></span></p>
-    <p><br></p>
-    <p><strong><span style="font-family: Arial, Helvetica, sans-serif;"><em>Informazioni tecniche e privacy</em></span></strong></p>
-    <p><span style="font-family: Arial, Helvetica, sans-serif;">Gli unici dati registrati e permanenti sono l&apos;email e il nome dell&apos;utente, per garantire i successivi Login.</span></p>
-    <p><span style="font-family: Arial, Helvetica, sans-serif;">I dati di posizione vengono cancellati a &quot;Fine Volo&quot; o al &quot;Logout&quot;.</span></p>
-    <p><span style="font-family: Arial, Helvetica, sans-serif;">Le chat tra due piloti vengono cancellate periodicamente se entrambi i piloti sono off-line o al termine volo di entrambi.</span></p>
-    <p><span style="font-family: Arial, Helvetica, sans-serif;">I messaggi contenuti nella Group Chat, vengono cancellati periodicamente quando non &egrave; pi&ugrave; nessuno presente nel gruppo.&nbsp;</span></p>
-</body>
 
+  <h2>📱 Drone Pilot App</h2>
+  <p><strong>Versione installata:</strong> $versionName</p>
+
+  <p>Questa app è dedicata ai piloti remoti di UAS, noti anche come "piloti di droni".</p>
+
+  <p style="color: #c0392b;"><strong>Per far volare un drone è necessario conoscere alcune regole fondamentali:</strong></p>
+
+  <ul>
+    <li>Devi avere un'assicurazione contro terzi</li>
+    <li>Devi registrarti come operatore su <a href="https://www.d-flight.it" target="_blank">d-flight.it</a></li>
+    <li>Dopo la registrazione, scarica il QR Code da applicare sul drone</li>
+    <li>Se il drone pesa più di 250g, devi ottenere l’attestato OPEN A1/A3</li>
+    <li>Non puoi volare ovunque: consulta sempre la mappa di D-Flight</li>
+  </ul>
+
+  <p><strong>Questa app ti aiuta a condividere la tua posizione in tempo reale con altri piloti.</strong></p>
+
+  <div class="manual-box">
+    📘 <strong>Manuale Utente</strong><br/>
+    Leggi la guida completa e aggiornata:<br/>
+    <a href="https://iz0qwm.github.io/Drone_Pilot_App/" target="_blank">
+      https://iz0qwm.github.io/Drone_Pilot_App/
+    </a>
+  </div>
+
+  <h3 style="margin-top: 32px;">🔒 Privacy e dati salvati</h3>
+  <p>I dati salvati in modo permanente sono solo <strong>email</strong> e <strong>nome</strong> dell'utente.</p>
+  <p>I dati di posizione vengono eliminati al termine del volo o al logout.</p>
+  <p>Le chat tra due piloti vengono eliminate quando entrambi sono offline o a fine volo.</p>
+  <p>I messaggi della Group Chat vengono cancellati automaticamente quando il gruppo è vuoto.</p>
+
+  <div class="footer">© 2025 Raffaello Di Martino - KWOS - IZ0QWM</div>
+
+</body>
 </html>
-        """
+"""
+
 
         // Imposta il WebView
         val webView = findViewById<WebView>(R.id.webView)
         webView.settings.javaScriptEnabled = true // Abilita JavaScript se necessario
-        webView.loadData(htmlContent, "text/html", "UTF-8")
+        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+
     }
 }

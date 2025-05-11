@@ -13,6 +13,7 @@ _I successivi login non necessiteranno pi&ugrave; dell&apos;inserimento di alcun
 
 <p align="center">
   <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new.jpeg" alt="Prima pagina" >
+<img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new_wa.jpeg" alt="Prima pagina" >
 </p> 
-
+[01-Registrazione-e-login.md](01-Registrazione-e-login.md)
 
