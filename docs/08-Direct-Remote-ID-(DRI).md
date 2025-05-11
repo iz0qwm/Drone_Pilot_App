@@ -41,8 +41,8 @@ Sulla mappa si vedranno tutti i droni ricevuti e si traccerà la traiettoria fin
 Se ci sarà **un volo dello stesso drone dopo un'ora dal precedente**, **verrà considerato un secondo volo** e sull'ultimo punto del primo volo, apparirà l'icona del drone atterrato.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_01.jpeg" alt="Prima pagina" width="20%" height="20%" >
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_02.jpeg" alt="Prima pagina" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_01.jpeg" alt="Prima pagina" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_02.jpeg" alt="Prima pagina"  >
 </p>
 
 ## ✨ Se i ricevitori non funzionano?
@@ -53,11 +53,11 @@ Devi quindi eseguire questi passi:
 
 - 🛠️ **Attivare le opzioni sviluppatore**: vai su Impostazioni ➡️ Informazioni sul telefono ➡️ cerca la voce Numero Build ➡️ tappa 7 volte sopra
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/sviluppatori_01.jpeg" alt="Prima pagina" width="30%" height="30%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/sviluppatori_01.jpeg" alt="Prima pagina" >
 </p>
 - ⚙️ **NO Ricerca limitata del Wi-Fi** : disabilitare la ricerca limitata in Wi-Fi.
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/sviluppatori_02.jpeg" alt="Prima pagina" width="30%" height="30%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/sviluppatori_02.jpeg" alt="Prima pagina" >
 </p>
 
 ## 🧩 Migliorare la ricezione
@@ -67,8 +67,8 @@ Se vuoi migliorare la ricezione del tuo telefono, puoi comprare un **[ds100 Dron
 Ti basterà collegarlo ad un powerbank e posizionarlo in un luogo alto.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/ds100retail_ant_connectors.jpeg" alt="ds100 01" width="30%" height="30%" >
-<img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/ds100retail_package.jpeg" alt="ds100 02" width="30%" height="30%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/ds100retail_ant_connectors.jpeg" alt="ds100 01" >
+<img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/ds100retail_package.jpeg" alt="ds100 02" >
 </p>
 
 [![Guarda il video su YouTube](https://img.youtube.com/vi/dSLGsIccyHY/0.jpg)](https://www.youtube.com/watch?v=dSLGsIccyHY)
