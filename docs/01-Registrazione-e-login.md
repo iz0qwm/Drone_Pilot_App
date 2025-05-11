@@ -14,11 +14,11 @@ _I successivi login non necessiteranno pi&ugrave; dell&apos;inserimento di alcun
 
 <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
   <div style="text-align: center;">
-    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new.jpeg" alt="App Android" >
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new.jpeg" alt="App Android" width="460">
     <div style="margin-top: 8px;">📱 Android</div>
   </div>
   <div style="text-align: center;">
-    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new_wa.jpeg" alt="Web App" >
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new_wa.jpeg" alt="Web App" width="460">
     <div style="margin-top: 8px;">🌐 Web App</div>
   </div>
 </div>
