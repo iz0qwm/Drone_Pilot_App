@@ -8,7 +8,7 @@ Questa sotto sezione di permetterà di:
 - Attivare la ricezione DRI (Direct Remote ID)
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="Impostazioni" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="Impostazioni" >
 </p>
 
 Una volta cambiata qualsiasi impostazione è necessario cliccare su **Salva Impostazioni**

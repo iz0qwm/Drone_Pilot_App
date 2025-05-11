@@ -12,7 +12,7 @@ Ti sarà possibile _reimpostare la password_ utilizzando l'email con cui ti eri 
 _I successivi login non necessiteranno pi&ugrave; dell&apos;inserimento di alcun campo perché le informazioni si registreranno nelle preferenze di sistema._
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new.jpeg" alt="Prima pagina" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new.jpeg" alt="Prima pagina" >
 </p> 
 
 

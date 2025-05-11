@@ -9,5 +9,5 @@ Nella pagina principale c'è un icona che ti permette di **aprire una pagina** s
 Se non hai ancora stipulato la tua **assicurazione** per far volare il tuo drone, naviga tra le pagine e troverai quella che fa per te.
 
 <p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/news.jpeg" alt="In Chat" width="20%" height="20%" >
+  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/news.jpeg" alt="In Chat" >
 </p> 

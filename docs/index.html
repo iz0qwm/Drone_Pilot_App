@@ -11,9 +11,26 @@
       max-width: 100%;
       height: auto;
       display: block;
-      margin: auto;
+      margin: 1em auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      transition: transform 0.2s ease;
+      cursor: zoom-in;
+    }
+
+    /* Solo su schermi grandi: limita la larghezza al 40% */
+    @media screen and (min-width: 768px) {
+      img {
+        max-width: 30%;
+      }
+    }
+
+    img:hover {
+      transform: scale(1.02);
     }
   </style>
+
+
 
 </head>
 <body>
@@ -29,11 +46,14 @@
       search: 'auto',
       coverpage: false,
       loadFooter: 'footer.md',
-      mounted() {
+      // Rimuovi "mounted"
+      // Aggiungi questa funzione:
+      doneEach() {
         mediumZoom('img');
       }
     };
   </script>
+
 
   <!-- Docsify core -->
   <!-- <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script> -->
