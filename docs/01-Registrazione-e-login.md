@@ -11,9 +11,17 @@ Ti sarà possibile _reimpostare la password_ utilizzando l'email con cui ti eri 
 ## 🔐 Login
 _I successivi login non necessiteranno pi&ugrave; dell&apos;inserimento di alcun campo perché le informazioni si registreranno nelle preferenze di sistema._
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new.jpeg" alt="Prima pagina" >
-<img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new_wa.jpeg" alt="Prima pagina" >
-</p> 
-[01-Registrazione-e-login.md](01-Registrazione-e-login.md)
+
+<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new.jpeg" alt="App Android" >
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/registrazione_new_wa.jpeg" alt="Web App" >
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+</div>
+
+
 
