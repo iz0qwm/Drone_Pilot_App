@@ -86,12 +86,17 @@ import android.net.Uri
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.view.ContextThemeWrapper
+import android.view.LayoutInflater
 import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
+import android.widget.PopupWindow
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
 import java.util.Locale
 
+// Per i layers su google maps
+import com.kwos.dronepilotapp.FlightZoneLayer
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -115,6 +120,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var assistant: FlightZoneAssistant
     private lateinit var speechRecognizer: SpeechRecognizer
     private lateinit var speechIntent: Intent
+
+    //Layers su mappa
+    private lateinit var flightZoneLayer: FlightZoneLayer
+    private var zonesVisible = false
 
     private var bluetoothReceiver: BluetoothReceiver? = null
     private var wifiAwareReceiver: WifiAwareReceiver? = null
@@ -275,7 +284,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val dronezineButton = findViewById<ImageButton>(R.id.dronezineButton)
         val dflightButton = findViewById<ImageButton>(R.id.dflightButton)
         val voiceBtn = findViewById<Button>(R.id.voiceZoneButton)
-
+        val layersButton = findViewById<ImageButton>(R.id.layersButton)
 
         // layer trasparente davanti alla mappa per intercettare il tocco di due dita
         // e non passarlo alla scroll view
@@ -365,6 +374,32 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             } else {
                 Toast.makeText(this, "Non posso fermare un volo inesistente", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        //Tasto layers sulla mappa
+        layersButton.setOnClickListener {
+            val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val popupView = inflater.inflate(R.layout.popup_menu_layout, null)
+
+            val popupWindow = PopupWindow(popupView,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                true)
+
+            popupWindow.elevation = 10f
+
+            // Imposta il click listener per le voci di menu
+            popupView.findViewById<LinearLayout>(R.id.menu_zones).setOnClickListener {
+                zonesVisible = !zonesVisible
+                if (zonesVisible) flightZoneLayer.drawZones()
+                else flightZoneLayer.clearZones()
+                popupWindow.dismiss()
+            }
+
+            // Mostra il popup sotto il pulsante dei layer
+            popupWindow.showAsDropDown(layersButton, 0, 0)
+
+
         }
 
         //
@@ -602,6 +637,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         bluetoothReceiver = BluetoothReceiver(this, droneIdDataManager)
         wifiAwareReceiver = WifiAwareReceiver(this, droneIdDataManager)
         wifiBeaconReceiver = WifiBeaconReceiver(this, droneIdDataManager, null)
+        (application as DronePilotApp).bluetoothReceiver = bluetoothReceiver
+        //(application as DronePilotApp).wifiAwareReceiver = wifiAwareReceiver // se lo usi in futuro
+        (application as DronePilotApp).wifiBeaconReceiver = wifiBeaconReceiver
+
 
         //controllo DRI receiver acceso
         val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
@@ -946,7 +985,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             loadPilots()
             listenForChatAvailability()
             loadDrones()
+            flightZoneLayer = FlightZoneLayer(this, googleMap)
+
             logDebug(TAG, "📡 Chat Listener per chat attivato")
+
         }
     }
 
@@ -1872,17 +1914,24 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             } else true
 
             if (hasLocation && hasBluetoothScan && hasNearbyWifi) {
-                bluetoothReceiver?.startScanning()
+                // Uso questo al posto di bluetoothReceiver?.startScanning()
+                ContextCompat.startForegroundService(this, Intent(this, BluetoothScanService::class.java))
                 //wifiAwareReceiver?.startSession()
-                wifiBeaconReceiver?.startScan()
+                // Uso questo al posto di  wifiBeaconReceiver?.startScan()
+                ContextCompat.startForegroundService(this, Intent(this, WifiBeaconScanService::class.java))
+                //
                 Log.d("DronePilotApp", "onStart Dashboard: Receiver Drone ID attivati")
             } else {
                 Log.w("DronePilotApp", "onStart Dashboard: Permessi insufficienti per avviare i receiver")
             }
         } else {
-            bluetoothReceiver?.stopScanning()
+            // Uso questo al posto di bluetoothReceiver?.stopScanning()
+            stopService(Intent(this, BluetoothScanService::class.java))
             //wifiAwareReceiver?.stopSession()
-            wifiBeaconReceiver?.stopScan()
+            // Uso questo al posto di  wifiBeaconReceiver?.stopScan()
+            stopService(Intent(this, WifiBeaconScanService::class.java))
+            //
+
             Log.d("DronePilotApp", "onStart Dashboard: Drone ID disattivato nelle preferenze")
         }
 
@@ -2184,9 +2233,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         try {
-            bluetoothReceiver?.stopScanning()
+            // Uso questo al posto di bluetoothReceiver?.stopScanning()
+            stopService(Intent(this, BluetoothScanService::class.java))
             //wifiAwareReceiver?.stopSession()
-            wifiBeaconReceiver?.stopScan()
+            // Uso questo al posto di  wifiBeaconReceiver?.stopScan()
+            stopService(Intent(this, WifiBeaconScanService::class.java))
+            //
             Log.d("DronePilotApp", "onDestroy Dashboard: Receiver Drone ID fermati")
         } catch (e: SecurityException) {
             Log.w("DronePilotApp", "onDestroy Dashboard: Permessi insufficienti per fermare i receiver: ${e.message}")

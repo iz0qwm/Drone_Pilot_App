@@ -152,7 +152,7 @@ class WifiBeaconReceiver(
         val isDroneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
 
         if (!isDroneIdEnabled) {
-            Log.d("DronePilotApp", "WifiBeaconReceiver: Rilevamento disattivato, scan non avviato")
+            //Log.d("DronePilotApp", "WifiBeaconReceiver: Rilevamento disattivato, scan non avviato")
             return
         }
 

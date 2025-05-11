@@ -201,6 +201,17 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
 
+                    <!-- Bottone Layer (in alto a destra) -->
+                    <ImageButton
+                        android:id="@+id/layersButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="top|start"
+                        android:layout_margin="12dp"
+                        android:background="@drawable/round_button_background"
+                        android:src="@drawable/ic_layers"
+                        android:contentDescription="Gestione layer" />
+
                     <!-- QUI sopra, la touch interceptor view -->
                     <com.kwos.dronepilotapp.TransparentTouchView
                         android:id="@+id/touchInterceptor"
