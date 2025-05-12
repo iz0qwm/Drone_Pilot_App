@@ -2,13 +2,21 @@
 
 Cliccando sul tasto **Meteo e GPS** si aprirà una schermata come quella che vedete qui sotto.
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/meteo_attuale_new.jpeg" alt="Meteo attuale" >
-</p>
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/meteo_attuale_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/meteo_attuale_new_wa.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+</div>
 
 _Non è possibile selezionare un altro luogo per le previsioni. Saranno disponibili solo quelle del luogo in cui vi trovate._
 
-Le informazioni meteorologiche vengono prelevate dal sito [MeteoBlue](https://www.meteoblue.com/)<br>
+Le informazioni meteorologiche vengono prelevate dal sito [MeteoBlue](https://www.meteoblue.com/) e<br>
+da [OpenWeather](https://openweathermap.org/)<br>
 Le informazioni di Alba e tramonto sono prelevate dal sito [Sunrise Sunset](https://sunrise-sunset.org/)
 
 Analizzando le condizioni meteorologiche del momento è possibile fornire degli **alert** per vento forte, pioggia imminente, tempo instabile, ecc.
@@ -18,10 +26,37 @@ Cliccando sul testo **Previsioni** verranno mostrate le previsioni meteorologich
 
 Alla fine della pagina vi sono dei meteogrammi per la località.
 
-<p align="center"> 
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/previsioni_meteo_01_new.jpeg" alt="Previsione 01">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/previsioni_meteo_02_new.jpeg" alt="Previsione 02">
-</p>
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/previsioni_meteo_01_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/previsioni_meteo_02_new.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/previsioni_meteo_01_new_wa.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+</div>
+
+Ad oggi la **Web App** ha anche i layer per il **vento**, la **nuvolosità** e il **radar meteorologico**
+
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/layer_radar_wa.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">Radar meteo - 🌐 Web App</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/layer_vento_wa.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">Vento - 🌐 Web App</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/layer_nuvolosita_wa.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">Nuvolosità - 🌐 Web App</div>
+  </div>
+</div>
 
 ## 📡 Ricezione GPS
 I nostri UAS stabilizzati, utilizzano un ricevitore GPS per rimanere stabili in aria e per percorrere la giusta traiettoria.<br>
@@ -31,9 +66,16 @@ L'applicazione utilizza due modalità per capire se vi è ricezione GPS ottimale
 * ricezione GPS dello smartphone su cui viene eseguita
 * controllo del numero di elettroni nella ionosfera
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/gps_new.jpeg" alt="GPS" >
-</p>
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/gps_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/previsioni_meteo_01_new_wa.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+</div>
 
 Ovviamente lo smartphone sarà sempre con voi durante il volo, quindi se lui non riuscirà a fare il fix, si presuppone che anche il vostro drone possa avere dei problemi<br><br>
 
