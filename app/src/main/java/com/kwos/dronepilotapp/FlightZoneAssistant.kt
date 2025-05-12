@@ -55,6 +55,7 @@ class FlightZoneAssistant(
             withContext(Dispatchers.Main) {
                 onSpeechStarted() // notifica che inizia a parlare
                 //Log.d("DronePilotApp", "🐛 DEBUG 📣 TESTO PRIMA DI SPEAK: $reply (${reply::class.simpleName})")
+                (context as? DashboardActivity)?.showAssistantOverlay(reply)
                 speak(reply)
             }
         }
@@ -189,12 +190,34 @@ class FlightZoneAssistant(
 
 
             val detail = if (isNotam) {
-                val notamSintetico = interpretNotam(message, permanent, start, end)
-                "È attivo un NOTAM ($name) con restrizione $restriction. $notamSintetico"
+                Log.d("DronePilotApp", "FlightZoneAssistant: Provo a estrarre orari schedulati dal nome NOTAM: $name")
+                val notamOrari = fetchNotamSchedule(name)
+                val notamSintetico = buildString {
+                    append(interpretNotam(message, permanent, start, end))
+                    if (notamOrari != null) {
+                        append(" ${notamOrari.descrizione}. ")
+                        append(if (notamOrari.attivaOra) "La restrizione è attiva ora. " else "La restrizione non è attiva in questo momento. ")
+                    }
+                }
+
+                val restrictionNote = when (restriction.uppercase()) {
+                    "PROHIBITED" -> "Proibito far volare UAS negli orari e nei tempi in cui è attivo. "
+                    "RESTRICTED" -> "Zona a volo ristretto per UAS. "
+                    "DANGER" -> "Zona pericolosa per UAS. "
+                    else -> ""
+                }
+
+                "È attivo un NOTAM ($name) con restrizione $restriction. $restrictionNote$notamSintetico"
             } else {
                 val reasonText = when {
                     reasons.contains("AIR_TRAFFIC") -> "Attenzione: sei in prossimità di un aeroporto."
                     reasons.contains("SENSITIVE") -> "Questa è una zona sensibile, vola con cautela."
+                    reasons.contains("EMERGENCY") -> "Attenzione a conflitti di area con aeromobili."
+                    reasons.contains("PROHIBITED") -> "Vietato volare."
+                    reasons.contains("NATURE") && reasons.contains("NOISE") ->
+                        "Questa è una zona naturale, non si deve recare disturbo."
+                    reasons.contains("NATURE") -> "Questa è una zona naturale."
+                    reasons.contains("NOISE") -> "Non si deve recare disturbo."
                     reasons.isNotEmpty() -> "Ci sono restrizioni attive: ${reasons.joinToString(", ")}."
                     else -> ""
                 }
@@ -202,11 +225,29 @@ class FlightZoneAssistant(
                 "$reasonText$otherInfo"
             }
 
-            val zonaTesto = if (zonaDescrizione.isNotBlank()) {
-                "Zona attiva: $zonaDescrizione. "
+            val zonaDescrizionePulita = zonaDescrizione
+                // 1. Trasforma 13/31 → pista 13 31
+                .replace(Regex("(?<![\\w\\d])(\\d{2})/(\\d{2})(?!\\d)"), "pista $1 $2")
+                // 2. Sostituisci altri / e _
+                .replace("/", " ")
+                .replace("_", " ")
+                // 3. Se inizia con lettere seguite da cifre → separa le lettere
+                .replace(Regex("^(?i)([A-Z]{3})(\\d)"), { match ->
+                    match.groupValues[1].toCharArray().joinToString(" ") + " " + match.groupValues[2]
+                })
+
+            val tipoZonaExtra = if (zonaDescrizione.contains("SUP")) {
+                "Zona di volo con restrizioni specifiche. "
             } else {
                 ""
             }
+
+            val zonaTesto = if (zonaDescrizionePulita.isNotBlank()) {
+                "Zona attiva: $zonaDescrizionePulita. $tipoZonaExtra"
+            } else {
+                ""
+            }
+
 
             //return intro + aipNote + detail
 
@@ -394,6 +435,7 @@ class FlightZoneAssistant(
             .replace(Regex("(?i)SUN"), "domenica")
             .replace(Regex("(?i)HOL(\\s*esclusi|\\s*excluded)?"), "festivi esclusi")
             .replace(Regex("(?i)H24"), "attiva H24")
+            .replace(Regex("(?i)SR\\s*\\-\\s*SS"), "dall'alba al tramonto")
             .replace(Regex("(?i)HJ[\\-\\+]?30"), "da mezz'ora prima dell'alba a mezz'ora dopo il tramonto")
             .replace(Regex("(?i)SR[\\-\\+]?\\d{1,2}"), "all'alba più/minus tot") // opzionale, da raffinare
             .replace(Regex("(?i)(\\d{4})-(SS\\+?\\d{1,2})")) {
@@ -441,6 +483,44 @@ class FlightZoneAssistant(
         }
 
         return AipOrariInfo(pulito, isActive)
+    }
+
+    private suspend fun fetchNotamSchedule(name: String): AipOrariInfo? {
+        Log.d("DronePilotApp", "fetchNotamSchedule: Ricevuto nome: $name")
+
+        val match = Regex("([A-Z])\\s?(\\d{4})/(\\d{2})").find(name)
+        if (match != null) {
+            val (serie, numeroRaw, anno) = match.destructured
+            val numero = numeroRaw.trimStart('0') // <-- rimuove zeri iniziali
+            Log.d("DronePilotApp", "fetchNotamSchedule: Serie=$serie Numero=$numero Anno=$anno")
+
+            val url = "https://www.deskaeronautico.it/cerca-numero-notam/?serie=$serie&numero=$numero&anno=$anno"
+            Log.d("DronePilotApp", "fetchNotamSchedule: URL costruito: $url")
+
+            return try {
+                val doc = Jsoup.connect(url).get()
+                val allElements = doc.select("body").first()?.allElements ?: return null
+
+                for (element in allElements) {
+                    if (element.ownText().contains("Schedulato (UTC):")) {
+                        val testo = element.ownText()
+                        val cleaned = testo.substringAfter("Schedulato (UTC):").substringBefore("<").trim()
+                        Log.d("DronePilotApp", "fetchNotamSchedule: Orario estratto: $cleaned")
+                        return AipOrariInfo(descrizione = "Orari previsti: $cleaned", attivaOra = true)
+                    }
+                }
+
+                Log.w("DronePilotApp", "fetchNotamSchedule: Nessun elemento con Schedulato (UTC) trovato.")
+                return null
+
+            } catch (e: Exception) {
+                Log.w("DronePilotApp", "fetchNotamSchedule: Errore nel parsing HTML: ${e.message}")
+                return null
+            }
+        } else {
+            Log.w("DronePilotApp", "fetchNotamSchedule: Regex NOTAM non ha trovato nulla in $name")
+            return null
+        }
     }
 
 

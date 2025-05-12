@@ -141,6 +141,29 @@ class MainActivity : AppCompatActivity() {
 
         val emailField = findViewById<EditText>(R.id.emailField)
         val passwordField = findViewById<EditText>(R.id.passwordField)
+
+        // Mostra email e password se già salvate
+        val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+        val savedEmail = prefs.getString("user_email", null)
+
+        if (savedEmail != null) {
+            emailField.setText(savedEmail)
+        }
+
+        val savedPassword = getPasswordFromKeystore()
+        if (!savedPassword.isNullOrEmpty()) {
+            passwordField.setText(savedPassword)
+            passwordField.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        //
+        // Cambiamo il bottone se sono già salvati login e password
+        val autoLoginInfo = findViewById<TextView>(R.id.autoLoginInfo)
+
+        if (!savedEmail.isNullOrEmpty() && !getPasswordFromKeystore().isNullOrEmpty()) {
+            autoLoginInfo.visibility = View.VISIBLE
+        }
+        //
+
         val fullNameField = findViewById<EditText>(R.id.fullNameField)
         val loginButton = findViewById<Button>(R.id.loginButton)
         val registerButton = findViewById<Button>(R.id.registerButton)
@@ -164,8 +187,8 @@ class MainActivity : AppCompatActivity() {
 
 
         // Controllo presenza della registrazione email nelle SharedPreferences
-        val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
-        val savedEmail = prefs.getString("user_email", null)
+        //val prefs = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+        //val savedEmail = prefs.getString("user_email", null)
 
         //prefs.edit().remove("encrypted_password").apply()  // Cancella solo la password
         //prefs.edit().remove("user_email").apply()  // Cancella solo l'email
@@ -567,7 +590,7 @@ class MainActivity : AppCompatActivity() {
                         .addOnSuccessListener {
                             // Prepara ActionCodeSettings con URL della tua pagina di verifica
                             val actionCodeSettings = ActionCodeSettings.newBuilder()
-                                .setUrl("https://www.tuosito.it/verify.html") // <<< Cambia con il tuo dominio reale
+                                .setUrl("https://tutto-sui-droni-community.web.app/verify.html") // <<< Cambia con il tuo dominio reale
                                 .setHandleCodeInApp(false)
                                 .build()
 

@@ -416,6 +416,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Parla ora…")
         }
 
+        findViewById<ImageButton>(R.id.closeAssistantOverlay).setOnClickListener {
+            findViewById<FrameLayout>(R.id.assistantOverlay).visibility = View.GONE
+        }
+        //
+
 
         // Recupera lo stato della disponibilità alla chat da Firestore al login
         auth.currentUser?.uid?.let { userId ->
@@ -1177,6 +1182,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                                 points.add(LatLng(pointLat, pointLon))
                             }
 
+                            val SEGMENT_TIMEOUT = 120_000L // 2 minuti
+
                             if (trajectoryResult.documents.isNotEmpty()) {
                                 var lastTimestamp: Long? = null
                                 var segmentPoints = mutableListOf<LatLng>()
@@ -1189,7 +1196,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
                                     if (lastTimestamp != null) {
                                         val timeDiff = timestamp - lastTimestamp!!
-                                        if (timeDiff > 30_000) {
+                                        if (timeDiff > SEGMENT_TIMEOUT) {
                                             // 🧹 Più di 30 secondi: disegna la traiettoria precedente
                                             if (segmentPoints.isNotEmpty()) {
                                                 mMap.addPolyline(
@@ -1693,7 +1700,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                     // Recupera la lista di piloti nelle vicinanze
                     checkNearbyPilots(location.latitude, location.longitude, userId)
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userPosition, 8f))
+                    // Fa lo zoom sulla posizione del pilota
+                    // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userPosition, 8f))
                 }
             }
         }
@@ -2258,7 +2266,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.e("VoiceCommand", "Permessi di localizzazione non concessi")
+            Log.e("DronePilotApp", "VoiceCommand: Permessi di localizzazione non concessi")
             return
         }
 
@@ -2266,7 +2274,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             location?.let {
                 // ✅ usa l'assistant già pronto, che include hideVoiceFeedback()
                 assistant.askPermissionToFly(it.latitude, it.longitude)
-            } ?: Log.e("VoiceCommand", "Nessuna posizione disponibile")
+            } ?: Log.e("DronePilotApp", "VoiceCommand: Nessuna posizione disponibile")
         }
     }
 
@@ -2350,6 +2358,13 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun hideVoiceFeedback() {
         val feedbackText = findViewById<TextView>(R.id.voiceFeedbackText)
         feedbackText.visibility = View.GONE
+    }
+
+    fun showAssistantOverlay(text: String) {
+        val overlay = findViewById<FrameLayout>(R.id.assistantOverlay)
+        val assistantText = findViewById<TextView>(R.id.assistantText)
+        overlay.visibility = View.VISIBLE
+        assistantText.text = text
     }
 
 }

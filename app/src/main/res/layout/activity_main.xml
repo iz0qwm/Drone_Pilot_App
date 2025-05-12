@@ -82,6 +82,17 @@
                 android:layout_marginTop="24dp"
                 android:background="@drawable/rounded_button_blue" />
 
+            <TextView
+                android:id="@+id/autoLoginInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔐 Accesso automatico attivo"
+                android:textColor="#777"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"
+                />
+
+
             <Button
                 android:id="@+id/registerButton"
                 android:layout_width="match_parent"
