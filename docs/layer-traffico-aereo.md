@@ -36,6 +36,7 @@ Il layer ADS-B visualizza in tempo reale:
     <div style="margin-top: 8px;">🌐 Web App</div>
   </div>
 </div>
+
 ---
 
 ## 🎯 Perché è utile?
