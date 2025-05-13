@@ -3,10 +3,11 @@
 * [🛠️ Le funzioni principali](02-Le-funzioni-principali.md)
 * [🌦️ Previsioni meteo e GPS](03-Previsioni-meteo-e-GPS.md)
 * [📍 Spot di volo](04-Spot-di-volo.md)
-* [📋 Il menu](05-Il-menu.md)
+* [📋 Il menu - solo Android](05-Il-menu.md)
 * [⚙️ Impostazioni](06-Impostazioni.md)
 * [💬 Group Chat](07-Group-Chat.md)
 * [📡 Direct Remote ID (DRI)](08-Direct-Remote-ID-(DRI).md)
 * [📰 Notizie](09-Notizie.md)
+* [🗣️ Assistente vocale](11-assistente-vocale.md)
 * [🚪 Logout](10-Logout.md)
  

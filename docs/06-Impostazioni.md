@@ -1,21 +1,33 @@
-# ⚙️ Impostazioni
+# ⚙️ Impostazioni - solo Android
 
 Questa sotto sezione di permetterà di:
 
 - Cambiare il tuo nome deciso durante la registrazione
 - Vedere con quale email ti sei registrato
 - Indicare che hai con te una radio PMR446
-- Attivare la ricezione DRI (Direct Remote ID)
+- Attivare la ricezione DRI [Direct Remote ID](08-Direct-Remote-ID-(DRI).md)
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="Impostazioni" >
-</p>
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+</div>
 
 Una volta cambiata qualsiasi impostazione è necessario cliccare su **Salva Impostazioni**
 
 # 📻 Radio PMR446 
 
-Se hai una radio PMR puoi dichiarare qui di averla accesa sul canale 4 e chiunque si troverà nelle tue vicinanze, potrà provare a chiamarti leggendo il tuo nome dall'applicazione.
+**Se hai una radio PMR** puoi dichiarare qui di averla accesa sul canale 4 e chiunque si troverà nelle tue vicinanze, potrà provare a chiamarti leggendo il tuo nome dall'applicazione.
+
+A differenza della App Android dove il flag si trova in Impostazioni, _sulla Web App, devi cliccare sul_ **tasto PMR446 CH4** nella schermata principale.
+
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/pmr_new_wa.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+</div>
 
 **Per convenzione si è deciso che il canale 4 è dedicato ai piloti di droni.**
 

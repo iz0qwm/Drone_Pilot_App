@@ -30,9 +30,12 @@ Per attivare la ricezione del DRI devi andare su **Impostazioni** e **spostare l
 
 In questo modo i ricevitori che sono abilitati nel tuo telefono, inizieranno a catturare il DRI dei droni intorno a te.
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="Prima pagina"  >
-</p>
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+</div>
 
 ## 🚁 Cosa si vede sulla mappa
 
@@ -40,10 +43,20 @@ Sulla mappa si vedranno tutti i droni ricevuti e si traccerà la traiettoria fin
 
 Se ci sarà **un volo dello stesso drone dopo un'ora dal precedente**, **verrà considerato un secondo volo** e sull'ultimo punto del primo volo, apparirà l'icona del drone atterrato.
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_01.jpeg" alt="Prima pagina" >
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_02.jpeg" alt="Prima pagina"  >
-</p>
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_01.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_02.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+</div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/dri_01_wa.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+</div>
 
 ## ✨ Se i ricevitori non funzionano?
 

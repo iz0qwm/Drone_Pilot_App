@@ -1,16 +1,25 @@
 ## 💬 Group Chat (Chat di gruppo)
 
-La group chat è quella chat dove _**tutti parlano con tutti**_. _Chi proviene dal Web si trova direttamente nella Group Chat_, invece, chi è sulla App Android, sulla pagina principale, può leggere in alto a destra, accanto alla voce **In chat** il numero di persone che si trovano nella Group Chat.
+La group chat è quella chat dove _**tutti parlano con tutti**_. <br>
+_Chi proviene dal Web si trova direttamente nella Group Chat_, invece, chi è sulla App Android, sulla pagina principale, può leggere in alto a destra, accanto alla voce **In chat** il numero di persone che si trovano nella Group Chat.
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/in_chat_new.jpeg" alt="In Chat" >
-</p>
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/in_chat_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/involo_chat_new_wa.jpeg" alt="Web App" width="360">
+    <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+</div>
 
 Questo è un esempio di come appare la scrittura di messaggi nella Group Chat.
 
-<p align="center">
-  <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/group_chat_new.jpeg" alt="In Chat" >
-</p>
-
-
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/group_chat_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+</div>
  
