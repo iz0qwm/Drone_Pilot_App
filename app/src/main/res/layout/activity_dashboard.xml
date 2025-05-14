@@ -182,6 +182,7 @@
 
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/mapCard"
                 android:layout_width="match_parent"
                 android:layout_height="325dp"
                 android:theme="@style/Theme.MaterialComponents.Light"
@@ -211,6 +212,15 @@
                         android:background="@drawable/round_button_background"
                         android:src="@drawable/ic_layers"
                         android:contentDescription="Gestione layer" />
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fullscreenButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|start"
+                        android:layout_margin="16dp"
+                        android:src="@drawable/ic_fullscreen"
+                        android:contentDescription="Toggle fullscreen" />
 
                     <!-- QUI sopra, la touch interceptor view -->
                     <com.kwos.dronepilotapp.TransparentTouchView

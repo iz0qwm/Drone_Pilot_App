@@ -2,6 +2,8 @@ package com.kwos.dronepilotapp
 
 
 import android.Manifest
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -49,6 +51,7 @@ import java.net.URL
 import kotlinx.coroutines.*
 import androidx.activity.OnBackPressedCallback
 import android.app.AlertDialog
+import android.content.res.Resources
 import android.view.MotionEvent
 import android.widget.ImageView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -88,6 +91,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
+import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
 import android.widget.PopupWindow
@@ -95,8 +99,22 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
 import java.util.Locale
 
+// Per layer meteo
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonArrayRequest
+import com.android.volley.toolbox.Volley
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+
+
 // Per i layers su google maps
 import com.kwos.dronepilotapp.FlightZoneLayer
+
+// Per ascoltare il listener dei nuovi messaggi sulla GroupChat
+import com.google.firebase.database.ChildEventListener
+
+
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -124,11 +142,15 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     //Layers su mappa
     private lateinit var flightZoneLayer: FlightZoneLayer
     private var zonesVisible = false
+    private lateinit var weatherLayerManager: WeatherLayerManager
+    private var rainTimestamp: String? = null
+    private var aircraftLayer: AircraftLayer? = null
+    private var aircraftLayerVisible = false
 
+    // Ricevitori DroneID
     private var bluetoothReceiver: BluetoothReceiver? = null
     private var wifiAwareReceiver: WifiAwareReceiver? = null
     private var wifiBeaconReceiver: WifiBeaconReceiver? = null
-
 
 
     private var mapFragment: SupportMapFragment? = null
@@ -162,6 +184,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private var retryAttempts = 0
     private val maxRetryAttempts = 10
 
+    // Full screen della mappa
+    private var isFullscreen = false
 
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
@@ -241,6 +265,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         //Partenza utente
         loadUserName() // Carica il nome del pilota all'avvio
 
+        //Partenza listenere per Notifiche messaggi in Group Chat
+        listenForGroupChatNotifications()
 
 
         // INIZIO BROADCAST RECEIVER
@@ -285,6 +311,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val dflightButton = findViewById<ImageButton>(R.id.dflightButton)
         val voiceBtn = findViewById<Button>(R.id.voiceZoneButton)
         val layersButton = findViewById<ImageButton>(R.id.layersButton)
+        val mapCard = findViewById<MaterialCardView>(R.id.mapCard)
 
         // layer trasparente davanti alla mappa per intercettare il tocco di due dita
         // e non passarlo alla scroll view
@@ -396,6 +423,35 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 popupWindow.dismiss()
             }
 
+            popupView.findViewById<LinearLayout>(R.id.menu_clouds).setOnClickListener {
+                weatherLayerManager.toggleCloudsLayer()
+                popupWindow.dismiss()
+            }
+
+            popupView.findViewById<LinearLayout>(R.id.menu_wind).setOnClickListener {
+                weatherLayerManager.toggleWindLayer()
+                popupWindow.dismiss()
+            }
+
+            popupView.findViewById<LinearLayout>(R.id.menu_rain).setOnClickListener {
+                rainTimestamp?.let {
+                    weatherLayerManager.toggleRainLayer(it)
+                } ?: Log.w("WeatherLayer", "RainViewer timestamp non ancora pronto")
+                popupWindow.dismiss()
+            }
+
+            popupView.findViewById<LinearLayout>(R.id.menu_aircraft).setOnClickListener {
+                aircraftLayerVisible = !aircraftLayerVisible
+                if (aircraftLayerVisible) {
+                    aircraftLayer?.start()
+                    Toast.makeText(this, "Layer aerei attivo", Toast.LENGTH_SHORT).show()
+                } else {
+                    aircraftLayer?.stop()
+                    Toast.makeText(this, "Layer aerei disattivato", Toast.LENGTH_SHORT).show()
+                }
+                popupWindow.dismiss()
+            }
+
             // Mostra il popup sotto il pulsante dei layer
             popupWindow.showAsDropDown(layersButton, 0, 0)
 
@@ -421,6 +477,14 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         //
 
+        //
+        // Tasto full screen
+        //
+        val fullscreenButton = findViewById<FloatingActionButton>(R.id.fullscreenButton)
+        fullscreenButton.setOnClickListener {
+            toggleFullscreen()
+        }
+        //
 
         // Recupera lo stato della disponibilità alla chat da Firestore al login
         auth.currentUser?.uid?.let { userId ->
@@ -821,6 +885,13 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val popupMenu = PopupMenu(this, view)
         popupMenu.menuInflater.inflate(R.menu.menu_options, popupMenu.menu)
 
+        // 🔄 Cambia il titolo della voce Group Chat se ci sono nuovi messaggi
+        if (nuovoMessaggioGruppoPresente) {
+            val groupChatItem = popupMenu.menu.findItem(R.id.menu_group_chat)
+            groupChatItem.title = "💬 Group Chat ✳️"
+            // oppure: "💬 Group Chat (1)", o cambia icona con un'altra temporanea
+        }
+
         popupMenu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.menu_piloti_online -> {
@@ -846,6 +917,85 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         popupMenu.show()
 
     }
+
+    // Listener per vedere se vi sono nuovi messaggi nell Group Chat
+    //
+    private fun isGroupChatActivityOpen(): Boolean {
+        return GroupChatActivity.isOpen
+    }
+
+
+    private fun listenForGroupChatNotifications() {
+        val messagesRef = FirebaseDatabase.getInstance().reference.child("groupchat")
+
+        messagesRef.limitToLast(1).addChildEventListener(object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                Log.d("DronePilotApp", "GroupChatNotif: 📩 Nuovo messaggio rilevato")
+
+                if (!isGroupChatActivityOpen()) {
+                    nuovoMessaggioGruppoPresente = true
+                    Log.d("DronePilotApp", "GroupChatNotif: 🔔 Chat non aperta, avvio lampeggio")
+                    flashMenuButton()
+                } else {
+                    Log.d("DronePilotApp", "GroupChatNotif: ✅ Chat già aperta, niente lampeggio")
+                }
+            }
+
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+            override fun onChildRemoved(snapshot: DataSnapshot) {}
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    // Fa flashare l'icona del Menu in caso di presenza di messaggi nella Group Chat
+    // 👉 Variabile di istanza
+    var flashingAnimator: ObjectAnimator? = null
+
+    // 🔄 Metodo di istanza: usabile dentro DashboardActivity
+    private fun flashMenuButton() {
+        val menuButton = findViewById<ImageButton>(R.id.menuButton)
+
+        if (flashingAnimator == null) {
+            flashingAnimator = ObjectAnimator.ofFloat(menuButton, "alpha", 1f, 0.3f, 1f).apply {
+                duration = 600
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                start()
+            }
+            Log.d("DronePilotApp", "MenuFlash: ✨ Flash avviato.")
+        }
+    }
+
+    // 🧭 Companion per accesso statico da fuori Activity
+    companion object {
+        // 🔔 Flag per messaggi non letti in group chat
+        var nuovoMessaggioGruppoPresente: Boolean = false
+
+        // 🔁 Istanza viva di DashboardActivity
+        var currentInstance: DashboardActivity? = null
+
+        // 🛑 Metodo per fermare l'animazione del menu
+        fun stopFlashingMenuButton() {
+            currentInstance?.runOnUiThread {
+                currentInstance?.stopFlashing()
+            }
+        }
+    }
+
+
+    fun stopFlashing() {
+        flashingAnimator?.cancel()
+        flashingAnimator = null
+        findViewById<ImageButton>(R.id.menuButton)?.alpha = 1f
+        Log.d("DronePilotApp", "MenuFlash: 🔕 Flash arrestato.")
+    }
+
+
+
+
+    //
 
     // Mostra messaggi dopo averli recuperati dal Broadcast
     private fun showNewMessageInDashboard(title: String, message: String, senderId: String) {
@@ -927,6 +1077,17 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.uiSettings.isZoomControlsEnabled = true
         mMap.uiSettings.isMyLocationButtonEnabled = true
 
+        try {
+            val success = googleMap.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(this, R.raw.dark_map_style)
+            )
+            if (!success) {
+                Log.e("DronePilotApp", "MapStyle: Stile mappa non applicato correttamente.")
+            }
+        } catch (e: Resources.NotFoundException) {
+            Log.e("DronePilotApp", "MapStyle: File di stile non trovato.", e)
+        }
+
         mMap.setOnInfoWindowClickListener { marker ->
             val userId = marker.tag as? String
             if (userId != null) {
@@ -990,7 +1151,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             loadPilots()
             listenForChatAvailability()
             loadDrones()
+            // Layer Flight Zone
             flightZoneLayer = FlightZoneLayer(this, googleMap)
+            // Layer Meteo
+            weatherLayerManager = WeatherLayerManager(googleMap)
+            getLatestRainTimestamp() // fetch asincrono
+            aircraftLayer = AircraftLayer(this, googleMap)
 
             logDebug(TAG, "📡 Chat Listener per chat attivato")
 
@@ -1107,6 +1273,30 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
             }
     }
+
+
+    //
+    // Utility per Layer Meteo
+    //
+    private fun getLatestRainTimestamp() {
+        val url = "https://tilecache.rainviewer.com/api/maps.json"
+        val requestQueue = Volley.newRequestQueue(this)
+
+        val jsonArrayRequest = JsonArrayRequest(Request.Method.GET, url, null,
+            { response ->
+                val lastTimestamp = response.getString(response.length() - 1)
+                rainTimestamp = lastTimestamp
+            },
+            { error ->
+                Log.e("RainViewer", "Errore nel caricamento: ${error.message}")
+            })
+
+        requestQueue.add(jsonArrayRequest)
+    }
+    //
+    //
+    //
+
 
     //
     // Sezione Drone ID
@@ -1841,6 +2031,9 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onStart() {
         super.onStart()
+        // dichiaro Istanza per ricezione messaggi Group Chat
+        DashboardActivity.currentInstance = this
+        //
         val user = FirebaseAuth.getInstance().currentUser
         leggiLogin()
 
@@ -2138,6 +2331,9 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onStop() {
         super.onStop()
+        // Ferma l'istanza per il flash del menù in caso di messaggi nella Group Chat
+        DashboardActivity.currentInstance = null
+
         // Ferma gli aggiornamenti della posizione quando l'attività è in stop
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
@@ -2360,11 +2556,81 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         feedbackText.visibility = View.GONE
     }
 
+    // Testo dell'assistente
     fun showAssistantOverlay(text: String) {
         val overlay = findViewById<FrameLayout>(R.id.assistantOverlay)
         val assistantText = findViewById<TextView>(R.id.assistantText)
         overlay.visibility = View.VISIBLE
         assistantText.text = text
+    }
+
+    // Full Screen della Mappa
+    private fun toggleFullscreen() {
+        val mapCard = findViewById<MaterialCardView>(R.id.mapCard)
+        val decorView = window.decorView
+
+        if (!isFullscreen) {
+            supportActionBar?.hide()
+            decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                            or View.SYSTEM_UI_FLAG_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    )
+            // Nascondi elementi UI visibili (aggiungi qui i tuoi)
+            findViewById<View>(R.id.droneField)?.visibility = View.GONE
+            findViewById<View>(R.id.startFlightButton)?.visibility = View.GONE
+            findViewById<View>(R.id.stopFlightButton)?.visibility = View.GONE
+            findViewById<View>(R.id.weather_forecast_button)?.visibility = View.GONE
+            findViewById<View>(R.id.takeoff_spots_button)?.visibility = View.GONE
+            findViewById<View>(R.id.onlineUsersText)?.visibility = View.GONE
+            findViewById<View>(R.id.chatUsersText)?.visibility = View.GONE
+            findViewById<View>(R.id.driLed)?.visibility = View.GONE
+            findViewById<View>(R.id.lowerLimitTextView)?.visibility = View.GONE
+            findViewById<View>(R.id.pilotNearAlert)?.visibility = View.GONE
+            findViewById<View>(R.id.chatToggle)?.visibility = View.GONE
+            findViewById<View>(R.id.chatTitle)?.visibility = View.GONE
+            findViewById<View>(R.id.chatLabelOn)?.visibility = View.GONE
+            findViewById<View>(R.id.chatLabelOff)?.visibility = View.GONE
+            findViewById<View>(R.id.new_message_text)?.visibility = View.GONE
+            findViewById<View>(R.id.new_message_icon)?.visibility = View.GONE
+            // Espandi la mappa
+            val heightInDp = 650
+            val scale = resources.displayMetrics.density
+            mapCard.layoutParams.height = (heightInDp * scale).toInt()
+            mapCard.requestLayout()
+
+        } else {
+            supportActionBar?.hide()
+
+            // Ripristina altezza 325dp (convertita in pixel)
+            val heightInDp = 325
+            val scale = resources.displayMetrics.density
+            mapCard.layoutParams.height = (heightInDp * scale).toInt()
+            mapCard.requestLayout()
+
+
+            decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+            findViewById<View>(R.id.droneField)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.startFlightButton)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.stopFlightButton)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.weather_forecast_button)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.takeoff_spots_button)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.onlineUsersText)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.chatUsersText)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.driLed)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.lowerLimitTextView)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.pilotNearAlert)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.chatToggle)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.chatTitle)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.chatLabelOn)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.chatLabelOff)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.new_message_text)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.new_message_icon)?.visibility = View.VISIBLE
+        }
+
+        isFullscreen = !isFullscreen
     }
 
 }

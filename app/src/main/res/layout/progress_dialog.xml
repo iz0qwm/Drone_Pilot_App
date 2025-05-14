@@ -3,7 +3,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:padding="24dp"
-    android:background="@android:color/white"
+    android:background="@drawable/rounded_background"
     android:orientation="vertical"
     android:gravity="center">
 
@@ -19,6 +19,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Accesso in corso..."
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         android:textSize="16sp" />
 </LinearLayout>

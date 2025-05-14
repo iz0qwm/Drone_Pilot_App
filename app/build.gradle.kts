@@ -17,7 +17,7 @@ android {
         minSdk = 30
         targetSdk = 35
         versionCode = 26
-        versionName = "2.0.0"
+        versionName = "2.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -89,6 +89,8 @@ dependencies {
     implementation("androidx.browser:browser:1.7.0")
     implementation("com.google.maps.android:android-maps-utils:2.3.0")
     implementation("org.jsoup:jsoup:1.15.3")
+    implementation("com.android.volley:volley:1.2.1")
+
 
 
 

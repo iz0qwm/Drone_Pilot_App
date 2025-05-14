@@ -56,6 +56,9 @@ import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.animation.ObjectAnimator
 import android.app.ProgressDialog
+import android.graphics.drawable.ColorDrawable
+import android.graphics.Color
+
 import android.view.ViewTreeObserver
 import android.widget.ProgressBar
 import com.google.firebase.auth.ActionCodeSettings
@@ -489,6 +492,7 @@ class MainActivity : AppCompatActivity() {
 
         val dialog = builder.create()
         dialog.show()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         return dialog
     }

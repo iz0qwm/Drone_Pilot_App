@@ -1,0 +1,21 @@
+[
+  {
+    "elementType": "geometry",
+    "stylers": [
+      { "lightness": -30 },
+      { "saturation": -30 }
+    ]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [
+      { "color": "#9c9c9c" }
+    ]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      { "color": "#404040" }
+    ]
+  }
+]

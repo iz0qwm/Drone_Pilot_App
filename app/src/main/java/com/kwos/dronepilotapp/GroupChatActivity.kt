@@ -109,31 +109,29 @@ class GroupChatActivity : AppCompatActivity() {
     }
 
     private fun listenForMessages() {
-        messagesRef.orderByChild("timestamp").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                messagesList.clear()
-                for (data in snapshot.children) {
-                    val msg = data.getValue(Message::class.java)
-                    if (msg != null) {
-                        // Recupera il nome completo dall'ID utente
-                        getUserFullName(msg.senderId) { fullName ->
-                            // Aggiorna il nome completo nel messaggio
-                            msg.senderName = fullName ?: "Utente sconosciuto"
-                            messagesList.add(msg)
-                            // Ordina i messaggi esplicitamente per timestamp (se Firebase non li ordina correttamente)
-                            messagesList.sortBy { it.timestamp }
-                            messagesAdapter.notifyDataSetChanged()
-                            recyclerView.scrollToPosition(messagesList.size - 1)
-                        }
+        messagesRef.orderByChild("timestamp").addChildEventListener(object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                val msg = snapshot.getValue(Message::class.java)
+                if (msg != null) {
+                    getUserFullName(msg.senderId) { fullName ->
+                        msg.senderName = fullName ?: "Utente sconosciuto"
+                        messagesList.add(msg)
+                        messagesList.sortBy { it.timestamp }
+                        messagesAdapter.notifyItemInserted(messagesList.size - 1)
+                        recyclerView.scrollToPosition(messagesList.size - 1)
                     }
                 }
             }
 
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+            override fun onChildRemoved(snapshot: DataSnapshot) {}
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
             override fun onCancelled(error: DatabaseError) {
                 Toast.makeText(this@GroupChatActivity, "Errore nel caricamento messaggi", Toast.LENGTH_SHORT).show()
             }
         })
     }
+
 
     private fun getUserFullName(userId: String, callback: (String?) -> Unit) {
         firestore.collection("users").document(userId)
@@ -163,14 +161,25 @@ class GroupChatActivity : AppCompatActivity() {
         }
     }
 
+    companion object {
+        var isOpen = false
+    }
+
     override fun onStart() {
         super.onStart()
         updateUserOnlineStatus(true) // Imposta lo stato online
+        isOpen = true
+        // reset notifica
+        DashboardActivity.nuovoMessaggioGruppoPresente = false
+        // Fermai il flash
+        DashboardActivity.stopFlashingMenuButton()
+
     }
 
     override fun onStop() {
         super.onStop()
         updateUserOnlineStatus(false) // Imposta lo stato offline (opzionale)
+        isOpen = false
     }
 
 }
