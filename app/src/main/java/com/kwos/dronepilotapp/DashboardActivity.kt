@@ -2495,7 +2495,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 matches?.firstOrNull()?.let { spokenText ->
                     showVoiceFeedback("📢 Hai detto: \"$spokenText\"")
 
-                    if (spokenText.contains("può volare", ignoreCase = true)) {
+                    if (spokenText.contains(Regex("può volare|posso volare|si può volare|posso far volare|posso usare", RegexOption.IGNORE_CASE))) {
                         // Dopo 600 ms cambia il messaggio ed esegui l'assistente
                         Handler(Looper.getMainLooper()).postDelayed({
                             showVoiceFeedback("📡 Recupero le informazioni...")
