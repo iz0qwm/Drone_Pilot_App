@@ -221,9 +221,33 @@ class FlightZoneAssistant(
                     reasons.isNotEmpty() -> "Ci sono restrizioni attive: ${reasons.joinToString(", ")}."
                     else -> ""
                 }
-                val otherInfo = if (!otherReason.isNullOrBlank()) "Circolare $otherReason." else ""
+
+                val otherInfo = when (otherReason.uppercase(Locale.ROOT)) {
+                    "NFZ" -> "Questa è una zona in cui il volo è interdetto. "
+                    "ATM09", "ATM09A" -> "Zona soggetta a restrizioni aeronautiche ATM 09. "
+                    else -> if (otherReason.isNotBlank()) "Circolare $otherReason. " else ""
+                }
+
                 "$reasonText$otherInfo"
+
             }
+
+            val periodoAttivazione = if (permanent == "NO" && !start.isNullOrBlank() && !end.isNullOrBlank()) {
+                try {
+                    val formatter = DateTimeFormatter.ISO_DATE_TIME
+                    val zonedStart = ZonedDateTime.parse(start, formatter).withZoneSameInstant(ZoneId.systemDefault())
+                    val zonedEnd = ZonedDateTime.parse(end, formatter).withZoneSameInstant(ZoneId.systemDefault())
+
+                    val formato = DateTimeFormatter.ofPattern("d MMMM yyyy 'alle' HH:mm", Locale.ITALIAN)
+                    val startFormatted = formato.format(zonedStart)
+                    val endFormatted = formato.format(zonedEnd)
+
+                    "Questa restrizione è valida dal $startFormatted fino al $endFormatted. "
+                } catch (e: Exception) {
+                    Log.w("DronePilotApp", "Errore parsing date zona non NOTAM: ${e.message}")
+                    ""
+                }
+            } else ""
 
             val zonaDescrizionePulita = zonaDescrizione
                 // 1. Trasforma 13/31 → pista 13 31
@@ -249,9 +273,7 @@ class FlightZoneAssistant(
             }
 
 
-            //return intro + aipNote + detail
-
-            val finalMessage = intro + zonaTesto + aipNote + detail
+            val finalMessage = intro + zonaTesto + aipNote + detail + periodoAttivazione
             //Log.d("DronePilotApp", "🐛 DEBUG: ✉️ Messaggio finale: $finalMessage (${finalMessage::class.simpleName})")
             return finalMessage
 
