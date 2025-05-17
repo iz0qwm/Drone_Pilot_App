@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/droneLogLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center_horizontal"
+    android:background="@android:color/white">
+
+    <TextView
+        android:id="@+id/logTitleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📁 Importa Log di Volo DJI"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"
+        android:textColor="#191970" />
+
+    <TextView
+        android:id="@+id/logDescriptionTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Importa l'ultimo file di log del tuo drone DJI registrato dalla DJI FLY. La traiettoria di volo verrà mostrata sulla mappa."
+        android:textSize="16sp"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:textColor="#333333" />
+
+    <Button
+        android:id="@+id/importLogButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🔍 Importa"
+        android:textAllCaps="false"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:backgroundTint="#191970"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:layout_gravity="center"
+        android:background="@drawable/rounded_button_blue" />
+
+    <Button
+        android:id="@+id/close_weather_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="❌ Chiudi"
+        android:layout_marginTop="16dp"
+        android:textColor="@color/button_text_color"
+        android:background="@drawable/rounded_button_red" />
+</LinearLayout>

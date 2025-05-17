@@ -910,6 +910,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     startActivity(Intent(this, GroupChatActivity::class.java))
                     true
                 }
+                R.id.menu_drone_log -> {
+                    startActivity(Intent(this, DroneLogActivity::class.java))
+                    true
+                }
 
                 else -> false
             }

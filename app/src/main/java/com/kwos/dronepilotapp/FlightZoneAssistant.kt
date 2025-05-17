@@ -207,7 +207,8 @@ class FlightZoneAssistant(
                     else -> ""
                 }
 
-                "È attivo un NOTAM ($name) con restrizione $restriction. $restrictionNote$notamSintetico"
+                //"È attivo un NOTAM ($name) con restrizione $restriction. $restrictionNote$notamSintetico"
+                "$restrictionNote$notamSintetico"
             } else {
                 val reasonText = when {
                     reasons.contains("AIR_TRAFFIC") -> "Attenzione: sei in prossimità di un aeroporto."
@@ -242,7 +243,7 @@ class FlightZoneAssistant(
                     val startFormatted = formato.format(zonedStart)
                     val endFormatted = formato.format(zonedEnd)
 
-                    "Questa restrizione è valida dal $startFormatted fino al $endFormatted. "
+                    "D-Flight dice che questa restrizione è valida dal $startFormatted fino al $endFormatted. "
                 } catch (e: Exception) {
                     Log.w("DronePilotApp", "Errore parsing date zona non NOTAM: ${e.message}")
                     ""
@@ -336,14 +337,15 @@ class FlightZoneAssistant(
                 val formatter = DateTimeFormatter.ISO_DATE_TIME
                 val zonedEnd = ZonedDateTime.parse(end, formatter).withZoneSameInstant(ZoneId.systemDefault())
                 val formattedDate = DateTimeFormatter.ofPattern("d MMMM yyyy 'alle' HH:mm", Locale.ITALIAN).format(zonedEnd)
-                simplified.append("Il NOTAM è attivo fino al $formattedDate. ")
+                //simplified.append("Il NOTAM è attivo fino al $formattedDate. ")
             } catch (e: Exception) {
                 Log.w("DronePilotApp", "FlightZoneAssistant: Errore nel parsing della data: ${e.message}")
             }
         }
 
         return if (simplified.isNotBlank()) simplified.toString()
-        else "È presente un NOTAM attivo in questa zona."
+        //else "È presente un NOTAM attivo in questa zona."
+        else " "
     }
 
     suspend fun fetchAipDetails(aipCode: String): String {
@@ -523,22 +525,70 @@ class FlightZoneAssistant(
                 val doc = Jsoup.connect(url).get()
                 val allElements = doc.select("body").first()?.allElements ?: return null
 
+                var periodoDescrizione = ""
+                var schedulatoDescrizione = ""
+                var attivaOra = true
+
                 for (element in allElements) {
-                    if (element.ownText().contains("Schedulato (UTC):")) {
-                        val testo = element.ownText()
+                    val testo = element.ownText()
+
+                    // 🔹 Leggi il campo "Periodo (UTC):"
+                    if (testo.contains("Periodo (UTC):")) {
+                        val periodo = testo.substringAfter("Periodo (UTC):").substringBefore("(").trim()
+                        periodoDescrizione = "Il NOTAM riporta il seguente periodo di validità: dal $periodo"
+
+                        val match = Regex("(\\d{2})/(\\d{2})/(\\d{2}) (\\d{2}:\\d{2}) - (\\d{2})/(\\d{2})/(\\d{2}) (\\d{2}:\\d{2})").find(periodo)
+                        if (match != null) {
+                            val groups = match.groupValues
+                            val dayStart = groups[1]
+                            val monthStart = groups[2]
+                            val yearStart = groups[3]
+                            val timeStart = groups[4]
+                            val dayEnd = groups[5]
+                            val monthEnd = groups[6]
+                            val yearEnd = groups[7]
+                            val timeEnd = groups[8]
+
+                            val startDateTime = ZonedDateTime.of(
+                                "20$yearStart".toInt(), monthStart.toInt(), dayStart.toInt(),
+                                timeStart.substring(0, 2).toInt(), timeStart.substring(3, 5).toInt(),
+                                0, 0, ZoneId.of("UTC")
+                            )
+                            val endDateTime = ZonedDateTime.of(
+                                "20$yearEnd".toInt(), monthEnd.toInt(), dayEnd.toInt(),
+                                timeEnd.substring(0, 2).toInt(), timeEnd.substring(3, 5).toInt(),
+                                0, 0, ZoneId.of("UTC")
+                            )
+
+                            val nowUtc = ZonedDateTime.now(ZoneId.of("UTC"))
+                            attivaOra = nowUtc.isAfter(startDateTime) && nowUtc.isBefore(endDateTime)
+                        }
+                    }
+
+                    // 🔸 Leggi il campo "Schedulato (UTC):"
+                    if (testo.contains("Schedulato (UTC):")) {
                         val cleaned = testo.substringAfter("Schedulato (UTC):").substringBefore("<").trim()
-                        Log.d("DronePilotApp", "fetchNotamSchedule: Orario estratto: $cleaned")
-                        return AipOrariInfo(descrizione = "Orari previsti: $cleaned", attivaOra = true)
+                        schedulatoDescrizione = "Orari previsti: $cleaned"
                     }
                 }
 
-                Log.w("DronePilotApp", "fetchNotamSchedule: Nessun elemento con Schedulato (UTC) trovato.")
+                if (periodoDescrizione.isNotBlank() || schedulatoDescrizione.isNotBlank()) {
+                    val descrizione = listOf(periodoDescrizione, schedulatoDescrizione)
+                        .filter { it.isNotBlank() }
+                        .joinToString(". ") + "."
+
+                    Log.d("DronePilotApp", "fetchNotamSchedule: ✔️ Descrizione combinata: $descrizione")
+                    return AipOrariInfo(descrizione = descrizione, attivaOra = attivaOra)
+                }
+
+                Log.w("DronePilotApp", "fetchNotamSchedule: Nessun campo utile trovato.")
                 return null
 
             } catch (e: Exception) {
                 Log.w("DronePilotApp", "fetchNotamSchedule: Errore nel parsing HTML: ${e.message}")
                 return null
             }
+
         } else {
             Log.w("DronePilotApp", "fetchNotamSchedule: Regex NOTAM non ha trovato nulla in $name")
             return null

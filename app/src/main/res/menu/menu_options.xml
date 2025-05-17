@@ -15,5 +15,9 @@
         android:title="💬 Group Chat"
         android:icon="@drawable/ic_chat"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/menu_drone_log"
+        android:title="📁 Drone LogFiles"
+        app:showAsAction="never" />
 
 </menu>
