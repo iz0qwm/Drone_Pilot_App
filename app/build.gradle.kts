@@ -26,16 +26,31 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(project.property("RELEASE_STORE_FILE") as String)
+            storePassword = project.property("RELEASE_STORE_PASSWORD") as String
+            keyAlias = project.property("RELEASE_KEY_ALIAS") as String
+            keyPassword = project.property("RELEASE_KEY_PASSWORD") as String
+        }
+    }
+
     buildTypes {
-        release {
+        getByName("release") {
             isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             buildConfigField("String", "VERSION_NAME", "\"${defaultConfig.versionName}\"")
+            signingConfig = signingConfigs.getByName("release")
+        }
+        getByName("debug") {
+            // Config opzionali per debug
         }
     }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -48,6 +63,7 @@ android {
         compose = true
         viewBinding = true
     }
+
 }
 
 dependencies {
