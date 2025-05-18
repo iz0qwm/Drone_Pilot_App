@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white">
@@ -47,11 +48,35 @@
             android:layout_gravity="center"
             android:background="@drawable/rounded_button_blue" />
 
-        <com.google.android.gms.maps.MapView
-            android:id="@+id/flightMap"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/mapCard"
             android:layout_width="match_parent"
             android:layout_height="250dp"
-            android:layout_marginBottom="16dp" />
+            android:theme="@style/Theme.MaterialComponents.Light"
+            app:cardElevation="4dp"
+            app:cardCornerRadius="8dp"
+            app:strokeWidth="4dp"
+            app:strokeColor="@color/black">
+
+        <!-- Contenitore per mappa + touch view -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.google.android.gms.maps.MapView
+                android:id="@+id/flightMap"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- QUI sopra, la touch interceptor view -->
+            <com.kwos.dronepilotapp.TransparentTouchView
+                android:id="@+id/touchInterceptor"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"/>
+        </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView android:id="@+id/summaryModel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🚁 Drone: -" android:textSize="16sp" android:layout_marginTop="8dp" />
         <TextView android:id="@+id/summaryDuration" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⏱️ Durata: -" android:textSize="16sp" />

@@ -535,41 +535,65 @@ class FlightZoneAssistant(
                     // 🔹 Leggi il campo "Periodo (UTC):"
                     if (testo.contains("Periodo (UTC):")) {
                         val periodo = testo.substringAfter("Periodo (UTC):").substringBefore("(").trim()
-                        periodoDescrizione = "Il NOTAM riporta il seguente periodo di validità: dal $periodo"
 
                         val match = Regex("(\\d{2})/(\\d{2})/(\\d{2}) (\\d{2}:\\d{2}) - (\\d{2})/(\\d{2})/(\\d{2}) (\\d{2}:\\d{2})").find(periodo)
                         if (match != null) {
                             val groups = match.groupValues
-                            val dayStart = groups[1]
-                            val monthStart = groups[2]
-                            val yearStart = groups[3]
-                            val timeStart = groups[4]
-                            val dayEnd = groups[5]
-                            val monthEnd = groups[6]
-                            val yearEnd = groups[7]
-                            val timeEnd = groups[8]
+                            val dayStart = groups[1].toInt()
+                            val monthStart = groups[2].toInt()
+                            val yearStart = "20${groups[3]}".toInt()
+                            val timeStartHour = groups[4].substring(0, 2).toInt()
+                            val timeStartMinute = groups[4].substring(3, 5).toInt()
 
-                            val startDateTime = ZonedDateTime.of(
-                                "20$yearStart".toInt(), monthStart.toInt(), dayStart.toInt(),
-                                timeStart.substring(0, 2).toInt(), timeStart.substring(3, 5).toInt(),
-                                0, 0, ZoneId.of("UTC")
-                            )
-                            val endDateTime = ZonedDateTime.of(
-                                "20$yearEnd".toInt(), monthEnd.toInt(), dayEnd.toInt(),
-                                timeEnd.substring(0, 2).toInt(), timeEnd.substring(3, 5).toInt(),
-                                0, 0, ZoneId.of("UTC")
-                            )
+                            val dayEnd = groups[5].toInt()
+                            val monthEnd = groups[6].toInt()
+                            val yearEnd = "20${groups[7]}".toInt()
+                            val timeEndHour = groups[8].substring(0, 2).toInt()
+                            val timeEndMinute = groups[8].substring(3, 5).toInt()
 
-                            val nowUtc = ZonedDateTime.now(ZoneId.of("UTC"))
-                            attivaOra = nowUtc.isAfter(startDateTime) && nowUtc.isBefore(endDateTime)
+                            val utcZone = ZoneId.of("UTC")
+                            val localZone = ZoneId.systemDefault()
+
+                            val startDateTimeUTC = ZonedDateTime.of(yearStart, monthStart, dayStart, timeStartHour, timeStartMinute, 0, 0, utcZone)
+                            val endDateTimeUTC = ZonedDateTime.of(yearEnd, monthEnd, dayEnd, timeEndHour, timeEndMinute, 0, 0, utcZone)
+
+                            val startDateTimeLocal = startDateTimeUTC.withZoneSameInstant(localZone)
+                            val endDateTimeLocal = endDateTimeUTC.withZoneSameInstant(localZone)
+
+                            val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy 'alle' HH:mm", Locale.ITALIAN)
+                            periodoDescrizione = "Il NOTAM è valido dal ${formatter.format(startDateTimeLocal)} fino al ${formatter.format(endDateTimeLocal)}"
+
+                            val nowLocal = ZonedDateTime.now(localZone)
+                            attivaOra = nowLocal.isAfter(startDateTimeLocal) && nowLocal.isBefore(endDateTimeLocal)
                         }
                     }
 
+
                     // 🔸 Leggi il campo "Schedulato (UTC):"
                     if (testo.contains("Schedulato (UTC):")) {
-                        val cleaned = testo.substringAfter("Schedulato (UTC):").substringBefore("<").trim()
-                        schedulatoDescrizione = "Orari previsti: $cleaned"
+                        val raw = testo.substringAfter("Schedulato (UTC):").substringBefore("<").trim()
+
+                        // Prova a riconoscere pattern tipo 08:30-17:00
+                        val timeRangeMatch = Regex("(\\d{2}):(\\d{2})-(\\d{2}):(\\d{2})").find(raw)
+                        schedulatoDescrizione = if (timeRangeMatch != null) {
+                            val (h1, m1, h2, m2) = timeRangeMatch.destructured
+                            val zoneUTC = ZoneId.of("UTC")
+                            val zoneLocal = ZoneId.systemDefault()
+                            val today = ZonedDateTime.now(zoneUTC).toLocalDate()
+
+                            val startUtc = ZonedDateTime.of(today, LocalTime.of(h1.toInt(), m1.toInt()), zoneUTC)
+                            val endUtc = ZonedDateTime.of(today, LocalTime.of(h2.toInt(), m2.toInt()), zoneUTC)
+
+                            val startLocal = startUtc.withZoneSameInstant(zoneLocal).toLocalTime()
+                            val endLocal = endUtc.withZoneSameInstant(zoneLocal).toLocalTime()
+
+                            "Orari previsti (ora locale): dalle ${startLocal.format(DateTimeFormatter.ofPattern("HH:mm"))} alle ${endLocal.format(DateTimeFormatter.ofPattern("HH:mm"))}"
+                        } else {
+                            // fallback se non si può interpretare
+                            "Orari previsti (in UTC, non convertiti): $raw"
+                        }
                     }
+
                 }
 
                 if (periodoDescrizione.isNotBlank() || schedulatoDescrizione.isNotBlank()) {

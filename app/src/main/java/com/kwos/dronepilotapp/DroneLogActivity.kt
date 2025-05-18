@@ -25,6 +25,7 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.json.JSONObject
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -105,6 +106,13 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView = findViewById(R.id.flightMap)
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
+
+        val touchInterceptor = findViewById<View>(R.id.touchInterceptor)
+        touchInterceptor.setOnTouchListener { _, _ ->
+            mapView.parent.requestDisallowInterceptTouchEvent(true)
+            false
+        }
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -151,6 +159,10 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
             .post(requestBody)
             .build()
 
+        runOnUiThread {
+            fileInfoTextView.text = "📄 Attendere, sto interpretando il file di log…"
+        }
+
         Thread {
             try {
                 val client = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).writeTimeout(30, TimeUnit.SECONDS).build()
@@ -184,7 +196,7 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
                         }
 
                         drawTrajectory(json)
-                        fileInfoTextView.text = "✅ Log inviato con successo!"
+                        fileInfoTextView.text = "✅ Log interpretato con successo!"
                     } else {
                         fileInfoTextView.text = "❌ Errore upload: ${response.code}"
                     }
@@ -225,7 +237,7 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
         val maxAltitude = json.optDouble("maxAltitude", 0.0)
         val maxSpeedKmH = json.optDouble("maxSpeed", 0.0)
         val maxSpeedMS = maxSpeedKmH / 3.6
-        val maxSpeedRounded = String.format("%.1f", maxSpeedMS).toDouble()
+        val maxSpeedRounded = String.format(Locale.US, "%.1f", maxSpeedMS).toDouble()
 
         val droneData = hashMapOf(
             "lat" to last.optDouble("lat"),
@@ -235,6 +247,14 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
             "model" to model
         )
         firestore.collection("detected_drones").document(serial).set(droneData)
+
+        .addOnSuccessListener {
+            Toast.makeText(this, "✅ Dati inviati, ora chiudi e vedi la mappa sulla Dashboard", Toast.LENGTH_LONG).show()
+        }
+        .addOnFailureListener {
+            Toast.makeText(this, "❌ Errore nell'invio dei dati", Toast.LENGTH_LONG).show()
+        }
+
     }
 
     private fun drawTrajectory(json: JSONObject) {

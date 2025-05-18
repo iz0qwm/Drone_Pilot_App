@@ -18,6 +18,10 @@ Il layer ADS-B visualizza in tempo reale:
     <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/layer_traffico_areo_wa_02.jpeg" alt="Dashboard principale" width="360">
     <div style="margin-top: 8px;">🌐 Web App</div>
   </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/layer_traffico_areo_02.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
 </div>
 
 ---
@@ -34,6 +38,10 @@ Il layer ADS-B visualizza in tempo reale:
   <div style="text-align: center;">
     <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/layer_traffico_areo_wa_01.jpeg" alt="Dashboard principale" width="360">
     <div style="margin-top: 8px;">🌐 Web App</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/layer_traffico_areo_01.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
   </div>
 </div>
 

@@ -14,6 +14,9 @@ _Chi proviene dal Web si trova direttamente nella Group Chat_, invece, chi è su
   </div>
 </div>
 
+L'utente web vedrà lampeggiare l'icona della group chat quando vi sono nuovi messagi.
+L'utente Android vedrà lampeggiare l'icona del menù, avvisandolo di cliccare su Group Chat per vedere i nuovi messaggi.
+
 Questo è un esempio di come appare la scrittura di messaggi nella Group Chat.
 
 <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">

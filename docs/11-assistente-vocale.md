@@ -20,7 +20,7 @@ Quando apri l'app, premi l’icona del microfono 🎙️ e **chiedi qualcosa com
 
 > *"Può volare" qui il mio drone?*  
 
-Riconosce le parole: "**Può volare**"
+Riconosce le parole: "**Può volare**" o "**Posso volare**"
 
 L’app:
 
