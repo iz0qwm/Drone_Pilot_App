@@ -3,53 +3,48 @@ package com.kwos.dronepilotapp
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.GnssStatus
+import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import java.util.concurrent.Executors
 
 class GpsStatusHelper(
     context: Context,
-    private val callback: (totalSatellites: Int, usedSatellites: Int) -> Unit
+    private val callback: (totalSatellites: Int, usedSatellites: Int, accuracy: Float) -> Unit
 ) {
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private val executor = Executors.newSingleThreadExecutor()
 
+    // Variabili per mantenere i dati più recenti
+    private var lastTotalSatellites: Int = 0
+    private var lastUsedSatellites: Int = 0
+
     private val gnssStatusCallback = object : GnssStatus.Callback() {
         override fun onSatelliteStatusChanged(status: GnssStatus) {
-            //logDebug("DronePilotApp", "onSatelliteStatusChanged CHIAMATO: Satelliti totali=${status.satelliteCount}")
-            val totalSatellites = status.satelliteCount
-            var usedSatellites = 0
+            lastTotalSatellites = status.satelliteCount
+            lastUsedSatellites = 0
 
-            for (i in 0 until totalSatellites) {
+            for (i in 0 until status.satelliteCount) {
                 if (status.usedInFix(i)) {
-                    usedSatellites++
+                    lastUsedSatellites++
                 }
             }
-            //logDebug("DronePilotApp", "onSatelliteStatusChanged: Satelliti totali: $totalSatellites, Usati per il fix: $usedSatellites")
-            callback(totalSatellites, usedSatellites)
         }
     }
 
     @SuppressLint("MissingPermission")
     fun startListening() {
         try {
-            //logDebug("DronePilotApp", "GpsStatusHelper:  Registrazione callback GNSS in corso...")
             locationManager.registerGnssStatusCallback(executor, gnssStatusCallback)
-            //logDebug("DronePilotApp", "GpsStatusHelper: Callback GNSS registrato con successo!")
-            val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            //logDebug("DronePilotApp", "startListening: GPS attivo: $isGpsEnabled")
 
-            // Richiede un aggiornamento della posizione
             locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
-                1000L, // intervallo in millisecondi
-                1f,    // distanza minima in metri
-                object : android.location.LocationListener {
-                    override fun onLocationChanged(location: android.location.Location) {
-                        //logDebug(
-                        //    "DronePilotApp",
-                        //    "Posizione aggiornata: lat=${location.latitude}, lon=${location.longitude}"
-                        //)
+                1000L, // ogni secondo
+                1f,    // ogni metro
+                object : LocationListener {
+                    override fun onLocationChanged(location: Location) {
+                        callback(lastTotalSatellites, lastUsedSatellites, location.accuracy)
                     }
 
                     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}

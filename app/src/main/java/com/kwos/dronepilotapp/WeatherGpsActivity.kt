@@ -18,6 +18,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class WeatherGpsActivity : AppCompatActivity() {
 
@@ -27,6 +30,14 @@ class WeatherGpsActivity : AppCompatActivity() {
     private lateinit var tecTitleTextView: TextView
 
     private val REQUEST_CODE = 1001
+
+    private lateinit var gpsAccuracyText: TextView
+    private lateinit var gnssSummaryText: TextView
+    private lateinit var fixHistoryText: TextView
+    private var lastAccuracy: Float = -1f
+    private val fixHistory = mutableListOf<String>()
+    private var locationReceived = false
+    private val locationTimeoutHandler = Handler(Looper.getMainLooper())
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +73,9 @@ class WeatherGpsActivity : AppCompatActivity() {
         tecValueTextView = findViewById(R.id.tecValueTextView)
         tecStatusTextView = findViewById(R.id.tecStatusTextView)
         tecTitleTextView = findViewById(R.id.tecTitleTextView)
-
+        gpsAccuracyText = findViewById(R.id.gps_accuracy_text)
+        gnssSummaryText = findViewById(R.id.gnss_summary)
+        fixHistoryText = findViewById(R.id.fix_history)
 
         //setContentView(R.layout.activity_dashboard)
         supportActionBar?.hide()
@@ -116,27 +129,41 @@ class WeatherGpsActivity : AppCompatActivity() {
             }, 200) // Ritardo di 1000ms
         }
 
-        gpsStatusHelper = GpsStatusHelper(this) { totalSatellites, usedSatellites ->
-            //logDebug("DronePilotApp", "gpsStatusHelper: Callback ricevuta: totalSatellites=$totalSatellites, usedSatellites=$usedSatellites")
-            Handler(Looper.getMainLooper()).postDelayed({
-                runOnUiThread {
-                    val statusText = "Satelliti visibili: $totalSatellites, Usati per il fix: $usedSatellites"
-                    findViewById<TextView>(R.id.gpsStatusTextView).text = statusText
-                    // Aggiungi il controllo per la bassa ricezione GPS
-                    if (usedSatellites < 10) {
-                        gpsalertTextView.text = "BASSA RICEZIONE GPS!!!\n" +
-                                "Il tuo smartphone usa pochi satelliti per il fix.\n"+
-                                "Sei in interno o vi sono alcuni problemi in questa zona."
-                        gpsalertTextView.setTextColor(getColor(R.color.red)) // Imposta il testo in rosso
-                    } else {
-                        gpsalertTextView.text = "BUONA RICEZIONE GPS\n" +
-                                "Il tuo smartphone vede i satelliti GPS.\n"+
-                                "Sei all'esterno e le condizioni di ricezione sono buone."
-                        gpsalertTextView.setTextColor(getColor(R.color.green)) // Imposta il testo in verde
-                    }
+        gpsStatusHelper = GpsStatusHelper(this) { totalSatellites, usedSatellites, accuracy ->
+            runOnUiThread {
+                locationReceived = true // segna che la posizione è arrivata
+                // Mostra precisione
+                lastAccuracy = accuracy
+                gpsAccuracyText.text = "📍 Precisione stimata: ±${accuracy.toInt()} m"
+
+                // Calcolo del semaforo
+                val semaforo = when {
+                    usedSatellites >= 12 && accuracy <= 5 -> "🟢 Condizioni eccellenti"
+                    usedSatellites >= 8 && accuracy <= 10 -> "🟡 Condizioni accettabili"
+                    else -> "🔴 Condizioni critiche per volo GNSS"
                 }
-            }, 100) // Ritardo di 1000ms
+                gnssSummaryText.text = semaforo
+
+                // Avviso se probabilmente sei al chiuso
+                if (usedSatellites < 5 && accuracy > 20) {
+                    gpsalertTextView.text = "⚠️ Lo smartphone sembra essere al chiuso..."
+                    gpsalertTextView.setTextColor(getColor(R.color.red))
+                } else {
+                    gpsalertTextView.text = "✅ Buona ricezione GNSS\nRicezione attiva e stabile."
+                    gpsalertTextView.setTextColor(getColor(R.color.green))
+                }
+
+
+                // Storico fix
+                val timestamp = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                val entry = "🕒 $timestamp — $usedSatellites sat, ±${accuracy.toInt()} m"
+                fixHistory.add(0, entry)
+                if (fixHistory.size > 5) fixHistory.removeAt(fixHistory.lastIndex)
+                fixHistoryText.text = fixHistory.joinToString("\n")
+            }
         }
+
+
 
         //Ricarica gpsalertTextView
         //gpsalertTextView.requestLayout()
@@ -144,6 +171,17 @@ class WeatherGpsActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             logDebug("DronePilotApp", "WeatherGpsActivity:  Chiamato gpsStatusHelper.startListening()")
             gpsStatusHelper.startListening()
+
+            locationTimeoutHandler.postDelayed({
+                if (!locationReceived) {
+                    gpsalertTextView.text = "⚠️ Non riesco a ricevere una posizione GPS.\nLo smartphone sembra essere al chiuso o la ricezione è molto scarsa."
+                    gpsalertTextView.setTextColor(getColor(R.color.red))
+                    gpsAccuracyText.text = "📍 Precisione stimata: --"
+                    gnssSummaryText.text = "🔴 Nessun fix ricevuto"
+                    fixHistoryText.text = "Nessun dato disponibile"
+                }
+            }, 10000) // 10 secondi
+
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_CODE)
         }

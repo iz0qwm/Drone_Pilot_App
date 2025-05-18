@@ -46,5 +46,10 @@
         <item name="android:popupBackground">@drawable/bg_menu_rounded</item>
     </style>
 
+    <style name="TableHeader">
+        <item name="android:padding">6dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+    </style>
 
 </resources>

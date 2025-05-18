@@ -244,7 +244,8 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
             "lon" to last.optDouble("lon"),
             "altitude" to maxAltitude,
             "speed" to maxSpeedRounded,
-            "model" to model
+            "model" to model,
+            "timestamp" to System.currentTimeMillis()
         )
         firestore.collection("detected_drones").document(serial).set(droneData)
 

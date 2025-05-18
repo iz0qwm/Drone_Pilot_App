@@ -53,6 +53,7 @@ object OpenWeatherManager {
                                 val pressure = item.getDouble("pressure")
                                 val windSpeed = item.getDouble("wind_speed")
                                 val windGust = item.optDouble("wind_gust", 0.0)
+                                val windDeg = item.getInt("wind_deg")
                                 val clouds = item.getInt("clouds")
 
                                 val formattedDate = formatDateTime(dt)
@@ -69,7 +70,8 @@ object OpenWeatherManager {
                                     pressure = pressureRounded,
                                     windSpeed = windSpeedInKmhRounded,
                                     windGust = windGustInKmhRounded,
-                                    clouds = clouds
+                                    clouds = clouds,
+                                    windDirection = windDeg
                                 )
 
                                 forecastList.add(forecast)
@@ -102,5 +104,7 @@ data class HourlyForecast(
     val pressure: Int,
     val windSpeed: Int,
     val windGust: Int,
-    val clouds: Int
+    val clouds: Int,
+    val windDirection: Int
+
 )
