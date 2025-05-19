@@ -135,7 +135,10 @@ class MainActivity : AppCompatActivity() {
         )
 
         //controllo gli aggiornamenti su Github
-        checkForUpdate(this)
+        if (BuildConfig.DEBUG) {
+            checkForUpdate(this)
+        }
+
 
         // Controlla e richiedi i permessi di geolocalizzazione
         if (!checkLocationPermission()) {
