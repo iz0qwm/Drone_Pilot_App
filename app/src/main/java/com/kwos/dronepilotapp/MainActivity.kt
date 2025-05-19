@@ -61,6 +61,8 @@ import android.graphics.Color
 
 import android.view.ViewTreeObserver
 import android.widget.ProgressBar
+import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.firestore.SetOptions
 
@@ -124,15 +126,21 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             logError(TAG, "Errore nell'inizializzazione di Firebase", e)
         }
-        // AppCheck su PlayStore (con SHA256)
-        //Firebase.appCheck.installAppCheckProviderFactory(
-        //    PlayIntegrityAppCheckProviderFactory.getInstance(),
-        //)
-        //AppCheck di debug con Token letto da Logcat: I FirebaseAppCheck: Debug token: YOUR_DEBUG_TOKEN_HERE
-        // E inserito su Firebase AppCheck --> Gestisci i token di debug
-        Firebase.appCheck.installAppCheckProviderFactory(
-            DebugAppCheckProviderFactory.getInstance(),
-        )
+
+        FirebaseApp.initializeApp(this)
+
+        if (BuildConfig.DEBUG) {
+            // ✅ Debug mode: usa token da logcat
+            FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                DebugAppCheckProviderFactory.getInstance()
+            )
+        } else {
+            // ✅ Release mode: usa Play Integrity
+            FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                PlayIntegrityAppCheckProviderFactory.getInstance()
+            )
+        }
+
 
         //controllo gli aggiornamenti su Github
         if (BuildConfig.DEBUG) {
