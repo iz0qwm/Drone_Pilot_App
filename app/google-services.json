@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "594131987535",
+    "firebase_url": "https://tutto-sui-droni-community-default-rtdb.firebaseio.com",
     "project_id": "tutto-sui-droni-community",
     "storage_bucket": "tutto-sui-droni-community.firebasestorage.app"
   },
@@ -27,6 +28,14 @@
           "android_info": {
             "package_name": "com.kwos.dronepilotapp",
             "certificate_hash": "a13f83b30a802f612b1f5873dbc8ae1fc6809969"
+          }
+        },
+        {
+          "client_id": "594131987535-qudel8mh6rtoc35cs1o1vr28t1s4ktj0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kwos.dronepilotapp",
+            "certificate_hash": "50d51a992f1cd035788ba1c7ac067475b58a46fa"
           }
         },
         {

@@ -65,7 +65,6 @@
                     <TextView android:text="50 m" style="@style/TableHeader"/>
                     <TextView android:text="100 m" style="@style/TableHeader"/>
                     <TextView android:text="200 m" style="@style/TableHeader"/>
-                    <TextView android:text="500 m" style="@style/TableHeader"/>
                 </TableRow>
             </TableLayout>
 

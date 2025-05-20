@@ -66,6 +66,8 @@ import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderF
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.firestore.SetOptions
 
+import android.provider.Settings
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -114,9 +116,6 @@ class MainActivity : AppCompatActivity() {
         descriptionTextView.text = HtmlCompat.fromHtml(getString(R.string.description_text), HtmlCompat.FROM_HTML_MODE_LEGACY)
         descriptionTextView.movementMethod = LinkMovementMethod.getInstance() // Abilita link cliccabili se presenti
 
-        auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
-
         // AppCheck iniziata
         FirebaseAppCheck.getInstance().setTokenAutoRefreshEnabled(true)
         // Inizializza Firebase
@@ -140,6 +139,45 @@ class MainActivity : AppCompatActivity() {
                 PlayIntegrityAppCheckProviderFactory.getInstance()
             )
         }
+
+        // 🔍 Logga il token App Check
+        val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+
+        FirebaseAppCheck.getInstance().getAppCheckToken(true)
+            .addOnSuccessListener { token ->
+                Log.d("AppCheck", "🟢 TOKEN: ${token.token}")
+
+                val data = mapOf(
+                    "timestamp" to FieldValue.serverTimestamp(),
+                    "deviceId" to deviceId,
+                    "status" to "SUCCESS",
+                    "tokenPreview" to token.token.take(20) + "..."
+                )
+
+                FirebaseFirestore.getInstance()
+                    .collection("debug_appcheck_logs")
+                    .document(deviceId)
+                    .set(data, SetOptions.merge())
+            }
+            .addOnFailureListener { e ->
+                Log.e("AppCheck", "❌ Token AppCheck fallito", e)
+
+                val data = mapOf(
+                    "timestamp" to FieldValue.serverTimestamp(),
+                    "deviceId" to deviceId,
+                    "status" to "FAILURE",
+                    "error" to e.message
+                )
+
+                FirebaseFirestore.getInstance()
+                    .collection("debug_appcheck_logs")
+                    .document(deviceId)
+                    .set(data, SetOptions.merge())
+            }
+
+        // ORA ENTRO IN FIREBASE
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
 
         //controllo gli aggiornamenti su Github
@@ -218,7 +256,7 @@ class MainActivity : AppCompatActivity() {
                     loginUser(savedEmail, savedPassword)
                 } else {
                     logDebug(TAG, "setOnClickListener: La password non è salvata")
-                    AlertDialog.Builder(this)
+                    AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
                         .setTitle("Attenzione")
                         .setMessage("Inserisci la password")
                         .setPositiveButton("OK", null)
@@ -236,7 +274,7 @@ class MainActivity : AppCompatActivity() {
                 val password = passwordField.text.toString().trim()
 
                 if (email.isEmpty() || password.isEmpty()) {
-                    AlertDialog.Builder(this)
+                    AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
                         .setTitle("Attenzione")
                         .setMessage("Inserisci email e password")
                         .setPositiveButton("OK", null)

@@ -16,8 +16,8 @@ android {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 31
-        versionName = "2.1.7"
+        versionCode = 35
+        versionName = "2.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -28,10 +28,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = File(project.property("RELEASE_STORE_FILE").toString())
-            storePassword = project.property("RELEASE_STORE_PASSWORD") as String
-            keyAlias = project.property("RELEASE_KEY_ALIAS") as String
-            keyPassword = project.property("RELEASE_KEY_PASSWORD") as String
+          //  storeFile = File(project.property("RELEASE_STORE_FILE").toString())
+          //  storePassword = project.property("RELEASE_STORE_PASSWORD") as String
+          //  keyAlias = project.property("RELEASE_KEY_ALIAS") as String
+          //  keyPassword = project.property("RELEASE_KEY_PASSWORD") as String
         }
     }
 
@@ -44,7 +44,7 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("String", "VERSION_NAME", "\"${defaultConfig.versionName}\"")
-            signingConfig = signingConfigs.getByName("release")
+            // signingConfig = signingConfigs.getByName("release")
         }
         getByName("debug") {
             // Config opzionali per debug

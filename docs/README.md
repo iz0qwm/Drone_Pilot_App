@@ -30,9 +30,36 @@ _apri l'app Play Store, tocca l'icona del profilo in alto a destra, poi tocca "*
 
 ## 🚀 Come accedere
 
-Puoi scaricare l'App per Android da qui: https://github.com/iz0qwm/Drone_Pilot_App/releases
+🔹 **Se usi un iPhone o vuoi accedere da PC**  
+Puoi utilizzare la versione web dell'app direttamente dal browser, all’indirizzo:  
+👉 [https://tutto-sui-droni-community.web.app/](https://tutto-sui-droni-community.web.app/)
 
-La Web App è accessibile tramite il browser all’indirizzo: https://tutto-sui-droni-community.web.app/
+🔹 **Versioni di debug precedenti**  
+Sono disponibili nella sezione "Releases" del repository GitHub:  
+👉 [https://github.com/iz0qwm/Drone_Pilot_App/releases](https://github.com/iz0qwm/Drone_Pilot_App/releases)
+
+---
+
+### 🧪 Partecipare al test su Android (fase chiusa)
+
+Per partecipare alla **fase di test chiusa** dell’app Android:
+
+1. 📲 Unisciti al gruppo Telegram **DronePilotApp**  
+   👉 [https://t.me/DronePilotApp](https://t.me/DronePilotApp)
+2. Digita il comando `/android` nel gruppo per ricevere il link ufficiale
+3. Accetta di diventare **tester** tramite Google Play
+4. Installa l’app dal Play Store
+
+Link diretto alla pagina di test (funziona solo se sei stato abilitato):  
+👉 [https://play.google.com/apps/testing/com.kwos.dronepilotapp](https://play.google.com/apps/testing/com.kwos.dronepilotapp)
+
+---
+
+📌 **Nota**: serve uno smartphone Android (versione 10 o superiore).  
+Il test dura 14 giorni e aiuta a migliorare stabilità e funzionalità dell’app.
+
+
+
 
 
 
