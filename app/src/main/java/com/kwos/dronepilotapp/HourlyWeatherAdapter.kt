@@ -51,8 +51,10 @@ class HourlyWeatherAdapter(private val forecastList: List<HourlyForecast>) :
 
         // Colore per la velocità del vento
         when {
-            forecast.windSpeed > 20 -> holder.windTextView.setTextColor(Color.RED) // Rosso per vento > 20 km/h
-            forecast.windSpeed in 10..20 -> holder.windTextView.setTextColor(Color.parseColor("#FFA500")) // Arancione per vento tra 10 e 20 km/h
+            forecast.windSpeed > 40 -> holder.windTextView.setTextColor(Color.parseColor("#FF6347")) // Rosso per vento > 40 km/h
+            forecast.windSpeed > 30 -> holder.windTextView.setTextColor(Color.parseColor("#FFA500")) // Arancione per vento > 30 km/h
+            forecast.windSpeed > 20 -> holder.windTextView.setTextColor(Color.parseColor("#FFD700")) // Giallo > 20 km/h
+            forecast.windSpeed > 10 -> holder.windTextView.setTextColor(Color.parseColor("#D0F0C0")) // Verde > 10 km/h
             else -> holder.tempTextView.setTextColor(Color.parseColor("#DCDCDC")) // Default
         }
 

@@ -211,22 +211,23 @@ class FlightZoneAssistant(
                 "$restrictionNote$notamSintetico"
             } else {
                 val reasonText = when {
-                    reasons.contains("AIR_TRAFFIC") -> "Attenzione: sei in prossimità di un aeroporto."
-                    reasons.contains("SENSITIVE") -> "Questa è una zona sensibile, vola con cautela."
-                    reasons.contains("EMERGENCY") -> "Attenzione a conflitti di area con aeromobili."
+                    reasons.contains("AIR_TRAFFIC") -> "Attenzione: sei in prossimità di un aeroporto. "
+                    reasons.contains("SENSITIVE") -> "Questa è una zona sensibile, vola con cautela. "
+                    reasons.contains("EMERGENCY") -> "Attenzione a conflitti di area con aeromobili. "
                     reasons.contains("PROHIBITED") -> "Vietato volare."
                     reasons.contains("NATURE") && reasons.contains("NOISE") ->
-                        "Questa è una zona naturale, non si deve recare disturbo."
-                    reasons.contains("NATURE") -> "Questa è una zona naturale."
-                    reasons.contains("NOISE") -> "Non si deve recare disturbo."
+                        "Questa è una zona naturale, non si deve recare disturbo. "
+                    reasons.contains("NATURE") -> "Questa è una zona naturale. "
+                    reasons.contains("NOISE") -> "Non si deve recare disturbo. "
+                    reasons.contains("OTHER") -> "Aviosuperficie. Per conoscere i gestori, consultare E N R 5 5 4. "
                     reasons.isNotEmpty() -> "Ci sono restrizioni attive: ${reasons.joinToString(", ")}."
                     else -> ""
                 }
 
                 val otherInfo = when (otherReason.uppercase(Locale.ROOT)) {
-                    "NFZ" -> "Questa è una zona in cui il volo è interdetto. "
+                    //"NFZ" -> "Questa è una zona in cui il volo è interdetto. "
                     "ATM09", "ATM09A" -> "Zona soggetta a restrizioni aeronautiche ATM 09. "
-                    else -> if (otherReason.isNotBlank()) "Circolare $otherReason. " else ""
+                    else -> if (otherReason.isNotBlank()) "$otherReason. " else ""
                 }
 
                 "$reasonText$otherInfo"
@@ -238,17 +239,25 @@ class FlightZoneAssistant(
                     val formatter = DateTimeFormatter.ISO_DATE_TIME
                     val zonedStart = ZonedDateTime.parse(start, formatter).withZoneSameInstant(ZoneId.systemDefault())
                     val zonedEnd = ZonedDateTime.parse(end, formatter).withZoneSameInstant(ZoneId.systemDefault())
+                    val now = ZonedDateTime.now()
 
                     val formato = DateTimeFormatter.ofPattern("d MMMM yyyy 'alle' HH:mm", Locale.ITALIAN)
                     val startFormatted = formato.format(zonedStart)
                     val endFormatted = formato.format(zonedEnd)
 
-                    "D-Flight dice che questa restrizione è valida dal $startFormatted fino al $endFormatted. "
+                    val stato = when {
+                        now.isBefore(zonedStart) -> "La restrizione non è ancora attiva. "
+                        now.isAfter(zonedEnd) -> "La restrizione non è più attiva. "
+                        else -> "La restrizione è attiva in questo momento. "
+                    }
+
+                    "$stato D-Flight indica che sarà valida dal $startFormatted fino al $endFormatted. "
                 } catch (e: Exception) {
                     Log.w("DronePilotApp", "Errore parsing date zona non NOTAM: ${e.message}")
                     ""
                 }
             } else ""
+
 
             val zonaDescrizionePulita = zonaDescrizione
                 // 1. Trasforma 13/31 → pista 13 31
@@ -262,13 +271,13 @@ class FlightZoneAssistant(
                 })
 
             val tipoZonaExtra = if (zonaDescrizione.contains("SUP")) {
-                "Zona di volo con restrizioni specifiche. "
+                "Volo con restrizioni specifiche, quando la zona è attiva. "
             } else {
                 ""
             }
 
             val zonaTesto = if (zonaDescrizionePulita.isNotBlank()) {
-                "Zona attiva: $zonaDescrizionePulita. $tipoZonaExtra"
+                "Zona: $zonaDescrizionePulita. $tipoZonaExtra"
             } else {
                 ""
             }

@@ -19,6 +19,11 @@
             android:background="#191970"
             android:padding="16dp">
 
+            <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp" />
+
             <TextView
                 android:id="@+id/weather_title"
                 style="@style/AppTextViewBold"

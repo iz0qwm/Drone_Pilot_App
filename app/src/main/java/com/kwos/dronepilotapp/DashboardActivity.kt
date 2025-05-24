@@ -83,12 +83,14 @@ import com.bumptech.glide.request.transition.Transition
 import android.graphics.Bitmap
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import android.location.Geocoder
 import android.net.Uri
 
 // Per l'assistente
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -97,6 +99,8 @@ import android.widget.LinearLayout
 import android.widget.PopupWindow
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import java.util.Locale
 
 // Per layer meteo
@@ -106,6 +110,7 @@ import com.android.volley.toolbox.Volley
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.util.Calendar
 
 
 // Per i layers su google maps
@@ -113,7 +118,7 @@ import com.kwos.dronepilotapp.FlightZoneLayer
 
 // Per ascoltare il listener dei nuovi messaggi sulla GroupChat
 import com.google.firebase.database.ChildEventListener
-
+import kotlin.math.roundToInt
 
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -187,6 +192,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     // Full screen della mappa
     private var isFullscreen = false
 
+    // Per ricerca luogo
+    private var searchMarker: Marker? = null
+
+    // Text to speach
+    private var tts: TextToSpeech? = null
+
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -205,25 +216,93 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Imposta il layout
         setContentView(binding.root)
 
+        // INIZIO PADDING
+        // EDGE-TO-EDGE
+        // Modalità edge-to-edge
+        WindowCompat.setDecorFitsSystemWindows(window, false) // Abilita modalità edge-to-edge
+
+        // Imposta se il contenuto della status bar deve essere scuro (true) o chiaro (false)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false // o false, dipende dal tema
+
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        // FINE EDGE-TO-EDGE
+
         //Fa il padding automatico (non va a coprire i tasti funzione per i
         //telefoni con immersive view
+        // GESTIONE INSETS
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-            view.updatePadding(
-                top = systemBars.top, // Adatta per la status bar
-                bottom = systemBars.bottom // Adatta per la navigation bar
-            )
-
-            WindowInsetsCompat.CONSUMED
+            // SOLO paddingBottom per evitare che l'ultima parte vada sotto la navigation bar
+            view.setPadding(0, 0, 0, systemBars.bottom)
+            insets
         }
         // fine padding
-
-
-        //setContentView(R.layout.activity_dashboard)
+        // Nasconde la Action Bar
         supportActionBar?.hide()
+        // FINE PADDING
 
 
+        //
+        // Gestione bottone di ricerca indirizzo
+        //
+        val openSearchPanelButton = findViewById<Button>(R.id.openSearchPanelButton)
+        val addressSearchPanel = findViewById<LinearLayout>(R.id.addressSearchPanel)
+        val addressInput = findViewById<EditText>(R.id.addressInput)
+        val btnGeocode = findViewById<Button>(R.id.btnGeocode)
+        val btnLocate = findViewById<Button>(R.id.btnLocate)
+
+        // Mostra/nasconde il pannello
+        openSearchPanelButton.setOnClickListener {
+            if (addressSearchPanel.visibility == View.GONE) {
+                addressSearchPanel.visibility = View.VISIBLE
+                addressInput.requestFocus()
+            } else {
+                addressSearchPanel.visibility = View.GONE
+            }
+        }
+
+        // Geocoding
+        btnGeocode.setOnClickListener {
+            val locationName = addressInput.text.toString()
+            if (locationName.isNotBlank()) {
+                val geocoder = Geocoder(this, Locale.getDefault())
+                val addresses = geocoder.getFromLocationName(locationName, 1)
+                if (!addresses.isNullOrEmpty()) {
+                    val addr = addresses[0]
+                    val location = LatLng(addr.latitude, addr.longitude)
+                    searchMarker?.remove()
+                    searchMarker = mMap.addMarker(
+                        MarkerOptions().position(location).title("Zona cercata")
+                    )
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 16f))
+                    fetchFlightLimit(location.latitude, location.longitude) { lowerLimit ->
+                        Toast.makeText(this, "Open Category fino a $lowerLimit m", Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    Toast.makeText(this, "Indirizzo non trovato", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // Torna alla mia posizione
+        btnLocate.setOnClickListener {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                    location?.let {
+                        val userLatLng = LatLng(it.latitude, it.longitude)
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 16f))
+                        addressSearchPanel.visibility = View.GONE
+
+                        // ❌ Rimuovi marker di ricerca, se presente
+                        searchMarker?.remove()
+                        searchMarker = null
+                    }
+                }
+
+            }
+        }
+        //
 
         // Aggiungi il callback per gestire il tasto indietro
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -475,6 +554,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<ImageButton>(R.id.closeAssistantOverlay).setOnClickListener {
             findViewById<FrameLayout>(R.id.assistantOverlay).visibility = View.GONE
         }
+
+        findViewById<ImageButton>(R.id.closeMeteoOverlay).setOnClickListener {
+            findViewById<FrameLayout>(R.id.meteoOverlay).visibility = View.GONE
+        }
         //
 
         //
@@ -524,6 +607,12 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<TextView>(R.id.lowerLimitTextView)?.text = "In attesa...."
         fetchFlightLimitWithLocation()
 
+        // Text to Speach
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = Locale.getDefault()
+            }
+        }
 
         //
         // Sezione Drone ID - call back
@@ -1092,6 +1181,48 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.e("DronePilotApp", "MapStyle: File di stile non trovato.", e)
         }
 
+        // click per fare ricerche
+        mMap.setOnMapClickListener { latLng ->
+            // 🔁 Rimuovi il vecchio marker se esiste
+            searchMarker?.remove()
+
+            // 📍 Aggiungi nuovo marker
+            searchMarker = mMap.addMarker(
+                MarkerOptions()
+                    .position(latLng)
+                    .title("Zona selezionata")
+            )?.apply {
+                tag = "search"  // 👈 Aggiungiamo un tag per riconoscerlo
+            }
+
+            // Se tocco il Marker lo rimuovo
+            mMap.setOnMarkerClickListener { marker ->
+                if (marker.tag == "search") {
+                    marker.remove()
+                    searchMarker = null
+                    Toast.makeText(this, "📍 Zona cercata rimossa", Toast.LENGTH_SHORT).show()
+                    true  // evento gestito
+                } else {
+                    false  // altri marker possono avere comportamento default
+                }
+            }
+
+
+            // 🔄 Sposta la mappa (opzionale, se vuoi animare)
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
+
+            // 🔍 Fai la richiesta come se fosse una ricerca
+            fetchFlightLimit(latLng.latitude, latLng.longitude) { lowerLimit ->
+                val textView = findViewById<TextView>(R.id.lowerLimitTextView)
+                textView.text = "Open Category fino a: $lowerLimit m"
+                textView.visibility = View.VISIBLE
+                textView.setTextColor(getColor(R.color.red))
+
+                Toast.makeText(this, "Open Category fino a: $lowerLimit m", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        // Info windows
         mMap.setOnInfoWindowClickListener { marker ->
             val userId = marker.tag as? String
             if (userId != null) {
@@ -2276,7 +2407,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
 
                 findViewById<TextView>(R.id.lowerLimitTextView)?.apply {
-                    text = lowerLimit
+                    text = "Open Category fino a: $lowerLimit m"
                     visibility = View.VISIBLE
                     setTextColor(getColor(R.color.red))
                 }
@@ -2424,6 +2555,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         //intent.putExtra("stacktrace", stackTrace)  // Passa lo stacktrace tramite Intent
         //startActivity(intent)  // Avvia la MainActivity
 
+        tts?.stop()
+        tts?.shutdown()
         usersListener?.remove()
         usersListener = null
         pilotsListener?.remove()
@@ -2463,20 +2596,45 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     // ASSISTENTE DI VOLO
     //
     private fun getCurrentLocationAndAskFlightZone(assistant: FlightZoneAssistant) {
+        // Se c'è un marker di ricerca attivo, usa quello
+        if (searchMarker != null) {
+            val pos = searchMarker!!.position
+
+            showVoiceFeedback("📍 Controllo la zona cercata...")
+            Handler(Looper.getMainLooper()).postDelayed({
+                hideVoiceFeedback()
+            }, 3000)
+
+            assistant.askPermissionToFly(pos.latitude, pos.longitude)
+
+            return
+        }
+
+        // Altrimenti usa la posizione attuale
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
             Log.e("DronePilotApp", "VoiceCommand: Permessi di localizzazione non concessi")
+            showVoiceFeedback("❌ Permessi posizione non concessi")
             return
         }
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             location?.let {
-                // ✅ usa l'assistant già pronto, che include hideVoiceFeedback()
+                showVoiceFeedback("📍 Controllo la tua posizione attuale...")
+                Handler(Looper.getMainLooper()).postDelayed({
+                    hideVoiceFeedback()
+                }, 3000)
+
                 assistant.askPermissionToFly(it.latitude, it.longitude)
-            } ?: Log.e("DronePilotApp", "VoiceCommand: Nessuna posizione disponibile")
+            } ?: run {
+                Log.e("DronePilotApp", "VoiceCommand: Nessuna posizione disponibile")
+                showVoiceFeedback("❌ Posizione non disponibile")
+            }
         }
     }
+
+
 
 
 
@@ -2499,22 +2657,86 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 matches?.firstOrNull()?.let { spokenText ->
                     showVoiceFeedback("📢 Hai detto: \"$spokenText\"")
 
-                    if (spokenText.contains(Regex("può volare|posso volare|si può volare|posso far volare|posso usare", RegexOption.IGNORE_CASE))) {
-                        // Dopo 600 ms cambia il messaggio ed esegui l'assistente
+                    val spokenTextLower = spokenText.lowercase()
+                    val giorniDopo = when {
+                        spokenTextLower.contains("dopodomani") -> 2
+                        spokenTextLower.contains("domani") -> 1
+                        spokenTextLower.contains("oggi") -> 0
+                        else -> null
+                    }
+
+                    val richiedeVolo = spokenTextLower.contains(Regex("può volare|posso volare|si può volare|posso far volare|posso usare"))
+
+                    if (richiedeVolo) {
                         Handler(Looper.getMainLooper()).postDelayed({
-                            showVoiceFeedback("📡 Recupero le informazioni...")
+                            showVoiceFeedback("📡 Controllo lo spazio aereo...")
+
                             val assistant = FlightZoneAssistant(this@DashboardActivity) {
-                                hideVoiceFeedback()
+                                // Callback quando l'assistente ha finito di parlare
+                                giorniDopo?.let { giorno ->
+                                    val pos = searchMarker?.position
+                                    val fallbackLocation = fusedLocationClient.lastLocation
+
+                                    fun processMeteo(lat: Double, lon: Double) {
+                                        OpenWeatherManager.getDailyWeather(lat, lon, giorno) { daily ->
+                                            if (daily == null) {
+                                                val fallbackText = "❌ Meteo non disponibile."
+                                                showVoiceFeedback(fallbackText)
+                                                speakText(fallbackText)
+                                                return@getDailyWeather
+                                            }
+
+                                            val report = buildString {
+                                                append("Si prevede: ${daily.condition}. ")
+                                                append("Temperatura tra ${daily.tempMin} e ${daily.tempMax} gradi. ")
+                                                append("Vento ${daily.windSpeed} km/h, raffiche fino a ${daily.windGust}.")
+                                            }
+
+                                            runOnUiThread {
+                                                //showVoiceFeedback(report)
+                                                //speakText(report)
+                                                showMeteoOverlay(report)
+
+                                            }
+                                        }
+                                    }
+
+                                    if (pos != null) {
+                                        processMeteo(pos.latitude, pos.longitude)
+                                    } else {
+                                        if (ActivityCompat.checkSelfPermission(this@DashboardActivity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                            fallbackLocation.addOnSuccessListener { location ->
+                                                location?.let {
+                                                    processMeteo(it.latitude, it.longitude)
+                                                } ?: run {
+                                                    val err = "❌ Posizione non disponibile"
+                                                    showVoiceFeedback(err)
+                                                    speakText(err)
+                                                }
+                                            }
+                                        } else {
+                                            val err = "❌ Permessi posizione mancanti"
+                                            showVoiceFeedback(err)
+                                            speakText(err)
+                                        }
+                                    }
+                                }
                             }
+
+                            // Questo chiama la logica esistente di volo (parlante)
                             getCurrentLocationAndAskFlightZone(assistant)
-                        }, 1500)
+
+                        }, 1000)
+
                     } else {
-                        // Comando non riconosciuto, resta visibile per 3s
-                        Handler(Looper.getMainLooper()).postDelayed({ hideVoiceFeedback() }, 3000)
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            showVoiceFeedback("❌ Comando non riconosciuto")
+                            speakText("Comando non riconosciuto")
+                            hideVoiceFeedback()
+                        }, 2000)
                     }
                 }
             }
-
 
             override fun onError(error: Int) {
                 stopMicAnimation()
@@ -2533,6 +2755,13 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         speechRecognizer.startListening(speechIntent)
     }
+
+
+
+    private fun speakText(text: String) {
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+    }
+
 
 
     private fun startMicAnimation() {
@@ -2567,6 +2796,20 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         overlay.visibility = View.VISIBLE
         assistantText.text = text
     }
+
+    // Testo del meteo
+    private fun showMeteoOverlay(text: String) {
+        val overlay = findViewById<FrameLayout>(R.id.meteoOverlay)
+        val meteoText = findViewById<TextView>(R.id.meteoText)
+
+        runOnUiThread {
+            meteoText.text = text
+            overlay.visibility = View.VISIBLE
+            speakText(text)
+        }
+    }
+
+
 
     // Full Screen della Mappa
     private fun toggleFullscreen() {

@@ -95,7 +95,64 @@ object OpenWeatherManager {
         val sdf = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
         return sdf.format(date)
     }
+
+    fun getDailyWeather(lat: Double, lon: Double, giorniDopo: Int, callback: (DailyWeather?) -> Unit) {
+        val url = "https://api.openweathermap.org/data/3.0/onecall?lat=$lat&lon=$lon&exclude=current,minutely,hourly,alerts&units=metric&lang=it&appid=$API_KEY"
+        logDebug("DronePilotApp", "OpenWeatherManager: getDailyWeather: $url")
+
+        val request = Request.Builder().url(url).build()
+        val client = OkHttpClient()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("DronePilotApp", "Errore meteo giornaliero", e)
+                callback(null)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (!response.isSuccessful) {
+                        Log.e("DronePilotApp", "getDailyWeather: Risposta non valida: ${response.code}")
+                        callback(null)
+                        return
+                    }
+
+                    val json = JSONObject(response.body?.string() ?: "")
+                    val dailyArray = json.getJSONArray("daily")
+
+                    if (giorniDopo >= dailyArray.length()) {
+                        callback(null)
+                        return
+                    }
+
+                    val item = dailyArray.getJSONObject(giorniDopo)
+
+                    val temp = item.getJSONObject("temp")
+                    val tempMin = temp.getDouble("min").roundToInt()
+                    val tempMax = temp.getDouble("max").roundToInt()
+
+                    val weather = item.getJSONArray("weather").getJSONObject(0)
+                    val condition = weather.getString("description").replaceFirstChar { it.uppercase() }
+
+                    val windSpeed = (item.optDouble("wind_speed", 0.0) * 3.6).roundToInt()
+                    val windGust = (item.optDouble("wind_gust", 0.0) * 3.6).roundToInt()
+
+                    val result = DailyWeather(
+                        tempMin = tempMin,
+                        tempMax = tempMax,
+                        condition = condition,
+                        windSpeed = windSpeed,
+                        windGust = windGust
+                    )
+
+                    callback(result)
+                }
+            }
+        })
+    }
+
 }
+
 
 // Data class per il meteo orario
 data class HourlyForecast(
@@ -107,4 +164,12 @@ data class HourlyForecast(
     val clouds: Int,
     val windDirection: Int
 
+)
+
+data class DailyWeather(
+    val tempMin: Int,
+    val tempMax: Int,
+    val condition: String,
+    val windSpeed: Int,
+    val windGust: Int
 )

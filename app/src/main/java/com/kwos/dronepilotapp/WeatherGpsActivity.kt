@@ -9,13 +9,16 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.Manifest
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.text.SimpleDateFormat
@@ -51,20 +54,21 @@ class WeatherGpsActivity : AppCompatActivity() {
         //Fa il padding automatico (non va a coprire i tasti funzione per i
         //telefoni con immersive view
         // Recupera la root view del layout
-        val rootView = findViewById<View>(android.R.id.content)
+        //val rootView = findViewById<View>(android.R.id.content)
+        val rootView = findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
 
-        // Applica il padding per evitare che gli elementi vengano coperti
-        ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-            view.updatePadding(
-                top = systemBars.top, // Evita sovrapposizione con la status bar
-                bottom = systemBars.bottom // Evita sovrapposizione con la navigation bar
-            )
+        // INIZIO PADDING
+        // EDGE-TO-EDGE
+        // Modalità edge-to-edge
+        WindowCompat.setDecorFitsSystemWindows(window, false) // Abilita modalità edge-to-edge
 
-            WindowInsetsCompat.CONSUMED
-        }
-        // fine padding
+        // Imposta se il contenuto della status bar deve essere scuro (true) o chiaro (false)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false // o false, dipende dal tema
+
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        // FINE EDGE-TO-EDGE
 
 
         val closeButton: Button = findViewById(R.id.close_gps_button)

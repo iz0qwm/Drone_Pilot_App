@@ -26,7 +26,7 @@ import com.google.firebase.appcheck.FirebaseAppCheck
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import android.app.Activity
-import android.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -67,6 +67,10 @@ import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.firestore.SetOptions
 
 import android.provider.Settings
+import android.view.ViewGroup
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 
 class MainActivity : AppCompatActivity() {
@@ -90,22 +94,35 @@ class MainActivity : AppCompatActivity() {
         //Fa il padding automatico (non va a coprire i tasti funzione per i
         //telefoni con immersive view
         // Recupera la root view del layout
-        val rootView = findViewById<View>(android.R.id.content)
+        //val rootView = findViewById<View>(android.R.id.content)
+        val rootView = findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
 
-        // Applica il padding per evitare che gli elementi vengano coperti
+
+        // INIZIO PADDING
+        // EDGE-TO-EDGE
+        // Modalità edge-to-edge
+        WindowCompat.setDecorFitsSystemWindows(window, false) // Abilita modalità edge-to-edge
+
+        // Imposta se il contenuto della status bar deve essere scuro (true) o chiaro (false)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false // o false, dipende dal tema
+
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        // FINE EDGE-TO-EDGE
+
+        //Fa il padding automatico (non va a coprire i tasti funzione per i
+        //telefoni con immersive view
+        // GESTIONE INSETS
         ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-            view.updatePadding(
-                top = systemBars.top, // Evita sovrapposizione con la status bar
-                bottom = systemBars.bottom // Evita sovrapposizione con la navigation bar
-            )
-
-            WindowInsetsCompat.CONSUMED
+            // SOLO paddingBottom per evitare che l'ultima parte vada sotto la navigation bar
+            view.setPadding(0, 0, 0, systemBars.bottom)
+            insets
         }
         // fine padding
-
+        // Nasconde la Action Bar
         supportActionBar?.hide()
+        // FINE PADDING
 
         //Carica il logo
         val logoImage: ImageView = findViewById(R.id.logoImage)
@@ -181,9 +198,9 @@ class MainActivity : AppCompatActivity() {
 
 
         //controllo gli aggiornamenti su Github
-        if (BuildConfig.DEBUG) {
-            checkForUpdate(this)
-        }
+        //if (BuildConfig.DEBUG) {
+        //    checkForUpdate(this)
+        //}
 
 
         // Controlla e richiedi i permessi di geolocalizzazione
@@ -256,7 +273,8 @@ class MainActivity : AppCompatActivity() {
                     loginUser(savedEmail, savedPassword)
                 } else {
                     logDebug(TAG, "setOnClickListener: La password non è salvata")
-                    AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
+                    MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+
                         .setTitle("Attenzione")
                         .setMessage("Inserisci la password")
                         .setPositiveButton("OK", null)
@@ -274,7 +292,8 @@ class MainActivity : AppCompatActivity() {
                 val password = passwordField.text.toString().trim()
 
                 if (email.isEmpty() || password.isEmpty()) {
-                    AlertDialog.Builder(this, R.style.CustomAlertDialogTheme)
+                    MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+
                         .setTitle("Attenzione")
                         .setMessage("Inserisci email e password")
                         .setPositiveButton("OK", null)
@@ -463,7 +482,8 @@ class MainActivity : AppCompatActivity() {
                     val user = auth.currentUser
 
                     if (user != null && !user.isEmailVerified) {
-                        AlertDialog.Builder(this)
+                        MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+
                             .setTitle("Email non verificata")
                             .setMessage("Devi verificare il tuo indirizzo email prima di poter accedere.")
                             .setPositiveButton("Invia nuova email") { _, _ ->
@@ -528,8 +548,9 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun showProgressDialog(message: String): AlertDialog {
-        val builder = AlertDialog.Builder(this)
+    private fun showProgressDialog(message: String): androidx.appcompat.app.AlertDialog {
+        val builder = MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.progress_dialog, null)
 
@@ -687,7 +708,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showResetPasswordDialog() {
-        val builder = AlertDialog.Builder(this)
+        val builder = MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+
         builder.setTitle("Reimposta password")
 
         val input = EditText(this)
@@ -794,16 +816,15 @@ fun checkForUpdate(context: Context) {
                     val downloadUrl = assets.getJSONObject(0).getString("browser_download_url")
 
                     (context as Activity).runOnUiThread {
-                        // Crea una SpannableString con il testo in nero
                         val spannableMessage = SpannableString("Novità nella versione $latestVersion:\n\n$releaseNotes")
                         spannableMessage.setSpan(
-                            ForegroundColorSpan(ContextCompat.getColor(context, R.color.black)), // Colore nero
+                            ForegroundColorSpan(ContextCompat.getColor(context, R.color.black)),
                             0,
                             spannableMessage.length,
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                         )
 
-                        val dialog = AlertDialog.Builder(context)
+                        val dialog = MaterialAlertDialogBuilder(context)
                             .setTitle("Aggiornamento disponibile")
                             .setMessage(spannableMessage)
                             .setPositiveButton("Scarica") { _, _ ->
@@ -815,11 +836,12 @@ fun checkForUpdate(context: Context) {
 
                         dialog.show()
 
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
                             ?.setTextColor(ContextCompat.getColor(context, R.color.colorPrimary))
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)
                             ?.setTextColor(ContextCompat.getColor(context, R.color.gray))
                     }
+
                 } else {
                     logDebug(TAG, "UpdateCheck: App is up to date.")
                 }

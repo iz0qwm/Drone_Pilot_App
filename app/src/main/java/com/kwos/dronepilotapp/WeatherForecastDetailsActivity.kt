@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -17,7 +18,9 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -47,20 +50,35 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
         //Fa il padding automatico (non va a coprire i tasti funzione per i
         //telefoni con immersive view
         // Recupera la root view del layout
-        val rootView = findViewById<View>(android.R.id.content)
+        //val rootView = findViewById<View>(android.R.id.content)
+        val rootView = findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
 
-        // Applica il padding per evitare che gli elementi vengano coperti
+
+        // INIZIO PADDING
+        // EDGE-TO-EDGE
+        // Modalità edge-to-edge
+        WindowCompat.setDecorFitsSystemWindows(window, false) // Abilita modalità edge-to-edge
+
+        // Imposta se il contenuto della status bar deve essere scuro (true) o chiaro (false)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false // o false, dipende dal tema
+
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        // FINE EDGE-TO-EDGE
+
+        //Fa il padding automatico (non va a coprire i tasti funzione per i
+        //telefoni con immersive view
+        // GESTIONE INSETS
         ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-            view.updatePadding(
-                top = systemBars.top, // Evita sovrapposizione con la status bar
-                bottom = systemBars.bottom // Evita sovrapposizione con la navigation bar
-            )
-
-            WindowInsetsCompat.CONSUMED
+            // SOLO paddingBottom per evitare che l'ultima parte vada sotto la navigation bar
+            view.setPadding(0, 0, 0, systemBars.bottom)
+            insets
         }
         // fine padding
+        // Nasconde la Action Bar
+        supportActionBar?.hide()
+        // FINE PADDING
 
 
         val meteogramOneImage: ImageView = findViewById(R.id.weather_meteogramOne_general)
@@ -72,8 +90,6 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
         val lat = intent.getDoubleExtra("LATITUDE", 0.0)
         val lon = intent.getDoubleExtra("LONGITUDE", 0.0)
 
-        //setContentView(R.layout.activity_dashboard)
-        supportActionBar?.hide()
 
 
         hourlyWeatherRecyclerView = findViewById(R.id.hourlyWeatherRecyclerView)
@@ -141,10 +157,10 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
                         riskAlertView.visibility = View.GONE
                     }
 
-                    // Cerca fasce orarie con vento < 20 km/h e raffiche < 30 km/h
+                    // Cerca fasce orarie con vento < 10 km/h e raffiche < 20 km/h
                     val optimalHours = forecastList
                         .take(12)
-                        .filter { it.windSpeed <= 20 && it.windGust <= 30 }
+                        .filter { it.windSpeed <= 10 && it.windGust <= 20 }
                         .map { it.dt.substringAfter(" ") }
 
                     if (optimalHours.isNotEmpty()) {
@@ -209,11 +225,11 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
 
     private fun getWindColor(speedKmh: Int): Int {
         return when {
-            speedKmh < 10 -> Color.parseColor("#D0F0C0") // Verde chiaro
-            speedKmh < 20 -> Color.parseColor("#FFFACD") // Giallo chiaro
-            speedKmh < 30 -> Color.parseColor("#FFD700") // Giallo
-            speedKmh < 40 -> Color.parseColor("#FFA500") // Arancione
-            else -> Color.parseColor("#FF6347") // Rosso
+            speedKmh > 40 -> Color.parseColor("#FF6347") // Rosso
+            speedKmh > 30 -> Color.parseColor("#FFA500") // Arancione
+            speedKmh > 20 -> Color.parseColor("#FFD700") // Giallo
+            speedKmh > 10 -> Color.parseColor("#D0F0C0") // Verde chiaro
+            else -> Color.parseColor("#DCDCDC") // Default
         }
     }
 

@@ -23,5 +23,10 @@
         <item name="android:background">?android:attr/colorBackground</item>
     </style>
 
+    <!-- Tema neutro per dialoghi Material, per evitare il conflitto con AppCompat -->
+    <style name="MaterialSafeDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog">
+        <!-- Nessun item: usiamo solo l'overlay sicuro -->
+    </style>
+
 </resources>
 

@@ -2,7 +2,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:background="#191970">
+    <!-- android:fitsSystemWindows="true" -->
 
 
     <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
@@ -17,6 +18,11 @@
             android:orientation="vertical"
             android:background="#191970"
             android:padding="16dp">
+
+            <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp" />
 
             <TextView
                 android:id="@+id/weather_title"
