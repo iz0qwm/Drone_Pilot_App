@@ -1,0 +1,109 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#191970"
+    android:fitsSystemWindows="true">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp" />
+
+            <TextView
+                android:id="@+id/addDroneTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aggiungi Drone"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#f4f4f4"
+                android:gravity="center"
+                android:padding="10dp" />
+
+            <EditText
+                android:id="@+id/drone_name_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_input"
+                android:hint="Nome del drone"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp" />
+
+            <EditText
+                android:id="@+id/drone_description_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_input"
+                android:hint="Descrizione del drone (opzionale)"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:minLines="3"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/select_drone_photo_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🖼️ Seleziona foto del drone"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_green"
+                android:textAllCaps="false"
+                android:layout_marginTop="12dp" />
+
+            <ImageView
+                android:id="@+id/drone_photo_preview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/submit_drone_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="✅ Aggiungi Drone"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue"
+                android:textAllCaps="false"
+                android:layout_marginTop="12dp" />
+
+            <Button
+                android:id="@+id/delete_drone_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🗑️ Elimina Drone"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_red"
+                android:textAllCaps="false"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/close_adddrone_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="❌ Chiudi"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

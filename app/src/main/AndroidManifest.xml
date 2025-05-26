@@ -104,6 +104,9 @@
         <activity android:name=".WebViewWindyActivity" />
         <activity android:name=".AddTakeoffSpotActivity" />
         <activity android:name=".SpotDetailsActivity" />
+        <activity android:name=".AddDroneActivity" />
+        <activity android:name=".SchedaPilotaActivity" />
+
         <activity
             android:name=".FullScreenImageActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"/>

@@ -41,6 +41,7 @@ Ad oggi la **Web App** ha anche i layer per il **vento**, la **nuvolosità** e i
 
 ## 📅 Previsioni meteorologiche
 Cliccando sul tasto **Previsioni** verranno mostrate le previsioni meteorologiche del luogo in cui ti trovi, ora per ora.
+Molto importante è il _profilo verticale del vento_ e la sua previsione nelle prossime ore.
 
 Alla fine della pagina vi sono dei meteogrammi per la località.
 

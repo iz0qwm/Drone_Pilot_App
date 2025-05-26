@@ -1,0 +1,53 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="#FFFFFF"
+    android:elevation="2dp"
+    android:layout_marginBottom="8dp"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:id="@+id/imagePilotAvatar"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_person_placeholder"
+        android:background="@drawable/circle_background" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="12dp">
+
+        <TextView
+            android:id="@+id/textPilotName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nome Pilota"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000" />
+
+        <TextView
+            android:id="@+id/textDroneInVolo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Con DJI Mini 3"
+            android:textSize="14sp"
+            android:textColor="#555" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnApriScheda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="👁️ Vedi"
+        android:textAllCaps="false"
+        android:background="@drawable/rounded_button_blue"
+        android:textColor="@color/button_text_color" />
+
+</LinearLayout>

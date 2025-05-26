@@ -12,6 +12,11 @@
         android:background="#f4f4f4"
         android:clipToPadding="false">
 
+        <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="14dp" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

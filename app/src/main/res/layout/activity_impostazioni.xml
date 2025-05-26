@@ -2,100 +2,203 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="true"
+    android:background="#191970">
 
-        <LinearLayout
-            android:id="@+id/settingsContainer"
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:background="#f4f4f4"
+            android:background="#191970"
             android:clipToPadding="false">
 
-                <TextView
-                    android:id="@+id/textEmail"
+                <LinearLayout
+                    android:id="@+id/settingsContainer"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Email: "
-                    android:textSize="16sp"
-                    android:padding="8dp"/>
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:background="#191970"
+                    android:clipToPadding="false">
 
-                <EditText
-                    android:id="@+id/editFullName"
-                    android:background="@drawable/rounded_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="10dp"
-                    android:hint="Inserisci il tuo nome"/>
+                        <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="12dp" />
 
-                <CheckBox
-                    android:id="@+id/checkboxPMR"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Ho la radio PMR accesa sul CH4" />
+                        <!-- Switch per attivare la ricezione Drone ID -->
+                        <TextView
+                            android:id="@+id/textDroneId"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#FFFFFF"
+                            android:text="Rilevamento droni nelle vicinanze (DRI)"
+                            android:textSize="16sp"
+                            android:layout_marginTop="24dp"
+                            android:paddingBottom="4dp" />
 
-                <!-- Switch per attivare la ricezione Drone ID -->
-                <TextView
-                    android:id="@+id/textDroneId"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Rilevamento droni nelle vicinanze (DRI)"
-                    android:textSize="16sp"
-                    android:layout_marginTop="24dp"
-                    android:paddingBottom="4dp" />
+                        <Switch
+                            android:id="@+id/switchDroneId"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Attiva Direct Remote ID"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:padding="4dp"/>
 
-                <Switch
-                    android:id="@+id/switchDroneId"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Attiva Direct Remote ID"
-                    android:textSize="16sp"
-                    android:padding="4dp"/>
+                        <!-- Stato supporto Bluetooth e WiFi Aware -->
+                        <TextView
+                            android:id="@+id/textBluetoothStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Bluetooth LE: ..."
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:paddingTop="8dp" />
 
-                <!-- Stato supporto Bluetooth e WiFi Aware -->
-                <TextView
-                    android:id="@+id/textBluetoothStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Bluetooth LE: ..."
-                    android:textSize="14sp"
-                    android:paddingTop="8dp" />
+                        <TextView
+                            android:id="@+id/textWifiAwareStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="WiFi Aware: ..."
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:paddingBottom="8dp" />
 
-                <TextView
-                    android:id="@+id/textWifiAwareStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="WiFi Aware: ..."
-                    android:textSize="14sp"
-                    android:paddingBottom="8dp" />
+                        <TextView
+                            android:id="@+id/textWifiBeaconStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="WiFi Aware: ..."
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:paddingBottom="8dp" />
 
-                <TextView
-                    android:id="@+id/textWifiBeaconStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="WiFi Aware: ..."
-                    android:textSize="14sp"
-                    android:paddingBottom="8dp" />
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@android:color/darker_gray"
+                            android:layout_marginVertical="8dp" />
 
-                <Button
-                    android:id="@+id/btnSalvaNome"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="💾 Salva impostazioni"
-                    android:textAllCaps="false"
-                    android:layout_marginTop="16dp"
-                    android:textColor="@color/button_text_color"
-                    android:background="@drawable/rounded_button_green"/>
+                        <CheckBox
+                            android:id="@+id/checkboxPMR"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:textColor="#FFFFFF"
+                            android:text="Ho la radio PMR accesa sul CH4" />
 
-                <Button
-                    android:id="@+id/close_impostazioni_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="❌ Chiudi"
-                    android:layout_marginTop="16dp"
-                    android:textColor="@color/button_text_color"
-                    android:background="@drawable/rounded_button_blue" />
-        </LinearLayout>
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@android:color/darker_gray"
+                            android:layout_marginVertical="8dp" />
+
+
+                        <!-- Avatar del pilota -->
+                        <TextView
+                            android:id="@+id/textEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Email: "
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:padding="8dp"/>
+
+                        <EditText
+                            android:id="@+id/editFullName"
+                            android:background="@drawable/rounded_input"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:hint="Inserisci il tuo nome"/>
+
+                        <ImageView
+                            android:id="@+id/imageAvatar"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="16dp"
+                            android:src="@drawable/ic_person_placeholder"
+                            android:scaleType="centerCrop"
+                            android:background="@drawable/circle_background"
+                            android:contentDescription="Avatar pilota" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Tocca per cambiare avatar"
+                            android:textColor="#FFFFFF"
+                            android:gravity="center"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="8dp" />
+
+                        <!-- Bio / Descrizione del pilota -->
+                        <EditText
+                            android:id="@+id/editBio"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Che tipo di pilota sei?"
+                            android:background="@drawable/rounded_input"
+                            android:minLines="2"
+                            android:gravity="top"
+                            android:inputType="textMultiLine"
+                            android:padding="10dp"
+                            android:layout_marginBottom="16dp" />
+
+                        <!-- Sezione droni -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="I miei droni"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:paddingBottom="4dp"
+                            android:layout_marginTop="16dp" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerDroni"
+                            android:layout_width="match_parent"
+                            android:layout_height="150dp"
+                            android:background="@android:color/white"
+                            android:layout_marginBottom="8dp" />
+
+                        <Button
+                            android:id="@+id/btnAggiungiDrone"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="➕ Aggiungi drone"
+                            android:textAllCaps="false"
+                            android:layout_marginBottom="24dp"
+                            android:textColor="@color/button_text_color"
+                            android:background="@drawable/rounded_button_blue" />
+
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@android:color/darker_gray"
+                            android:layout_marginVertical="8dp" />
+
+                        <Button
+                            android:id="@+id/btnSalvaNome"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="💾 Salva impostazioni"
+                            android:textAllCaps="false"
+                            android:layout_marginTop="16dp"
+                            android:textColor="@color/button_text_color"
+                            android:background="@drawable/rounded_button_green"/>
+
+                        <Button
+                            android:id="@+id/close_impostazioni_button"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="❌ Chiudi"
+                            android:layout_marginTop="16dp"
+                            android:textColor="@color/button_text_color"
+                            android:background="@drawable/rounded_button_blue" />
+                </LinearLayout>
+        </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

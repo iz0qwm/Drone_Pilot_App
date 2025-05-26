@@ -16,6 +16,12 @@ Nella schermata principale:
 - Solo nella App Android **potrai collegarti** a D-Flight e leggere news ( Dronezine.it)
 - Solo nella App Android **potrai chiedere informazioni** con il microfono del tuo Smartphone
 
+**ATTENZIONE**:
+La prima operazione che dovrai fare appena loggato, è quella di [andare a registrare la tua scheda pilota](06-Impostazioni.md) e inserire almeno un drone che utilizzerai per i voli.
+
+
+
+
 <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
   <div style="text-align: center;">
     <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/schermata_principale_new.jpeg" alt="Dashboard principale" width="360">
@@ -35,7 +41,7 @@ Nella schermata principale:
 ## ✈️ 📭 In volo - senza messaggi
 Per far vedere la tua presenza agli altri piloti di droni che utilizzano la mappa e quindi per attivare il tuo marker, devi:
 
-1. cel campo _Nome Drone_ devi inserire il nome del drone che farai alzare in volo
+1. Nel lista dei droni [debitamente compilata](06-Impostazioni.md), potrai scegliere il modello del drone che farai alzare in volo
 2. cliccare su **Inizio volo** 
 
 Il tuo marker sarà come quello qui sotto e nessuno potrà inviarti messaggi privati.

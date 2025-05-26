@@ -1,0 +1,82 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#191970"
+    android:fitsSystemWindows="true">
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:background="#f4f4f4">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="16dp" />
+
+            <ImageView
+                android:id="@+id/imageAvatarBig"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_gravity="center"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_person_placeholder"
+                android:background="@drawable/circle_background" />
+
+            <TextView
+                android:id="@+id/textNomePilota"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nome Pilota"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/textBioPilota"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bio del pilota"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"
+                android:gravity="center_horizontal"
+                android:textColor="#555" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Droni registrati"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerDroniPilota"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false" />
+
+            <!-- Aggiungi un pulsante Chiudi -->
+            <Button
+                android:id="@+id/close_schedapilota_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="❌ Chiudi"
+                android:layout_marginTop="16dp"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue" />
+
+        </LinearLayout>
+
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

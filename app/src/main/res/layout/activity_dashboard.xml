@@ -61,17 +61,16 @@
                 android:gravity="center_vertical"
                 android:padding="8dp">
 
-                <EditText
-                    android:id="@+id/droneField"
+                <Spinner
+                    android:id="@+id/droneSpinner"
                     android:layout_width="0dp"
                     android:layout_weight="2"
-                    android:maxLines="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:background="@drawable/rounded_input"
-                    android:padding="8dp"
-                    android:textColor="#000"
-                    android:textColorHint="#ccc"
-                    android:hint="Nome Drone" />
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:textAlignment="center"
+                    android:gravity="center_vertical"/>
 
                 <TextView
                     android:id="@+id/onlineUsersText"

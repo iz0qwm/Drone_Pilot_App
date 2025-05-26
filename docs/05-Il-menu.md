@@ -18,6 +18,10 @@ Nella schermata **Piloti attivi** sono presenti i piloti con UAS in volo, quindi
     <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/piloti_attivi_new.jpeg" alt="Dashboard principale" width="360">
     <div style="margin-top: 8px;">📱 Android</div>
   </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/piloti_attivi_new_02.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
 </div>
 
 ## ⚙️ Impostazioni

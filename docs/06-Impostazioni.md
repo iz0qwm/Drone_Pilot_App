@@ -2,14 +2,27 @@
 
 Questa sotto sezione di permetterà di:
 
-- Cambiare il tuo nome deciso durante la registrazione
-- Vedere con quale email ti sei registrato
-- Indicare che hai con te una radio PMR446
 - Attivare la ricezione DRI [Direct Remote ID](08-Direct-Remote-ID-(DRI).md)
+- Indicare che hai con te una radio PMR446
+- Compilare la tua [scheda pilota e lista di droni](05-Il-menu.md):
+  - Vedere con quale email ti sei registrato
+  - Cambiare il tuo nome deciso durante la registrazione
+  - Inviare una piccola immagine di te o un Avatar
+  - Compilare una semplice descrizione di te come pilota
+  - Inserire i tuoi droni con una immagine ed una breve descrizione
+  
 
 <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
   <div style="text-align: center;">
     <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new_02.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/impostazioni_new_03.jpeg" alt="Dashboard principale" width="360">
     <div style="margin-top: 8px;">📱 Android</div>
   </div>
 </div>

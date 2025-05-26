@@ -95,8 +95,11 @@ import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.PopupWindow
+import android.widget.Spinner
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
 import androidx.core.view.WindowCompat
@@ -197,6 +200,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // Text to speach
     private var tts: TextToSpeech? = null
+
+    // Lista droni
+    private lateinit var droneSpinner: Spinner
+    private var droneList = listOf<String>()
+    private var selectedDrone: String? = null
 
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
@@ -374,7 +382,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val logoutButton = findViewById<Button>(R.id.logoutButton)
         val startFlightButton = findViewById<Button>(R.id.startFlightButton)
         val stopFlightButton = findViewById<Button>(R.id.stopFlightButton)
-        val droneField = findViewById<EditText>(R.id.droneField)
+        //val droneField = findViewById<EditText>(R.id.droneField)
         val mapContainer = findViewById<FrameLayout>(R.id.mapContainer)
         val scrollView = findViewById<ScrollView>(R.id.scrollView)
         //val weatherInfoText = findViewById<TextView>(R.id.weather_info_text)
@@ -391,6 +399,14 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val voiceBtn = findViewById<Button>(R.id.voiceZoneButton)
         val layersButton = findViewById<ImageButton>(R.id.layersButton)
         val mapCard = findViewById<MaterialCardView>(R.id.mapCard)
+
+        // Mettiamo stopFlight a 0
+        stopFlightButton.isEnabled = false // all'inizio
+        // sistemiamo droneName
+        droneName = intent.getStringExtra("droneName")
+            ?: getSharedPreferences("prefs", MODE_PRIVATE).getString("ultimoDrone", null)
+                    ?: "Drone Sconosciuto"
+
 
         // layer trasparente davanti alla mappa per intercettare il tocco di due dita
         // e non passarlo alla scroll view
@@ -445,15 +461,102 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
 
-        // Tasto Start Flight
-        startFlightButton.setOnClickListener {
-            droneName = droneField.text.toString()
-            if (!userName.isNullOrEmpty() && !droneName.isNullOrEmpty()) {
-                startFlight(userName!!, droneName!!)
-            } else {
-                Toast.makeText(this, "Caricamento nome pilota in corso o nome drone mancante", Toast.LENGTH_SHORT).show()
-            }
+        // Spinner per recupero drone
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            Toast.makeText(this, "Utente non autenticato", Toast.LENGTH_SHORT).show()
+            return
         }
+
+        val droneSpinner = findViewById<Spinner>(R.id.droneSpinner)
+
+        FirebaseFirestore.getInstance()
+            .collection("pilotProfiles").document(uid)
+            .collection("drones")
+            .get()
+            .addOnSuccessListener { result ->
+                val droneList = if (result.isEmpty) {
+                    listOf("Nessun drone disponibile")
+                } else {
+                    result.map { it.getString("name") ?: "Senza nome" }
+                }
+
+                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, droneList)
+                droneSpinner.adapter = adapter
+
+                // 🔹 Recupera ultimo drone usato
+                val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+                val ultimoDrone = prefs.getString("ultimoDrone", null)
+                val posizioneDefault = droneList.indexOfFirst { it == ultimoDrone }
+                if (posizioneDefault >= 0) {
+                    droneSpinner.setSelection(posizioneDefault)
+                    selectedDrone = droneList[posizioneDefault]
+                }
+
+                droneSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                        selectedDrone = if (droneList[position] == "Nessun drone disponibile") null else droneList[position]
+                    }
+
+                    override fun onNothingSelected(parent: AdapterView<*>) {
+                        selectedDrone = null
+                    }
+                }
+            }
+
+
+
+
+        // Tasto Start Flight
+        // 🔹 Salva l'ultimo drone selezionato
+        FirebaseFirestore.getInstance()
+            .collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                userName = document.getString("fullName") ?: "Pilota Anonimo"
+                val avatarUrl = document.getString("avatarUrl") ?: ""
+
+                stopFlightButton.isEnabled = true
+
+                startFlightButton.setOnClickListener {
+                    val safeUserName = userName ?: "Pilota Anonimo"
+                    val safeDroneName = selectedDrone ?: "Drone Sconosciuto"
+
+                    // 🔹 Salva l'ultimo drone usato
+                    getSharedPreferences("prefs", MODE_PRIVATE)
+                        .edit()
+                        .putString("ultimoDrone", safeDroneName)
+                        .apply()
+
+                    val pilotaAttivo = mapOf(
+                        "uid" to uid,
+                        "name" to safeUserName,
+                        "drone" to safeDroneName,
+                        "avatarUrl" to avatarUrl
+                    )
+
+                    FirebaseFirestore.getInstance().collection("piloti").document(uid).set(pilotaAttivo)
+                        .addOnSuccessListener {
+                            logDebug(TAG, "✅ Pilota online salvato")
+                            startFlight(safeUserName, safeDroneName)
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(this, "Errore nel salvataggio del pilota online", Toast.LENGTH_SHORT).show()
+                        }
+                }
+            }
+
+
+        // ✅ Listener del pulsante "Start Flight"
+        startFlightButton.setOnClickListener {
+            val safeUserName = userName ?: "Pilota Anonimo"
+            val safeDroneName = droneName ?: "Drone Sconosciuto"
+
+            logDebug(TAG, "🛫 Premuto Start Flight: $safeUserName - $safeDroneName")
+            startFlight(safeUserName, safeDroneName)
+        }
+
+
+
 
         // Apertura News Dronezine
         dronezineButton.setOnClickListener {
@@ -473,14 +576,15 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //Tasto Stop Flight
         stopFlightButton.setOnClickListener {
-            val currentUserName = userName ?: ""  // Evita il nullable
-            if (currentUserName.isNotEmpty()) {
+            val currentUserName = userName
+            if (!currentUserName.isNullOrEmpty()) {
                 logDebug(TAG, "Tentativo di eliminare il volo per $currentUserName")
                 stopFlight(currentUserName)
             } else {
                 Toast.makeText(this, "Non posso fermare un volo inesistente", Toast.LENGTH_SHORT).show()
             }
         }
+
 
         //Tasto layers sulla mappa
         layersButton.setOnClickListener {
@@ -2826,7 +2930,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                             or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     )
             // Nascondi elementi UI visibili (aggiungi qui i tuoi)
-            findViewById<View>(R.id.droneField)?.visibility = View.GONE
+            //findViewById<View>(R.id.droneField)?.visibility = View.GONE
+            findViewById<View>(R.id.droneSpinner)?.visibility = View.GONE
             findViewById<View>(R.id.startFlightButton)?.visibility = View.GONE
             findViewById<View>(R.id.stopFlightButton)?.visibility = View.GONE
             findViewById<View>(R.id.weather_forecast_button)?.visibility = View.GONE
@@ -2859,7 +2964,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
             decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
-            findViewById<View>(R.id.droneField)?.visibility = View.VISIBLE
+            //findViewById<View>(R.id.droneField)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.droneSpinner)?.visibility = View.VISIBLE
             findViewById<View>(R.id.startFlightButton)?.visibility = View.VISIBLE
             findViewById<View>(R.id.stopFlightButton)?.visibility = View.VISIBLE
             findViewById<View>(R.id.weather_forecast_button)?.visibility = View.VISIBLE
