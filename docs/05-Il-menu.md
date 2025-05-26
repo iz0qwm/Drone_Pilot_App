@@ -12,7 +12,7 @@ In alto a destra vi è un menu che vi porta ad alcuni sotto sezioni dell'App.
 ## 🧑‍✈️ Piloti attivi
 
 Nella schermata **Piloti attivi** sono presenti i piloti con UAS in volo, quindi che hanno dichiarato di essere **In Volo** sulla schermata principale.
-
+Cliccando sul nome del pilota, si potrà vedere la sua scheda ed i droni in suo possesso, se avrà deciso di compilare la [scheda in impostazioni](06-Impostazioni.md).
 <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
   <div style="text-align: center;">
     <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/piloti_attivi_new.jpeg" alt="Dashboard principale" width="360">

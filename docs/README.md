@@ -34,10 +34,6 @@ _apri l'app Play Store, tocca l'icona del profilo in alto a destra, poi tocca "*
 Puoi utilizzare la versione web dell'app direttamente dal browser, all’indirizzo:  
 👉 [https://tutto-sui-droni-community.web.app/](https://tutto-sui-droni-community.web.app/)
 
-🔹 **Versioni di debug precedenti**  
-Sono disponibili nella sezione "Releases" del repository GitHub:  
-👉 [https://github.com/iz0qwm/Drone_Pilot_App/releases](https://github.com/iz0qwm/Drone_Pilot_App/releases)
-
 ---
 
 ### 🧪 Partecipare al test su Android (fase chiusa)
