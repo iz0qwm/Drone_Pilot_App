@@ -85,3 +85,12 @@ Ti basterà collegarlo ad un powerbank e posizionarlo in un luogo alto.
 </p>
 
 [![Guarda il video su YouTube](https://img.youtube.com/vi/dSLGsIccyHY/0.jpg)](https://www.youtube.com/watch?v=dSLGsIccyHY)
+
+## 🧩 Se il tuo drone non ha il DRI
+
+Se il tuo drone non trasmette il DRI ma vuoi comunque tracciarlo mentre vola, puoi acquistare un [Dronetag Beacon](https://dronetag.com/products/beacon/).
+
+<p align="center">
+  <img src="https://shop.dronetag.com/324-large_default/dronetag-beacon.jpg" alt="Dronetag Beacon" >
+<img src="https://shop.dronetag.com/img/cms/dronetag_beacon/dronetag_beacon_comparison.png" alt="Dronetag Beacon 2" >
+</p>

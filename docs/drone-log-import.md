@@ -2,8 +2,14 @@
 
 La DronePilotApp ti permette di importare i file di log generati dall'app DJI FLY e visualizzarne la traiettoria di volo.
 
----
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/import_log_divolo.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+</div>
 
+---
 ## 🧭 A cosa serve?
 
 Questa funzione ti consente di:

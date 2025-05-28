@@ -283,7 +283,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     searchMarker = mMap.addMarker(
                         MarkerOptions().position(location).title("Zona cercata")
                     )
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 16f))
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 8f))
                     fetchFlightLimit(location.latitude, location.longitude) { lowerLimit ->
                         Toast.makeText(this, "Open Category fino a $lowerLimit m", Toast.LENGTH_LONG).show()
                     }
@@ -299,12 +299,15 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                     location?.let {
                         val userLatLng = LatLng(it.latitude, it.longitude)
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 16f))
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 8f))
                         addressSearchPanel.visibility = View.GONE
 
                         // ❌ Rimuovi marker di ricerca, se presente
                         searchMarker?.remove()
                         searchMarker = null
+                        fetchFlightLimit(location.latitude, location.longitude) { lowerLimit ->
+                            Toast.makeText(this, "Open Category fino a $lowerLimit m", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
 
@@ -1313,7 +1316,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
             // 🔄 Sposta la mappa (opzionale, se vuoi animare)
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 8f))
 
             // 🔍 Fai la richiesta come se fosse una ricerca
             fetchFlightLimit(latLng.latitude, latLng.longitude) { lowerLimit ->

@@ -10,7 +10,11 @@ Questa sotto sezione di permetterà di:
   - Inviare una piccola immagine di te o un Avatar
   - Compilare una semplice descrizione di te come pilota
   - Inserire i tuoi droni con una immagine ed una breve descrizione
-  
+
+# 📅 Scheda Pilota e droni 
+
+Ogni pilota che utilizza l'App deve registrare la propria flotta, anche con una semplice foto e breve descrizione per poter selezionare il drone quando preme sul tasto Inizia volo nella dashboard principale.
+In più, può aggiungere una breve descrizione che lo accompagna, per farsi conoscere dagli altri.
 
 <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
   <div style="text-align: center;">
