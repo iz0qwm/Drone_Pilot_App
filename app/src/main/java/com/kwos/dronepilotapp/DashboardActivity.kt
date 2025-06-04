@@ -270,6 +270,13 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
+        // AR View
+        val arViewButton: Button = findViewById(R.id.ar_view_button)
+        arViewButton.setOnClickListener {
+            val intent = Intent(this, ARSpotViewerActivity::class.java)
+            startActivity(intent)
+        }
+
         // Geocoding
         btnGeocode.setOnClickListener {
             val locationName = addressInput.text.toString()
@@ -460,6 +467,15 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Controlla l'esecuzione del Logout
         logoutButton.setOnClickListener {
+            // Chiudo il volo esistente se faccio logout
+            val currentUserName = userName
+            if (!currentUserName.isNullOrEmpty()) {
+                logDebug(TAG, "Tentativo di eliminare il volo per $currentUserName")
+                stopFlight(currentUserName)
+            } else {
+                Toast.makeText(this, "Non posso fermare un volo inesistente", Toast.LENGTH_SHORT).show()
+            }
+            // faccio logout
             logout()
         }
 

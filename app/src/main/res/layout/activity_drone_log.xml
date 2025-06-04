@@ -13,6 +13,11 @@
         android:padding="24dp"
         android:gravity="center_horizontal">
 
+        <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="14dp" />
+
         <TextView
             android:id="@+id/logTitleTextView"
             android:layout_width="wrap_content"

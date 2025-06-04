@@ -12,6 +12,11 @@
         android:background="#f4f4f4"
         android:clipToPadding="false">
 
+        <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="12dp" />
+
         <!-- WebView per visualizzare contenuto HTML -->
         <WebView
             android:id="@+id/webView"

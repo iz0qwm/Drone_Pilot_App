@@ -108,6 +108,11 @@
         <activity android:name=".SchedaPilotaActivity" />
 
         <activity
+            android:name=".ARSpotViewerActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <activity
             android:name=".FullScreenImageActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"/>
 

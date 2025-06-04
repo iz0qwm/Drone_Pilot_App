@@ -70,7 +70,7 @@
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
                     android:textAlignment="center"
-                    android:gravity="center_vertical"/>
+                    android:gravity="center"/>
 
                 <TextView
                     android:id="@+id/onlineUsersText"
@@ -351,7 +351,7 @@
                     android:id="@+id/weather_forecast_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🌤️ Meteo e 📡 GPS"
+                    android:text="🌤️ Meteo/📡 GPS"
                     android:textAllCaps="false"
                     android:paddingHorizontal="10dp"
                     android:textColor="@color/button_text_color"
@@ -368,6 +368,19 @@
                     android:paddingHorizontal="10dp"
                     android:textColor="@color/button_text_color"
                     android:background="@drawable/rounded_button_green"/>
+
+                <Button
+                    android:id="@+id/ar_view_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:textSize="16sp"
+                    android:text="👁️‍🗨️"
+                    android:background="@drawable/round_button_background"
+                    android:contentDescription="Apri visuale AR"
+                    />
+
             </LinearLayout>
 
             <!-- Campo di testo ricerca indirizzo -->

@@ -72,6 +72,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
+import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -482,22 +483,52 @@ class MainActivity : AppCompatActivity() {
                     val user = auth.currentUser
 
                     if (user != null && !user.isEmailVerified) {
-                        MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
-
-                            .setTitle("Email non verificata")
-                            .setMessage("Devi verificare il tuo indirizzo email prima di poter accedere.")
-                            .setPositiveButton("Invia nuova email") { _, _ ->
+                        val snackbar = Snackbar.make(
+                            findViewById(android.R.id.content),
+                            "Email non verificata. Controlla la tua posta.",
+                            Snackbar.LENGTH_INDEFINITE
+                        )
+                            .setAction("RISPEDISCI") {
                                 user.sendEmailVerification()
                                     .addOnCompleteListener { resendTask ->
-                                        if (resendTask.isSuccessful) {
-                                            Toast.makeText(this, "Nuova email inviata! Controlla la tua casella di posta.", Toast.LENGTH_LONG).show()
-                                        } else {
-                                            Toast.makeText(this, "Errore nell'invio della nuova email.", Toast.LENGTH_SHORT).show()
-                                        }
+                                        val feedback = Snackbar.make(
+                                            findViewById(android.R.id.content),
+                                            if (resendTask.isSuccessful) "✅ Email inviata di nuovo."
+                                            else "❌ Errore nell'invio dell'email.",
+                                            Snackbar.LENGTH_LONG
+                                        )
+                                            .setTextColor(Color.WHITE)
+                                            .setBackgroundTint(
+                                                if (resendTask.isSuccessful) Color.parseColor("#323232")
+                                                else Color.parseColor("#D32F2F")
+                                            )
+
+                                        // Aggiungi padding anche alla Snackbar secondaria
+                                        feedback.view.setPadding(
+                                            feedback.view.paddingLeft,
+                                            feedback.view.paddingTop,
+                                            feedback.view.paddingRight,
+                                            feedback.view.paddingBottom + 900
+                                        )
+
+                                        feedback.show()
                                     }
                             }
-                            .setNegativeButton("Annulla", null)
-                            .show()
+                            .setActionTextColor(Color.YELLOW)
+                            .setTextColor(Color.WHITE)
+                            .setBackgroundTint(Color.parseColor("#D32F2F"))
+
+                        // Aggiungi padding per spostarla sopra la navigation bar
+                        snackbar.view.setPadding(
+                            snackbar.view.paddingLeft,
+                            snackbar.view.paddingTop,
+                            snackbar.view.paddingRight,
+                            snackbar.view.paddingBottom + 900
+                        )
+
+                        snackbar.show()
+
+                        FirebaseAuth.getInstance().signOut()
                     } else {
                         // Email verificata: procediamo al login normale
                         val userId = auth.currentUser?.uid
@@ -664,7 +695,7 @@ class MainActivity : AppCompatActivity() {
                         .addOnSuccessListener {
                             // Prepara ActionCodeSettings con URL della tua pagina di verifica
                             val actionCodeSettings = ActionCodeSettings.newBuilder()
-                                .setUrl("https://tutto-sui-droni-community.web.app/verify.html") // <<< Cambia con il tuo dominio reale
+                                .setUrl("https://tutto-sui-droni-community.web.app/verify_app.html") // <<< Cambia con il tuo dominio reale
                                 .setHandleCodeInApp(false)
                                 .build()
 
@@ -674,12 +705,48 @@ class MainActivity : AppCompatActivity() {
                                     progressDialog.dismiss() // Chiudiamo il dialog
 
                                     if (emailTask.isSuccessful) {
-                                        Toast.makeText(this, "Registrazione completata! Controlla la tua email per confermare l'account.", Toast.LENGTH_LONG).show()
-                                        startActivity(Intent(this, DashboardActivity::class.java))
-                                        finish()
+                                        val snackbar = Snackbar.make(
+                                            findViewById(android.R.id.content),
+                                            "📧 Verifica inviata! Controlla la tua email prima di accedere.",
+                                            Snackbar.LENGTH_INDEFINITE
+                                        )
+
+                                        snackbar.setTextColor(Color.WHITE)
+                                        snackbar.setBackgroundTint(Color.parseColor("#323232"))
+                                        snackbar.setAction("OK") {
+                                            snackbar.dismiss()
+                                        }
+                                        snackbar.view.setPadding(
+                                            snackbar.view.paddingLeft,
+                                            snackbar.view.paddingTop,
+                                            snackbar.view.paddingRight,
+                                            snackbar.view.paddingBottom + 100
+                                        )
+                                        snackbar.show()
+
+
+                                        FirebaseAuth.getInstance().signOut()
                                     } else {
-                                        Toast.makeText(this, "Errore nell'invio dell'email di conferma.", Toast.LENGTH_SHORT).show()
+                                        val snackbar = Snackbar.make(
+                                            findViewById(android.R.id.content),
+                                            "❌ Errore nell'invio dell'email di conferma.",
+                                            Snackbar.LENGTH_INDEFINITE
+                                        )
+                                        snackbar.setTextColor(Color.WHITE)
+                                        snackbar.setBackgroundTint(Color.parseColor("#323232"))
+                                        snackbar.setAction("OK") {
+                                            snackbar.dismiss()
+                                        }
+                                        snackbar.view.setPadding(
+                                            snackbar.view.paddingLeft,
+                                            snackbar.view.paddingTop,
+                                            snackbar.view.paddingRight,
+                                            snackbar.view.paddingBottom + 100
+                                        )
+                                        snackbar.show()
                                     }
+
+
                                 }
                         }
                         .addOnFailureListener { e ->

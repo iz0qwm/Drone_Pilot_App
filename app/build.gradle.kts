@@ -16,8 +16,8 @@ android {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 36
-        versionName = "2.3.0"
+        versionCode = 37
+        versionName = "2.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -106,7 +106,14 @@ dependencies {
     implementation("com.google.maps.android:android-maps-utils:2.3.0")
     implementation("org.jsoup:jsoup:1.15.3")
     implementation("com.android.volley:volley:1.2.1")
-
+    // CameraX Core
+    implementation("androidx.camera:camera-core:1.3.0")
+    // CameraX Camera2
+    implementation ("androidx.camera:camera-camera2:1.3.0")
+    // CameraX Lifecycle
+    implementation ("androidx.camera:camera-lifecycle:1.3.0")
+    // CameraX View per PreviewView
+    implementation ("androidx.camera:camera-view:1.3.0")
 
 
 
