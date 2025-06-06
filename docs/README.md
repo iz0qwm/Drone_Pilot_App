@@ -18,15 +18,10 @@ Altre, invece, che possono essere sviluppate in maniera differente su Web App (�
 A seconda dell'hardware e della piattaforma che utilizzerai per collegarti, potresti avere necessità di requisiti differenti.
 
 - Browser: **Chrome**, **Firefox**, **Safari** (ultime versioni)
-- Oppure **Android** da Versione 11 in su, se scarichi l'Apk
+- Oppure **Android** da Versione 11 in su
 - Connessione a Internet
 - Account registrato su **DronePilotApp**
 - Permessi di **localizzazione** attivati, permessi di **notifica** attivati 
-
-E' probabile che il tuo telefono Android non ti faccia installare l'App.
-Devi disabilitare il **Google Play Protect**:
-
-_apri l'app Play Store, tocca l'icona del profilo in alto a destra, poi tocca "**_Play Protect Impostazioni_**" e disattiva l'opzione "_**Analizza le app con Play Protect**_" . _
 
 ## 🚀 Come accedere
 
@@ -36,9 +31,9 @@ Puoi utilizzare la versione web dell'app direttamente dal browser, all’indiriz
 
 ---
 
-### 🧪 Partecipare al test su Android (fase chiusa)
+### 🧪 Per conoscere le novità in anteprima 
 
-Per partecipare alla **fase di test chiusa** dell’app Android:
+Puoi **partecipare come tester** dell’app Android:
 
 1. 📲 Unisciti al gruppo Telegram **DronePilotApp**  
    👉 [https://t.me/DronePilotApp](https://t.me/DronePilotApp)
@@ -51,8 +46,8 @@ Link diretto alla pagina di test (funziona solo se sei stato abilitato):
 
 ---
 
-📌 **Nota**: serve uno smartphone Android (versione 10 o superiore).  
-Il test dura 14 giorni e aiuta a migliorare stabilità e funzionalità dell’app.
+📌 **Nota**: serve uno smartphone Android (versione 11 o superiore).  
+
 
 
 
