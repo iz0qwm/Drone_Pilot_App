@@ -32,6 +32,7 @@ import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import android.util.Log
+import android.widget.ProgressBar
 
 
 class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -240,6 +241,9 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun saveFlightToFirestore(json: JSONObject) {
+        val (dialog, views) = showUploadProgressDialog()
+        val (statusText, progressBar) = views
+
         val serial = json.optString("aircraftSn", null) ?: return
         val model = json.optString("model", "-")
         val trajectory = json.optJSONArray("trajectory") ?: return
@@ -247,46 +251,66 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
         val firestore = FirebaseFirestore.getInstance()
         val trajectoryRef = firestore.collection("trajectories").document(serial).collection("points")
 
-        for (i in 0 until trajectory.length()) {
+        val total = trajectory.length()
+        var uploaded = 0
+
+        fun updateProgress() {
+            val percent = (uploaded * 100) / total
+            runOnUiThread {
+                progressBar.progress = percent
+                statusText.text = "📡 Caricamento: $percent%"
+            }
+        }
+
+        for (i in 0 until total) {
             val point = trajectory.getJSONObject(i)
             val lat = point.optDouble("lat", Double.NaN)
             val lon = point.optDouble("lon", Double.NaN)
+
             if (!lat.isNaN() && !lon.isNaN()) {
                 val data = hashMapOf(
                     "lat" to lat,
                     "lon" to lon,
                     "timestamp" to System.currentTimeMillis()
                 )
-                trajectoryRef.add(data)
+                trajectoryRef.add(data).addOnCompleteListener {
+                    uploaded++
+                    updateProgress()
+
+                    if (uploaded == total) {
+                        // Ultimo punto, ora invia il documento finale
+                        val last = trajectory.getJSONObject(trajectory.length() - 1)
+                        val maxAltitude = json.optDouble("maxAltitude", 0.0)
+                        val maxSpeedKmH = json.optDouble("maxSpeed", 0.0)
+                        val maxSpeedMS = maxSpeedKmH / 3.6
+                        val maxSpeedRounded = String.format(Locale.US, "%.1f", maxSpeedMS).toDouble()
+
+                        val droneData = hashMapOf(
+                            "lat" to last.optDouble("lat"),
+                            "lon" to last.optDouble("lon"),
+                            "altitude" to maxAltitude,
+                            "speed" to maxSpeedRounded,
+                            "model" to model,
+                            "timestamp" to System.currentTimeMillis()
+                        )
+                        firestore.collection("detected_drones").document(serial).set(droneData)
+                            .addOnSuccessListener {
+                                dialog.dismiss()
+                                Toast.makeText(this, "✅ Dati inviati, ora chiudi e vedi la mappa sulla Dashboard", Toast.LENGTH_LONG).show()
+                            }
+                            .addOnFailureListener {
+                                dialog.dismiss()
+                                Toast.makeText(this, "❌ Errore nell'invio dei dati", Toast.LENGTH_LONG).show()
+                            }
+                    }
+                }
+            } else {
+                uploaded++
+                updateProgress()
             }
         }
-
-        // salva posizione finale nella raccolta detected_drones
-        val last = trajectory.getJSONObject(trajectory.length() - 1)
-
-        val maxAltitude = json.optDouble("maxAltitude", 0.0)
-        val maxSpeedKmH = json.optDouble("maxSpeed", 0.0)
-        val maxSpeedMS = maxSpeedKmH / 3.6
-        val maxSpeedRounded = String.format(Locale.US, "%.1f", maxSpeedMS).toDouble()
-
-        val droneData = hashMapOf(
-            "lat" to last.optDouble("lat"),
-            "lon" to last.optDouble("lon"),
-            "altitude" to maxAltitude,
-            "speed" to maxSpeedRounded,
-            "model" to model,
-            "timestamp" to System.currentTimeMillis()
-        )
-        firestore.collection("detected_drones").document(serial).set(droneData)
-
-        .addOnSuccessListener {
-            Toast.makeText(this, "✅ Dati inviati, ora chiudi e vedi la mappa sulla Dashboard", Toast.LENGTH_LONG).show()
-        }
-        .addOnFailureListener {
-            Toast.makeText(this, "❌ Errore nell'invio dei dati", Toast.LENGTH_LONG).show()
-        }
-
     }
+
 
     private fun drawTrajectory(json: JSONObject) {
         val trajectoryArray = json.optJSONArray("trajectory") ?: return
@@ -310,6 +334,24 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
+
+    private fun showUploadProgressDialog(): Pair<AlertDialog, Pair<TextView, ProgressBar>> {
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        val dialogLayout = inflater.inflate(R.layout.progress_upload, null)
+
+        val statusText = dialogLayout.findViewById<TextView>(R.id.uploadStatusText)
+        val progressBar = dialogLayout.findViewById<ProgressBar>(R.id.uploadProgressBar)
+
+        builder.setView(dialogLayout)
+        builder.setCancelable(false)
+
+        val dialog = builder.create()
+        dialog.show()
+
+        return Pair(dialog, Pair(statusText, progressBar))
+    }
+
 
     private fun showImportInstructions() {
         val message = """

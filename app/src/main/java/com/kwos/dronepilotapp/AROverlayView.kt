@@ -35,6 +35,10 @@ class AROverlayView(context: Context, attrs: AttributeSet?) : View(context, attr
     private val smoothingWindow = 12
     private var maxVisibleDistanceMeters: Double = 5000.0
 
+    private var noFlyZones: List<NoFlyZone> = emptyList()
+    private var remotePilots: List<RemotePilot> = emptyList()
+
+
     fun setPOIs(pois: List<POI>, userLocation: LatLng) {
         poiList = pois
         deviceLocation = userLocation
@@ -61,6 +65,10 @@ class AROverlayView(context: Context, attrs: AttributeSet?) : View(context, attr
         invalidate()
     }
 
+    fun setRemotePilots(pilots: List<RemotePilot>) {
+        remotePilots = pilots
+        invalidate()
+    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -104,11 +112,157 @@ class AROverlayView(context: Context, attrs: AttributeSet?) : View(context, attr
                 else -> "📌 "
             }
 
-            canvas.drawText("$emoji$name", screenX, screenY, paint)
-            canvas.drawText("${distance.toInt()} m", screenX, screenY + 40f, paint)
+            // scrittura Nome POI e distanza
+            val nameText = "$emoji$name"
+            val distanceText = "${distance.toInt()} m"
+            val padding = 16f
+            val spacing = 12f
+            val textHeight = paint.textSize
+            val boxWidth = maxOf(paint.measureText(nameText), paint.measureText(distanceText)) + padding * 2
+            val boxHeight = textHeight * 2 + spacing + padding * 2
+
+            val boxLeft = screenX - boxWidth / 2
+            val boxTop = screenY - padding
+            val boxRight = screenX + boxWidth / 2
+            val boxBottom = boxTop + boxHeight
+
+            // Sfondo semi-trasparente
+            val bgPaint = Paint().apply {
+                color = Color.parseColor("#66000000") // Nero 40% opaco
+                style = Paint.Style.FILL
+                isAntiAlias = true
+            }
+            canvas.drawRoundRect(boxLeft, boxTop, boxRight, boxBottom, 12f, 12f, bgPaint)
+
+            val borderPaint = Paint().apply {
+                color = Color.WHITE
+                style = Paint.Style.STROKE
+                strokeWidth = 2f
+                isAntiAlias = true
+            }
+            canvas.drawRoundRect(boxLeft, boxTop, boxRight, boxBottom, 12f, 12f, borderPaint)
+
+
+            // Calcola posizione centrata per ciascuna riga
+            val nameX = boxLeft + (boxWidth - paint.measureText(nameText)) / 2
+            val nameY = boxTop + padding + textHeight
+            val distanceX = boxLeft + (boxWidth - paint.measureText(distanceText)) / 2
+            val distanceY = nameY + spacing + textHeight
+
+            canvas.drawText(nameText, nameX, nameY, paint)
+            canvas.drawText(distanceText, distanceX, distanceY, paint)
+
+        }
+
+        var zoneIndex = 0  // 🔢 contatore per distanziare le zone verticalmente
+
+        noFlyZones.forEach { zone ->
+
+            val distance = haversine(deviceLocation.latitude, deviceLocation.longitude, zone.center.latitude, zone.center.longitude)
+            val bearing = bearingBetweenLocations(deviceLocation, zone.center)
+            val relativeBearing = normalizeAngle(bearing - azimuth)
+            val elev = elevationAngle(deviceLocation.latitude, deviceLocation.longitude, zone.center.latitude, zone.center.longitude, pitch)
+
+            if (distance > maxVisibleDistanceMeters) return@forEach
+            if (abs(relativeBearing) > horizontalFOV / 2) return@forEach
+            if (elev < -30f || elev > 45f) return@forEach
+
+            val screenX = width / 2 + (width / horizontalFOV * relativeBearing).toFloat()
+
+            // 🔼 Offset verticale progressivo per evitare sovrapposizione
+            val screenY = height / 2f - elev * 5f - 150f - (zoneIndex * 150f)
+            zoneIndex++
+
+            val warningText = "🚫 ${zone.name}"
+            val altText = "Max ${zone.lowerLimit} m a ${distance.toInt()} m"
+            val padding = 16f
+            val spacing = 12f
+            val textHeight = paint.textSize
+            val boxWidth = maxOf(paint.measureText(warningText), paint.measureText(altText)) + padding * 2
+            val boxHeight = textHeight * 2 + spacing + padding * 2
+
+            val boxLeft = screenX - boxWidth / 2
+            val boxTop = screenY - padding
+            val boxRight = screenX + boxWidth / 2
+            val boxBottom = boxTop + boxHeight
+
+            val bgColor = ZoneColorUtils.getColorForLowerLimit(zone.lowerLimit) ?: return@forEach
+            val bgPaint = Paint().apply {
+                color = bgColor
+                style = Paint.Style.FILL
+                isAntiAlias = true
+            }
+
+            canvas.drawRoundRect(boxLeft, boxTop, boxRight, boxBottom, 12f, 12f, bgPaint)
+
+            val warningX = boxLeft + (boxWidth - paint.measureText(warningText)) / 2
+            val warningY = boxTop + padding + textHeight
+            val altX = boxLeft + (boxWidth - paint.measureText(altText)) / 2
+            val altY = warningY + spacing + textHeight
+
+            canvas.drawText(warningText, warningX, warningY, paint)
+            canvas.drawText(altText, altX, altY, paint)
+            // Log.d("AROverlay", "✅ Disegno zona ${zone.name} in AR")
+        }
+
+        remotePilots.forEach { pilot ->
+            val latLng = LatLng(pilot.latitude, pilot.longitude)
+            val distance = haversine(deviceLocation.latitude, deviceLocation.longitude, latLng.latitude, latLng.longitude)
+            val bearing = bearingBetweenLocations(deviceLocation, latLng)
+            val relativeBearing = normalizeAngle(bearing - azimuth)
+            val elev = elevationAngle(deviceLocation.latitude, deviceLocation.longitude, latLng.latitude, latLng.longitude, pitch)
+
+            if (distance > maxVisibleDistanceMeters) return@forEach
+            if (abs(relativeBearing) > horizontalFOV / 2) return@forEach
+            if (elev < -30f || elev > 45f) return@forEach
+
+            val screenX = width / 2 + (width / horizontalFOV * relativeBearing).toFloat()
+            val screenY = height / 2f - elev * 5f - 80f
+
+            val pilotEmoji = "👨‍✈️"
+            val nameText = "$pilotEmoji ${pilot.name} (${pilot.drone})"
+            val distText = "${distance.toInt()} m"
+            val padding = 16f
+            val spacing = 12f
+            val textHeight = paint.textSize
+            val boxWidth = maxOf(paint.measureText(nameText), paint.measureText(distText)) + padding * 2
+            val boxHeight = textHeight * 2 + spacing + padding * 2
+
+            val boxLeft = screenX - boxWidth / 2
+            val boxTop = screenY - padding
+            val boxRight = screenX + boxWidth / 2
+            val boxBottom = boxTop + boxHeight
+
+            val bgPaint = Paint().apply {
+                color = Color.parseColor("#5500FF00") // verde trasparente
+                style = Paint.Style.FILL
+                isAntiAlias = true
+            }
+            canvas.drawRoundRect(boxLeft, boxTop, boxRight, boxBottom, 12f, 12f, bgPaint)
+
+            val borderPaint = Paint().apply {
+                color = Color.WHITE
+                style = Paint.Style.STROKE
+                strokeWidth = 2f
+                isAntiAlias = true
+            }
+            canvas.drawRoundRect(boxLeft, boxTop, boxRight, boxBottom, 12f, 12f, borderPaint)
+
+            val nameX = boxLeft + (boxWidth - paint.measureText(nameText)) / 2
+            val nameY = boxTop + padding + textHeight
+            val distX = boxLeft + (boxWidth - paint.measureText(distText)) / 2
+            val distY = nameY + spacing + textHeight
+
+            canvas.drawText(nameText, nameX, nameY, paint)
+            canvas.drawText(distText, distX, distY, paint)
         }
 
 
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        setWillNotDraw(false)  // 🔥 forza il sistema a chiamare onDraw()
     }
 
     private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -152,5 +306,16 @@ class AROverlayView(context: Context, attrs: AttributeSet?) : View(context, attr
         maxVisibleDistanceMeters = distance
         invalidate()
     }
+
+    fun setNoFlyZones(zones: List<NoFlyZone>) {
+        noFlyZones = zones
+        Log.d("AROverlay", "📍 Ricevute ${zones.size} zone. Invalido ora + tra 1 secondo.")
+        invalidate()
+
+        postDelayed({
+            invalidate()
+        }, 2000)
+    }
+
 
 }

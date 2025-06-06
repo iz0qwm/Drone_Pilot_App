@@ -26,6 +26,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.LayoutInflater
@@ -38,8 +39,11 @@ import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgor
 //per il padding
 import androidx.core.view.ViewCompat
 import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.gms.maps.model.Marker
 
 
@@ -60,27 +64,38 @@ class TakeoffSpotsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_takeoffspots)
 
-        //Fa il padding automatico (non va a coprire i tasti funzione per i
+//Fa il padding automatico (non va a coprire i tasti funzione per i
         //telefoni con immersive view
         // Recupera la root view del layout
-        val rootView = findViewById<View>(android.R.id.content)
+        //val rootView = findViewById<View>(android.R.id.content)
+        val rootView = findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
 
-        // Applica il padding per evitare che gli elementi vengano coperti
+
+        // INIZIO PADDING
+        // EDGE-TO-EDGE
+        // Modalità edge-to-edge
+        WindowCompat.setDecorFitsSystemWindows(window, false) // Abilita modalità edge-to-edge
+
+        // Imposta se il contenuto della status bar deve essere scuro (true) o chiaro (false)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true // o false, dipende dal tema
+
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        // FINE EDGE-TO-EDGE
+
+        //Fa il padding automatico (non va a coprire i tasti funzione per i
+        //telefoni con immersive view
+        // GESTIONE INSETS
         ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-            view.updatePadding(
-                top = systemBars.top, // Evita sovrapposizione con la status bar
-                bottom = systemBars.bottom // Evita sovrapposizione con la navigation bar
-            )
-
-            WindowInsetsCompat.CONSUMED
+            // SOLO paddingBottom per evitare che l'ultima parte vada sotto la navigation bar
+            view.setPadding(0, 0, 0, systemBars.bottom)
+            insets
         }
         // fine padding
-
-
-        //setContentView(R.layout.activity_dashboard)
+        // Nasconde la Action Bar
         supportActionBar?.hide()
+        // FINE PADDING
 
         // Setup mappa
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map_fragment) as SupportMapFragment

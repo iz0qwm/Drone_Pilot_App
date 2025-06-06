@@ -33,6 +33,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.gms.maps.model.LatLng
 import com.kwos.dronepilotapp.AROverlayView
+import com.kwos.dronepilotapp.ZoneColorUtils.distanceBetweenMeters
+import java.io.IOException
+import okhttp3.Call
+import com.google.firebase.firestore.FirebaseFirestore
+
 
 class ARSpotViewerActivity : AppCompatActivity(), SensorEventListener {
 
@@ -57,6 +62,8 @@ class ARSpotViewerActivity : AppCompatActivity(), SensorEventListener {
 
     private val PREFS_NAME = "ARPrefs"
     private val PREF_KEY_OFFSET = "azimuth_offset"
+
+    private var nearbyZones10km: List<NoFlyZone> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -147,6 +154,16 @@ class ARSpotViewerActivity : AppCompatActivity(), SensorEventListener {
                         overlayView.setPOIs(filtered, userLatLng)
                         overlayView.setMaxVisibleDistance(selectedRadius)
 
+                        // 🛡️ Filtra e aggiorna anche le zone No-Fly
+                        val zoneFiltered = nearbyZones10km.filter {
+                            distanceBetweenMeters(userLatLng, it.center) < selectedRadius
+                        }
+                        Log.d("ARSpotViewer", "🛡️ Zone nel raggio $selectedRadius m: ${zoneFiltered.size}")
+                        overlayView.setNoFlyZones(zoneFiltered)
+                        overlayView.invalidate()
+
+                        loadNearbyPilots(currentLat, currentLon, selectedRadius)
+
                     },
                     onError = { msg -> Log.e("ARSpotViewer", msg) }
                 )
@@ -192,6 +209,8 @@ class ARSpotViewerActivity : AppCompatActivity(), SensorEventListener {
                 val selectedRadius = 500.0 + (progress * 500.0) // da 500m a 10500m
                 Log.d("ARSpotViewer", "🎚️ Raggio selezionato: $selectedRadius m")
 
+                loadNearbyPilots(currentLat, currentLon, selectedRadius)
+
                 fetchTouristicPOIs(
                     currentLat,
                     currentLon,
@@ -214,6 +233,48 @@ class ARSpotViewerActivity : AppCompatActivity(), SensorEventListener {
 
                         val userLatLng = LatLng(currentLat, currentLon)
                         overlayView.setPOIs(filtered, userLatLng)
+
+                        val url = "https://www.kwos.org/appoggio/droni/dflight_geozones.json"
+                        val request = okhttp3.Request.Builder().url(url).build()
+                        val client = okhttp3.OkHttpClient()
+
+                        client.newCall(request).enqueue(object : okhttp3.Callback {
+                            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                                Log.e("ARSpotViewer", "❌ Errore caricamento zone: ${e.message}")
+                            }
+
+                            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                                response.body?.string()?.let { jsonString ->
+                                    val allZones = ZoneColorUtils.parseZonesFromJson(jsonString)
+                                    Log.d("ARSpotViewer", "✅ Zone parse trovate: ${allZones.size}")
+
+                                    val userLatLng = LatLng(currentLat, currentLon)
+                                    nearbyZones10km = allZones.filter {
+                                        distanceBetweenMeters(userLatLng, it.center) < 10000  // 10 km
+                                    }
+
+                                    Log.d("ARSpotViewer", "📦 Zone nel raggio 10 km: ${nearbyZones10km.size}")
+                                    nearbyZones10km.forEach { zone ->
+                                        Log.d("ARSpotViewer", "→ ${zone.name} @ ${zone.center} - alt min ${zone.lowerLimit} m")
+                                    }
+
+                                    // Mostra subito le zone nel raggio iniziale selezionato
+                                    val filteredZones = nearbyZones10km.filter {
+                                        distanceBetweenMeters(userLatLng, it.center) < selectedRadius
+                                    }
+
+                                    runOnUiThread {
+                                        overlayView.setNoFlyZones(filteredZones)
+                                        overlayView.invalidate()
+                                        Log.d("ARSpotViewer", "📡 Zone settate sull’overlay (iniziale) e invalidate.")
+                                    }
+                                }
+                            }
+
+
+
+                        })
+
                         overlayView.setMaxVisibleDistance(selectedRadius)
 
                     },
@@ -332,10 +393,29 @@ class ARSpotViewerActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR), SensorManager.SENSOR_DELAY_UI)
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_UI)
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_UI)
+
+        val rotVec = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+        val accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        val magnet = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+
+        if (rotVec != null) {
+            sensorManager.registerListener(this, rotVec, SensorManager.SENSOR_DELAY_UI)
+            Log.d("ARSpotViewer", "✅ Rotation vector registrato")
+        } else {
+            Log.e("ARSpotViewer", "❌ Rotation vector non disponibile")
+        }
+
+        if (accel != null) {
+            sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_UI)
+            Log.d("ARSpotViewer", "✅ Accelerometro registrato")
+        }
+
+        if (magnet != null) {
+            sensorManager.registerListener(this, magnet, SensorManager.SENSOR_DELAY_UI)
+            Log.d("ARSpotViewer", "✅ Magnetometro registrato")
+        }
     }
+
 
     override fun onPause() {
         super.onPause()
@@ -344,21 +424,51 @@ class ARSpotViewerActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
-            if (it.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
-                val rotVec = it.values
-                val rotMatrix = FloatArray(9)
-                SensorManager.getRotationMatrixFromVector(rotMatrix, rotVec)
+            if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
+                val rotationMatrix = FloatArray(9)
+                SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
 
-                SensorManager.getOrientation(rotMatrix, orientationAngles)
-                overlayView.setOrientation(
-                    azimuth = Math.toDegrees(orientationAngles[0].toDouble()).toFloat(),
-                    pitch = Math.toDegrees(orientationAngles[1].toDouble()).toFloat(),
-                    roll = Math.toDegrees(orientationAngles[2].toDouble()).toFloat()
-                )
+                val orientation = FloatArray(3)
+                SensorManager.getOrientation(rotationMatrix, orientation)
+
+                val azimuth = Math.toDegrees(orientation[0].toDouble()).toFloat()
+                val pitch = Math.toDegrees(orientation[1].toDouble()).toFloat()
+                val roll = Math.toDegrees(orientation[2].toDouble()).toFloat()
+
+                overlayView.setOrientation(azimuth, pitch, roll)
+                //Log.d("ARSpotViewer", "🧭 Orientamento: azimuth=$azimuth°, pitch=$pitch°, roll=$roll°")
             }
         }
     }
 
-
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+
+
+    private fun loadNearbyPilots(userLat: Double, userLon: Double, maxDistanceMeters: Double) {
+        val db = FirebaseFirestore.getInstance()
+        val pilotsRef = db.collection("piloti")
+
+        pilotsRef.get().addOnSuccessListener { snapshot ->
+            val pilotList = snapshot.documents.mapNotNull { doc ->
+                val name = doc.getString("name") ?: return@mapNotNull null
+                val drone = doc.getString("drone") ?: "drone"
+                val lat = doc.getDouble("latitude") ?: return@mapNotNull null
+                val lon = doc.getDouble("longitude") ?: return@mapNotNull null
+
+                val distance = haversine(userLat, userLon, lat, lon)
+                if (distance <= maxDistanceMeters) {
+                    RemotePilot(name, drone, lat, lon)
+                } else null
+            }
+
+            Log.d("ARSpotViewer", "👨‍✈️ Piloti caricati e filtrati: ${pilotList.size}")
+            runOnUiThread {
+                overlayView.setRemotePilots(pilotList)
+            }
+        }.addOnFailureListener {
+            Log.e("ARSpotViewer", "❌ Errore caricamento piloti: ${it.message}")
+        }
+    }
+
 }

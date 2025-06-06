@@ -15,6 +15,11 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="18dp" />
+
             <!-- Foto Spot -->
             <ImageView
                 android:id="@+id/spot_photo"
@@ -45,7 +50,7 @@
                 android:layout_height="wrap_content"
                 android:text="Descrizione dello spot"
                 android:textSize="16sp"
-                android:textColor="#555"
+                android:textColor="#f4f4f4"
                 android:layout_marginBottom="16dp" />
 
             <!-- Mini mappa -->

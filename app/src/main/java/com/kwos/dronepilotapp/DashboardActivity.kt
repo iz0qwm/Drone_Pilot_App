@@ -2651,10 +2651,25 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         checkForNewMessages() // Controlla se ci sono nuovi messaggi
         val userId = auth.currentUser?.uid
-        if (userId != null && userName != null && droneName != null) {
-            logDebug(TAG, "onResume: faccio partire startLocationUpdates per $userId - $userName - $droneName")
+        if (userId != null) {
+            FirebaseFirestore.getInstance().collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener { document ->
+                    val inVolo = document.getBoolean("inVolo") ?: false
+                    val userName = document.getString("fullName")
+                    val droneName = document.getString("drone")
 
-            startLocationUpdates(userId, userName!!, droneName!!)
+                    if (inVolo && userName != null && droneName != null) {
+                        logDebug(TAG, "onResume: faccio partire startLocationUpdates per $userId - $userName - $droneName")
+                        startLocationUpdates(userId, userName, droneName)
+                    } else {
+                        logDebug(TAG, "onResume: inVolo è false o dati mancanti, non avvio startLocationUpdates")
+                    }
+                }
+                .addOnFailureListener {
+                    logDebug(TAG, "onResume: Errore nel recupero dati utente: ${it.message}")
+                }
         }
         // Ricarica la lista dei piloti quando l'app torna in primo piano, utilizzando l'handler
         handler.post(refreshRunnable) // Avvia il refresh quando l'app torna attiva
