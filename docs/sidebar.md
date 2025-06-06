@@ -10,7 +10,7 @@
 * [📰 Notizie - 📱](09-Notizie.md)
 * [🗣️ Assistente vocale - 📱](11-assistente-vocale.md)
 * [🔎 Ricerca zona di volo - 📱](ricerca-zona-di-volo.md)
-* [🕶️ AR Spot - Realtà Aumentata - 📱](AR-spot.md)
+* [👁️‍🗨️ AR Spot - Realtà Aumentata - 📱](AR-spot.md)
 * [✈️ Layer traffico aereo a bassa quota - 📱🌐](layer-traffico-aereo.md)
 * [📁 Importazione log di volo DJI - 📱](drone-log-import.md)
 * [🚪 Logout - 📱🌐](10-Logout.md)

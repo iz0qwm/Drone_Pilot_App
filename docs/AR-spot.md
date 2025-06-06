@@ -5,7 +5,7 @@ La funzione **AR Spot** ti consente di visualizzare in **realtà aumentata** i p
 ### 🚀 Come si accede
 
 Per aprire la modalità AR:
-1. Tocca l'icona 🕶️ (dell'occhio) **AR Spot** nella schermata principale (accanto a *Spot di volo*).
+1. Tocca l'icona 👁️‍🗨️ (dell'occhio) **AR Spot** nella schermata principale (accanto a *Spot di volo*).
 2. L'app aprirà una nuova finestra in **modalità landscape** con la fotocamera attiva.
 
 > ℹ️ Assicurati di avere attivato i **servizi di localizzazione** 📍 e di essere in una zona con buona visibilità GPS.
