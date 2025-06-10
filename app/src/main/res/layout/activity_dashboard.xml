@@ -351,7 +351,7 @@
                     android:id="@+id/weather_forecast_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🌤️ Meteo/📡 GPS"
+                    android:text="🌤️ Meteo/📡 RF"
                     android:textAllCaps="false"
                     android:paddingHorizontal="10dp"
                     android:textColor="@color/button_text_color"

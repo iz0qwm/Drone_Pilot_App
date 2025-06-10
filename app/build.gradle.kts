@@ -16,8 +16,8 @@ android {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 38
-        versionName = "2.3.2"
+        versionCode = 39
+        versionName = "2.3.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -114,8 +114,9 @@ dependencies {
     implementation ("androidx.camera:camera-lifecycle:1.3.0")
     // CameraX View per PreviewView
     implementation ("androidx.camera:camera-view:1.3.0")
-
-
+    // Grafico reti WiFi
+    //implementation (name = "MPAndroidChart-v3.1.0", ext = "aar")
+    implementation(files("libs/MPAndroidChart-v3.1.0.aar"))
 
 
     implementation(libs.play.services.maps)

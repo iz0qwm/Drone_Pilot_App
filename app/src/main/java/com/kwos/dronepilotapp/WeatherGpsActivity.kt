@@ -24,6 +24,19 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.net.wifi.ScanResult
+import android.net.wifi.WifiManager
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.Legend
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
+import com.github.mikephil.charting.data.*
+import com.github.mikephil.charting.utils.ColorTemplate
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import kotlin.math.sqrt
 
 class WeatherGpsActivity : AppCompatActivity() {
 
@@ -41,6 +54,14 @@ class WeatherGpsActivity : AppCompatActivity() {
     private val fixHistory = mutableListOf<String>()
     private var locationReceived = false
     private val locationTimeoutHandler = Handler(Looper.getMainLooper())
+    private lateinit var wifiScanResultTextView: TextView
+    private lateinit var wifiChart: LineChart
+    private lateinit var sensorManager: SensorManager
+    private var magneticSensor: Sensor? = null
+    private var magneticListener: SensorEventListener? = null
+    private lateinit var magneticChart: LineChart
+    private val magneticValues = mutableListOf<Entry>()
+    private var timeIndex = 0f
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +89,9 @@ class WeatherGpsActivity : AppCompatActivity() {
 
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
+
+        //setContentView(R.layout.activity_dashboard)
+        supportActionBar?.hide()
         // FINE EDGE-TO-EDGE
 
 
@@ -80,10 +104,57 @@ class WeatherGpsActivity : AppCompatActivity() {
         gpsAccuracyText = findViewById(R.id.gps_accuracy_text)
         gnssSummaryText = findViewById(R.id.gnss_summary)
         fixHistoryText = findViewById(R.id.fix_history)
+        wifiScanResultTextView = findViewById(R.id.wifiScanResultTextView)
+        wifiChart = findViewById(R.id.wifiChart)
 
-        //setContentView(R.layout.activity_dashboard)
-        supportActionBar?.hide()
+        // Magnetometro
+        magneticChart = findViewById(R.id.magneticChart)
+        setupMagneticChart()
 
+        val magneticFieldValueTextView: TextView = findViewById(R.id.magneticFieldValueTextView)
+        val magneticFieldStatusTextView: TextView = findViewById(R.id.magneticFieldStatusTextView)
+
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+
+        magneticListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                val magnitude = sqrt(x * x + y * y + z * z)
+
+                magneticFieldValueTextView.text = "Campo magnetico: %.1f µT".format(magnitude)
+
+                val (statusText, color) = when {
+                    magnitude < 35 -> "⚠️ Valore troppo basso (anomalo)" to Color.GRAY
+                    magnitude < 60 -> "🟢 Campo regolare" to Color.rgb(19, 117, 13)
+                    magnitude < 100 -> "🟠 Attenzione: possibili interferenze" to Color.rgb(255, 165, 0)
+                    else -> "🔴 Disturbo magnetico elevato!" to Color.RED
+                }
+
+                // Salva il punto per il grafico
+                magneticValues.add(Entry(timeIndex, magnitude))
+                if (magneticValues.size > 60) magneticValues.removeAt(0)  // mantieni ultimi 60 punti
+                timeIndex += 1f
+
+                val dataSet = LineDataSet(magneticValues, "Campo magnetico (µT)").apply {
+                    setColor(ColorTemplate.COLORFUL_COLORS[1])  // 👈 usa setColor al posto di color =
+                    setDrawCircles(false)
+                    lineWidth = 2f
+                    setDrawValues(false)
+                }
+
+
+                magneticChart.data = LineData(dataSet)
+                magneticChart.invalidate()
+
+                magneticFieldStatusTextView.text = statusText
+                magneticFieldStatusTextView.setTextColor(color)
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
 
 
 
@@ -194,6 +265,10 @@ class WeatherGpsActivity : AppCompatActivity() {
         tecValueTextView.requestLayout()
         tecStatusTextView.requestLayout()
 
+        // STATO RETI WIFI
+        Handler(Looper.getMainLooper()).postDelayed({
+            scanWifiFrequencies()
+        }, 2000)
 
 
         // Pulsante per chiudere la finestra
@@ -202,19 +277,179 @@ class WeatherGpsActivity : AppCompatActivity() {
         }
     }
 
+    private fun scanWifiFrequencies() {
+        val wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+
+        // ⚠️ Controllo permesso FINE_LOCATION
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+
+            wifiScanResultTextView.text = "⚠️ Permesso posizione necessario per analizzare le reti WiFi."
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_CODE
+            )
+            return
+        }
+
+        try {
+            val scanResults = wifiManager.scanResults
+
+            val results2_4GHz = scanResults.filter { it.frequency in 2400..2500 }
+            val results5GHz = scanResults.filter { it.frequency in 5000..5900 }
+
+            val congested2_4GHz = results2_4GHz.groupBy { it.frequency }.filterValues { it.size >= 3 }
+            val congested5GHz = results5GHz.groupBy { it.frequency }.filterValues { it.size >= 3 }
+
+            val sb = StringBuilder()
+
+            sb.append("📡 Reti 2.4GHz: ${results2_4GHz.size} — ")
+            if (congested2_4GHz.isNotEmpty()) {
+                sb.append("⚠️ Banda affollata. Assicurati di avere la banda 5GHz attiva.\n")
+            } else {
+                sb.append("✅ Banda 2.4GHz libera.\n")
+            }
+
+            sb.append("📡 Reti 5GHz: ${results5GHz.size} — ")
+            if (congested5GHz.isNotEmpty()) {
+                sb.append("⚠️ Anche la 5GHz ha molti segnali.\n")
+            } else {
+                sb.append("✅ Banda 5GHz utilizzabile.\n")
+            }
+
+            if (congested2_4GHz.isNotEmpty() && congested5GHz.isNotEmpty()) {
+                sb.append("\n🚨 ATTENZIONE: entrambe le bande risultano congestionate.\n" +
+                        "Se possibile, valuta di cambiare posizione di decollo.")
+            }
+
+            // Dettagli facoltativi
+           // sb.append("\nSegnali visibili (dBm):\n")
+           // (results2_4GHz + results5GHz)
+           //     .sortedBy { it.level }
+           //     .forEach {
+           //         val band = if (it.frequency < 2500) "2.4GHz" else "5GHz"
+           //         sb.append("• ${it.SSID.ifBlank { "(SSID nascosto)" }} @ $band → ${it.level} dBm\n")
+           //     }
+
+            wifiScanResultTextView.text = sb.toString()
+            updateWifiChart(results2_4GHz, results5GHz)
+
+
+        } catch (e: SecurityException) {
+            wifiScanResultTextView.text = "❌ Errore: permesso negato alla scansione WiFi."
+            e.printStackTrace()
+        }
+
+
+
+    }
+
+    private fun updateWifiChart(results2_4GHz: List<ScanResult>, results5GHz: List<ScanResult>) {
+        val entries24 = results2_4GHz.mapIndexed { index, result ->
+            Entry(index.toFloat(), result.level.toFloat())
+        }
+
+        val entries5 = results5GHz.mapIndexed { index, result ->
+            Entry(index.toFloat(), result.level.toFloat())
+        }
+
+        val dataSet24 = LineDataSet(entries24, "2.4GHz").apply {
+            color = ColorTemplate.COLORFUL_COLORS[0]
+            lineWidth = 2f
+            setDrawCircles(false)
+        }
+
+        val dataSet5 = LineDataSet(entries5, "5GHz").apply {
+            color = ColorTemplate.COLORFUL_COLORS[3]
+            lineWidth = 2f
+            setDrawCircles(false)
+        }
+
+        val lineData = LineData(dataSet24, dataSet5)
+        wifiChart.data = lineData
+
+        wifiChart.setBackgroundColor(Color.TRANSPARENT) // sfondo trasparente (o scuro, già fatto)
+        wifiChart.setNoDataTextColor(Color.WHITE)
+
+        wifiChart.axisRight.isEnabled = false
+
+        wifiChart.axisLeft.apply {
+            axisMinimum = -100f
+            axisMaximum = -5f
+            textColor = Color.WHITE       // ✅ Testo asse Y sinistro
+            gridColor = Color.DKGRAY
+        }
+
+        wifiChart.xAxis.apply {
+            position = XAxis.XAxisPosition.BOTTOM
+            textColor = Color.WHITE       // ✅ Testo asse X
+            gridColor = Color.DKGRAY
+            setDrawAxisLine(true)
+            setDrawGridLines(true)
+        }
+
+        wifiChart.legend.apply {
+            textColor = Color.WHITE       // ✅ Testo legenda
+            orientation = Legend.LegendOrientation.HORIZONTAL
+        }
+
+        wifiChart.description.isEnabled = false
+        wifiChart.invalidate()
+
+    }
+
+    private fun setupMagneticChart() {
+        magneticChart.setBackgroundColor(Color.TRANSPARENT)
+        magneticChart.setNoDataTextColor(Color.WHITE)
+        magneticChart.axisRight.isEnabled = false
+
+        magneticChart.axisLeft.apply {
+            axisMinimum = 0f
+            axisMaximum = 150f
+            textColor = Color.WHITE
+            gridColor = Color.DKGRAY
+        }
+
+        magneticChart.xAxis.apply {
+            position = XAxis.XAxisPosition.BOTTOM
+            textColor = Color.WHITE
+            gridColor = Color.DKGRAY
+            setDrawAxisLine(true)
+            setDrawGridLines(true)
+            labelRotationAngle = 0f
+            setDrawLabels(false)  // facoltativo per restare pulito
+        }
+
+        magneticChart.legend.apply {
+            textColor = Color.WHITE
+            orientation = Legend.LegendOrientation.HORIZONTAL
+        }
+
+        magneticChart.description.isEnabled = false
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         gpsStatusHelper.stopListening()
+        val sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        sensorManager.unregisterListener(magneticListener)
     }
 
     override fun onResume() {
         super.onResume()
         gpsStatusHelper.startListening()
+        val sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        val magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+        sensorManager.registerListener(magneticListener, magneticSensor, SensorManager.SENSOR_DELAY_UI)
+
     }
 
     override fun onPause() {
         super.onPause()
         gpsStatusHelper.stopListening()
+        val sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        sensorManager.unregisterListener(magneticListener)
     }
 
 }

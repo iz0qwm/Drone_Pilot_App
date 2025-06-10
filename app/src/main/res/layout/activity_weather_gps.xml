@@ -137,19 +137,98 @@
                 android:gravity="center"
                 android:layout_marginTop="8dp"/>
 
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@android:color/darker_gray"
                 android:layout_marginVertical="8dp" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/hourlyWeatherRecyclerView"
+            <TextView
+                android:id="@+id/wifiScanTitleTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="8dp"
+                android:text="Analisi congestione WiFi (2.4/5 GHz)"
+                android:textColor="#DCDCDC"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
                 android:layout_marginTop="16dp"/>
 
+            <TextView
+                android:id="@+id/wifiScanResultTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Scansione WiFi in corso..."
+                android:textColor="#A9A9A9"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:gravity="center"/>
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/wifiChart"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:layout_marginTop="12dp"
+                />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Questo valore rappresenta il campo magnetico rilevato dal telefono. Un campo troppo alto o basso può compromettere l'affidabilità della bussola elettronica del drone."
+                android:textColor="#808080"
+                android:textSize="12sp"
+                android:paddingBottom="6dp"
+                android:gravity="center"/>
+
+            <TextView
+                android:id="@+id/magnetometerTitleTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Monitor magnetico (bussola elettronica)"
+                android:textColor="#DCDCDC"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginTop="16dp" />
+
+            <TextView
+                android:id="@+id/magneticFieldValueTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Campo magnetico: -- µT"
+                android:textColor="#A9A9A9"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:padding="4dp" />
+
+            <TextView
+                android:id="@+id/magneticFieldStatusTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Analisi interferenze magnetiche..."
+                android:textColor="#DCDCDC"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:padding="4dp" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/magneticChart"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:layout_marginTop="12dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginVertical="8dp" />
 
             <Button
                 android:id="@+id/close_gps_button"
@@ -159,6 +238,14 @@
                 android:layout_marginTop="16dp"
                 android:textColor="@color/button_text_color"
                 android:background="@drawable/rounded_button_red" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/hourlyWeatherRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:layout_marginTop="16dp"/>
+
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
