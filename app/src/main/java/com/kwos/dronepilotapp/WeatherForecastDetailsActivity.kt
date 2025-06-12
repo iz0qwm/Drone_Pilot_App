@@ -4,6 +4,9 @@ package com.kwos.dronepilotapp
 
 import android.content.Intent
 import android.graphics.Color
+import android.location.Geocoder
+import android.location.Geocoder.GeocodeListener
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -85,12 +88,18 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
         val meteogramImage: ImageView = findViewById(R.id.weather_meteogram_general)
         val closeButton: Button = findViewById(R.id.close_weather_button)
         weather_meteogram = findViewById(R.id.weather_meteogram)
+        val locationText: TextView = findViewById(R.id.weather_location_details)
 
         // Recupero le coordinate passate dall'Activity principale
         val lat = intent.getDoubleExtra("LATITUDE", 0.0)
         val lon = intent.getDoubleExtra("LONGITUDE", 0.0)
 
-
+        //Prendo il nome del luogo
+        getLocationName(this, lat, lon) { locationName ->
+            Handler(Looper.getMainLooper()).postDelayed({
+                locationText.text = locationName
+            }, 500)
+        }
 
         hourlyWeatherRecyclerView = findViewById(R.id.hourlyWeatherRecyclerView)
         hourlyWeatherRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -263,6 +272,54 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+    }
+
+    private fun getLocationName(activity: WeatherForecastDetailsActivity, lat: Double, lon: Double, callback: (String) -> Unit) {
+        val geocoder = Geocoder(activity, Locale.getDefault())
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Metodo asincrono per Android 13+
+            geocoder.getFromLocation(lat, lon, 1, object : GeocodeListener {
+                override fun onGeocode(addresses: MutableList<android.location.Address>) {
+                    val locationName = if (addresses.isNotEmpty()) {
+                        val address = addresses[0]
+                        val city = address.locality ?: ""
+                        val country = address.countryName ?: ""
+                        "$city, $country".trim().removePrefix(",")
+                    } else {
+                        "Località sconosciuta"
+                    }
+                    callback(locationName)
+                }
+
+                override fun onError(errorMessage: String?) {
+                    callback("Località non disponibile")
+                }
+            })
+        } else {
+            // Metodo sincrono per versioni precedenti
+            Thread {
+                try {
+                    val addresses = geocoder.getFromLocation(lat, lon, 1)
+                    val locationName = if (!addresses.isNullOrEmpty()) {
+                        val address = addresses[0]
+                        val city = address.locality ?: ""
+                        val country = address.countryName ?: ""
+                        "$city, $country".trim().removePrefix(",")
+                    } else {
+                        "Località sconosciuta"
+                    }
+
+                    activity.runOnUiThread {
+                        callback(locationName)
+                    }
+                } catch (e: Exception) {
+                    activity.runOnUiThread {
+                        callback("Località non disponibile")
+                    }
+                }
+            }.start()
+        }
     }
 }
 

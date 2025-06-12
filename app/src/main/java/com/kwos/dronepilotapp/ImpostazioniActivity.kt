@@ -139,6 +139,7 @@ class ImpostazioniActivity : AppCompatActivity() {
         }
 
         closeButton.setOnClickListener {
+            setResult(Activity.RESULT_OK)
             finish()
         }
 

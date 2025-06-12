@@ -38,6 +38,19 @@
                 android:textColor="#DCDCDC"
                 android:paddingBottom="10dp"/>
 
+            <TextView
+                android:id="@+id/weather_location_details"
+                style="@style/AppTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Località"
+                android:gravity="center"
+                android:textColor="#DCDCDC"
+                android:layout_marginBottom="10dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textSize="18sp" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"

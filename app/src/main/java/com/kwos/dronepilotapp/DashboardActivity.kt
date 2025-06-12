@@ -4,6 +4,7 @@ package com.kwos.dronepilotapp
 import android.Manifest
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -100,6 +101,8 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.Spinner
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.cardview.widget.CardView
 import androidx.core.view.WindowCompat
@@ -123,6 +126,10 @@ import com.kwos.dronepilotapp.FlightZoneLayer
 import com.google.firebase.database.ChildEventListener
 import kotlin.math.roundToInt
 
+// Per import spinner lista droni
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -137,6 +144,9 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var pilotNearAlert: TextView
     private lateinit var lowerLimitTextView: TextView
     private lateinit var droneIdDataManager: OpenDroneIdDataManager
+
+    // Launcher per Activity e passare i droni
+    private lateinit var settingsLauncher: ActivityResultLauncher<Intent>
 
     // Mapper per riconoscere Costruttore e modello di drone
     private lateinit var prefixMap: Map<String, String>
@@ -365,6 +375,13 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         //Partenza listenere per Notifiche messaggi in Group Chat
         listenForGroupChatNotifications()
 
+        // launcher per Impostazioni
+        settingsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                loadDronesForSpinner()  // Funzione da richiamare per ricaricare lo Spinner
+            }
+        }
+
 
         // INIZIO BROADCAST RECEIVER
         messageReceiver = object : BroadcastReceiver() {
@@ -446,19 +463,27 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         weatherButton.setOnClickListener {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                location?.let {
-                    val userLat = it.latitude
-                    val userLon = it.longitude
-
-                    val intent = Intent(this, WeatherForecastActivity::class.java)
-                    intent.putExtra("LATITUDE", userLat) // Inserisci la latitudine reale
-                    intent.putExtra("LONGITUDE", userLon) // Inserisci la longitudine reale
-                    startActivity(intent)
-
+            val latLng = searchMarker?.position
+            if (latLng != null) {
+                val intent = Intent(this, WeatherForecastActivity::class.java)
+                intent.putExtra("LATITUDE", latLng.latitude)
+                intent.putExtra("LONGITUDE", latLng.longitude)
+                startActivity(intent)
+            } else {
+                // Fallback alla posizione attuale
+                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                    location?.let {
+                        val intent = Intent(this, WeatherForecastActivity::class.java)
+                        intent.putExtra("LATITUDE", it.latitude)
+                        intent.putExtra("LONGITUDE", it.longitude)
+                        startActivity(intent)
+                    } ?: run {
+                        Toast.makeText(this, "Posizione non disponibile", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
+
 
         spotButton.setOnClickListener {
             val intent = Intent(this, TakeoffSpotsActivity::class.java)
@@ -481,13 +506,14 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         // Spinner per recupero drone
+        droneSpinner = findViewById(R.id.droneSpinner)
         val uid = FirebaseAuth.getInstance().currentUser?.uid
         if (uid == null) {
             Toast.makeText(this, "Utente non autenticato", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val droneSpinner = findViewById<Spinner>(R.id.droneSpinner)
+        //val droneSpinner = findViewById<Spinner>(R.id.droneSpinner)
 
         FirebaseFirestore.getInstance()
             .collection("pilotProfiles").document(uid)
@@ -1111,7 +1137,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     true
                 }
                 R.id.menu_impostazioni -> {
-                    startActivity(Intent(this, ImpostazioniActivity::class.java))
+                    //startActivity(Intent(this, ImpostazioniActivity::class.java))
+                    settingsLauncher.launch(Intent(this, ImpostazioniActivity::class.java))
                     true
                 }
                 R.id.menu_informazioni -> {
@@ -2586,7 +2613,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-
     override fun onStop() {
         super.onStop()
         // Ferma l'istanza per il flash del menù in caso di messaggi nella Group Chat
@@ -3020,4 +3046,16 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         isFullscreen = !isFullscreen
     }
 
+    // Ricarica lo spinner dei droni al rientro da Impostazioni
+    private fun loadDronesForSpinner() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val dronesRef = Firebase.firestore.collection("pilotProfiles").document(uid).collection("drones")
+
+        dronesRef.get().addOnSuccessListener { result ->
+            val droneNames = result.documents.mapNotNull { it.getString("name") }
+            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, droneNames)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            droneSpinner.adapter = adapter
+        }
+    }
 }
