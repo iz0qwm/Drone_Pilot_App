@@ -27,7 +27,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -40,7 +42,9 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
     private lateinit var weather_meteogram: TextView
 
     private lateinit var hourlyWeatherRecyclerView: RecyclerView
-    private lateinit var hourlyWeatherAdapter: HourlyWeatherAdapter
+    //private lateinit var hourlyWeatherAdapter: HourlyWeatherAdapter
+    private var hourlyWeatherAdapter: HourlyWeatherAdapter? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,58 +105,86 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
             }, 500)
         }
 
+        val windSpeedHeader: TextView = findViewById(R.id.wind_speed_header)
+        val windGustHeader: TextView = findViewById(R.id.wind_gust_header)
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid != null) {
+            FirebaseFirestore.getInstance().collection("users").document(uid).get()
+                .addOnSuccessListener { document ->
+                    val unit = document.getString("vento") ?: "kmh"
+                    val unitLabel = when (unit) {
+                        "kt" -> "kt"
+                        "ms" -> "m/s"
+                        else -> "km/h"
+                    }
+                    windSpeedHeader.text = "Vel. Vento ($unitLabel)"
+                    windGustHeader.text = "Vel. Raff. ($unitLabel)"
+                }
+        }
+
         hourlyWeatherRecyclerView = findViewById(R.id.hourlyWeatherRecyclerView)
         hourlyWeatherRecyclerView.layoutManager = LinearLayoutManager(this)
 
         OpenWeatherManager.getHourlyWeather(lat, lon) { forecastList ->
             runOnUiThread {
                 if (forecastList != null) {
-                    hourlyWeatherAdapter = HourlyWeatherAdapter(forecastList)
-                    hourlyWeatherRecyclerView.adapter = hourlyWeatherAdapter
 
-                    val windProfileTable = findViewById<TableLayout>(R.id.windProfileTable)
-                    val roughness = 0.03
-                    val heights = listOf(10, 50, 100, 200)
+                    //val windProfileTable = findViewById<TableLayout>(R.id.windProfileTable)
+                    //val roughness = 0.03
+                    //val heights = listOf(10, 50, 100, 200)
 
-                    forecastList.take(6).forEach { forecast ->
-                        val hour = forecast.dt.substringAfter(" ")
-                        val wind10 = forecast.windSpeed / 3.6
-                        val gust10 = forecast.windGust / 3.6
-                        val dir = forecast.windDirection
+                    val uid = FirebaseAuth.getInstance().currentUser?.uid
+                    if (uid != null) {
+                        FirebaseFirestore.getInstance().collection("users").document(uid).get()
+                            .addOnSuccessListener { document ->
+                                val unit = document.getString("vento") ?: "kmh"
 
-                        val row = TableRow(this@WeatherForecastDetailsActivity)
-                        val hourText = TextView(this@WeatherForecastDetailsActivity).apply {
-                            text = hour
-                            setPadding(6, 6, 6, 6)
-                        }
-                        row.addView(hourText)
+                                hourlyWeatherAdapter = HourlyWeatherAdapter(forecastList, unit)
+                                hourlyWeatherRecyclerView.adapter = hourlyWeatherAdapter
 
-                        for (z in heights) {
-                            val estimatedSpeed = wind10 * (ln(z / roughness) / ln(10.0 / roughness))
-                            val estimatedGust = gust10 * (ln(z / roughness) / ln(10.0 / roughness))
-                            val speedKmh = (estimatedSpeed * 3.6).roundToInt()
-                            val gustKmh = (estimatedGust * 3.6).roundToInt()
+                                forecastList.take(6).forEach { forecast ->
+                                    val hour = forecast.dt.substringAfter(" ")
+                                    val wind10 = forecast.windSpeed / 3.6 // m/s
+                                    val gust10 = forecast.windGust / 3.6
+                                    val dir = forecast.windDirection
 
-                            val directionArrow = getArrowFromDegrees(dir)
+                                    val row = TableRow(this@WeatherForecastDetailsActivity)
+                                    val hourText = TextView(this@WeatherForecastDetailsActivity).apply {
+                                        text = hour
+                                        setPadding(6, 6, 6, 6)
+                                    }
+                                    row.addView(hourText)
 
-                            val cell = TextView(this@WeatherForecastDetailsActivity).apply {
-                                text = "$speedKmh km/h $directionArrow\n💨 $gustKmh km/h"
-                                setPadding(6, 6, 6, 6)
-                                textAlignment = View.TEXT_ALIGNMENT_CENTER
-                                setTextColor(getColor(android.R.color.black))
-                                setBackgroundColor(getWindColor(speedKmh))
-                                setLines(2) // massimo 2 righe
-                                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                                    for (z in listOf(10, 50, 100, 200)) {
+                                        val estimatedSpeed = wind10 * (ln(z / 0.03) / ln(10.0 / 0.03))
+                                        val estimatedGust = gust10 * (ln(z / 0.03) / ln(10.0 / 0.03))
+                                        val directionArrow = getArrowFromDegrees(dir)
+                                        val speedKmh = (estimatedSpeed * 3.6).roundToInt()
 
-                                isSingleLine = false
-                                ellipsize = null
+                                        val cell = TextView(this@WeatherForecastDetailsActivity).apply {
+                                            val textSpeed = convertWindSpeed(estimatedSpeed * 3.6, unit)
+                                            val textGust = convertWindSpeed(estimatedGust * 3.6, unit)
+
+                                            text = "$textSpeed $directionArrow\n💨 $textGust"
+                                            setPadding(6, 6, 6, 6)
+                                            textAlignment = View.TEXT_ALIGNMENT_CENTER
+                                            setTextColor(getColor(android.R.color.black))
+                                            setBackgroundColor(getWindColor(speedKmh))
+                                            setLines(2)
+                                            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                                            isSingleLine = false
+                                            ellipsize = null
+                                        }
+
+                                        row.addView(cell)
+                                    }
+
+                                    findViewById<TableLayout>(R.id.windProfileTable).addView(row)
+                                }
                             }
-
-                            row.addView(cell)
-                        }
-
-                        windProfileTable.addView(row)
                     }
+
 
                     val riskAlertView = findViewById<TextView>(R.id.wind_risk_alert)
                     val optimalTimesView = findViewById<TextView>(R.id.optimal_flight_times)
@@ -321,6 +353,17 @@ class WeatherForecastDetailsActivity : AppCompatActivity() {
             }.start()
         }
     }
+
+
+    fun convertWindSpeed(kmh: Double, unit: String): String {
+        return when (unit) {
+            "kt" -> String.format("%.1f kt", kmh / 1.852)
+            "ms" -> String.format("%.1f m/s", kmh / 3.6)
+            else -> String.format("%.1f km/h", kmh)
+        }
+    }
+
+
 }
 
 

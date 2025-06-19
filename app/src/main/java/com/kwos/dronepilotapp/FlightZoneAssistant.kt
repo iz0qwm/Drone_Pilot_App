@@ -118,6 +118,17 @@ class FlightZoneAssistant(
             val activeLimit = activeZone.optString("lowerLimit", "120")
             val isNotam = activeZone.optBoolean("isNotam", false)
             val name = activeZone.optString("name", "")
+
+            val codiceZona = name.substringBefore(" ").trim().uppercase()
+            val enrNote = when {
+                codiceZona.startsWith("LIP") -> "Questa zona è classificata come vietata secondo ENR 5.1.1. "
+                codiceZona.startsWith("LIR") -> "Questa zona è classificata come regolamentata secondo ENR 5.1.2. "
+                codiceZona.startsWith("LID") -> "Questa zona è classificata come pericolosa secondo ENR 5.1.3. "
+                codiceZona.startsWith("LIT") -> "Questa zona è classificata come temporaneamente riservata secondo ENR 5.1.4. "
+                codiceZona.startsWith("LIF") -> "Questa zona è un poligono militare secondo ENR 5.2.1. "
+                else -> ""
+            }
+
             val zonaDescrizione = name
                 .replace(Regex("^\\w{2,5}[-_\\s]\\d+\\s*"), "") // rimuove codici tipo SEC-003 o LIR314
                 .replace(Regex("[‘’']"), "'") // normalizza apostrofi strani
@@ -283,7 +294,7 @@ class FlightZoneAssistant(
             }
 
 
-            val finalMessage = intro + zonaTesto + aipNote + detail + periodoAttivazione
+            val finalMessage = intro + zonaTesto + enrNote + aipNote + detail + periodoAttivazione
             //Log.d("DronePilotApp", "🐛 DEBUG: ✉️ Messaggio finale: $finalMessage (${finalMessage::class.simpleName})")
             return finalMessage
 

@@ -32,7 +32,15 @@ import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import android.util.Log
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.ProgressBar
+import android.widget.Spinner
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.data.Entry
+
 
 
 class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -47,6 +55,13 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var summaryDistance: TextView
     private lateinit var summaryMaxSpeed: TextView
     private lateinit var summaryMaxAltitude: TextView
+    private lateinit var signalLegend: TextView
+    private lateinit var parameterSpinner: Spinner
+    private lateinit var voltageChart: LineChart
+    private lateinit var deviationChart: LineChart
+    private lateinit var summarySerials: TextView
+
+
     private var lastParsedJson: JSONObject? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,6 +107,21 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
         summaryDistance = findViewById(R.id.summaryDistance)
         summaryMaxSpeed = findViewById(R.id.summaryMaxSpeed)
         summaryMaxAltitude = findViewById(R.id.summaryMaxAltitude)
+        signalLegend = findViewById(R.id.signalLegend)
+        summarySerials = findViewById(R.id.summarySerials)
+
+
+        voltageChart = findViewById(R.id.voltageChart)
+        deviationChart = findViewById(R.id.deviationChart)
+        voltageChart.setTouchEnabled(true)
+        voltageChart.setPinchZoom(true)
+        voltageChart.setScaleEnabled(true)
+        voltageChart.setDoubleTapToZoomEnabled(true)
+
+        deviationChart.setTouchEnabled(true)
+        deviationChart.setPinchZoom(true)
+        deviationChart.setScaleEnabled(true)
+
 
         fileInfoTextView = TextView(this).apply {
             textSize = 14f
@@ -108,6 +138,23 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
             startActivityForResult(intent, 1234)
         }
 
+
+        // Spinner per cambio parametri analizzati
+        parameterSpinner = findViewById(R.id.parameterSpinner)
+        val parameterOptions = listOf("Segnale Radio", "Satelliti GPS", "Corrente")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, parameterOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        parameterSpinner.adapter = adapter
+
+        parameterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                val selected = parameterOptions[position]
+                updateLegend(selected)
+                lastParsedJson?.let { drawTrajectory(it, selected) }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
 
         // Bottone Istruzioni
         val layout = findViewById<android.widget.LinearLayout>(R.id.droneLogLayout)
@@ -185,7 +232,7 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
             .build()
 
         val request = Request.Builder()
-            .url("http://91.121.90.186:5555/upload")
+            .url("http://91.99.186.16:5555/upload")
             .addHeader("X-API-KEY", "RaDa0707")
             .post(requestBody)
             .build()
@@ -214,6 +261,12 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
                         val maxAltitude = json.optDouble("maxAltitude", 0.0)
                         val batteryStart = json.optInt("batteryStart", -1)
                         val batteryEnd = json.optInt("batteryEnd", -1)
+                        val aircraftSn = json.optString("aircraftSn", "-")
+                        val cameraSn = json.optString("cameraSn", "-")
+                        val rcSn = json.optString("rcSn", "-")
+                        val batterySn = json.optString("batterySn", "-")
+                        val appPlatform = json.optString("appPlatform", "-")
+                        val appVersion = json.optString("appVersion", "-")
 
                         summaryModel.text = "🚁 Drone: $model"
                         summaryDuration.text = "⏱️ Durata: ${durationFormatted}"
@@ -225,8 +278,20 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
                         } else {
                             "🔋 Batteria: -"
                         }
+                        summarySerials.text = """
+                        🔢 Seriali:
+                        • Drone: $aircraftSn
+                        • Camera: $cameraSn
+                        • RC: $rcSn
+                        • Batteria: $batterySn
+                        📱 App: $appPlatform $appVersion
+                        """.trimIndent()
+
+
                         Log.d("DroneLogActivity", "JSON ricevuto: $json")
-                        drawTrajectory(json)
+                        drawTrajectory(json, parameterSpinner.selectedItem.toString())
+                        drawBatteryCharts(json)
+
                         fileInfoTextView.text = "✅ Log interpretato con successo!"
                     } else {
                         fileInfoTextView.text = "❌ Errore upload: ${response.code}"
@@ -312,27 +377,181 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-    private fun drawTrajectory(json: JSONObject) {
-        val trajectoryArray = json.optJSONArray("trajectory") ?: return
-        val path = mutableListOf<LatLng>()
-
-        Log.d("DroneLogActivity", "Trajectory array: $trajectoryArray, size: ${trajectoryArray.length()}")
-        for (i in 0 until trajectoryArray.length()) {
-            val point = trajectoryArray.getJSONObject(i)
-            val lat = point.optDouble("lat", Double.NaN)
-            val lon = point.optDouble("lon", Double.NaN)
-            if (!lat.isNaN() && !lon.isNaN()) {
-                path.add(LatLng(lat, lon))
-            }
+    private fun updateLegend(param: String) {
+        signalLegend.text = when (param) {
+            "Satelliti GPS" -> "🛰️ Satelliti:\n🟢 >18   🟠 15–18   🔴 10–15   🟣 <10"
+            "Corrente" -> "⚡ Corrente Assorbita:\n🟢 <15A   🟠 15–20A   🔴 20–25A   🟣 >25A"
+            else -> "📶 Qualità Segnale:\n🟢 >50%   🟠 31–50%   🔴 11–30%   🟣 0–10%"
         }
+    }
+
+    private fun drawTrajectory(json: JSONObject, parameter: String = "Segnale Radio") {
+        val trajectoryArray = json.optJSONArray("trajectory") ?: return
+        var previousPoint: LatLng? = null
 
         googleMap?.apply {
             clear()
-            addPolyline(PolylineOptions().addAll(path).color(ContextCompat.getColor(this@DroneLogActivity, R.color.purple_700)).width(5f))
-            if (path.isNotEmpty()) {
-                moveCamera(CameraUpdateFactory.newLatLngZoom(path.first(), 16f))
+            for (i in 0 until trajectoryArray.length()) {
+                val point = trajectoryArray.getJSONObject(i)
+                val lat = point.optDouble("lat", Double.NaN)
+                val lon = point.optDouble("lon", Double.NaN)
+                if (!lat.isNaN() && !lon.isNaN()) {
+                    val currentPoint = LatLng(lat, lon)
+                    previousPoint?.let { prev ->
+
+                        //if (parameter == "Satelliti GPS") {
+                        //    Log.d("DJIlog", "gpsNum: ${point.opt("gpsNum")} at index $i")
+                        //}
+
+                        val color = when (parameter) {
+                            "Satelliti GPS" -> getColorForGps(point.optInt("gpsNum", -1).toInt())
+                            "Corrente" -> getColorForCurrent(point.optDouble("current", -1.0))
+                            else -> getColorForSignal(point.optInt("signal", -1))
+                        }
+
+                        addPolyline(
+                            PolylineOptions()
+                                .add(prev, currentPoint)
+                                .color(color)
+                                .width(6f)
+                        )
+                    }
+                    previousPoint = currentPoint
+                }
+            }
+
+            if (trajectoryArray.length() > 0) {
+                val first = trajectoryArray.getJSONObject(0)
+                val lat = first.optDouble("lat", Double.NaN)
+                val lon = first.optDouble("lon", Double.NaN)
+                if (!lat.isNaN() && !lon.isNaN()) {
+                    moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), 16f))
+                }
             }
         }
+    }
+
+    private fun getColorForSignal(signal: Int): Int = when {
+        signal > 50 -> Color.GREEN
+        signal in 31..50 -> Color.rgb(255, 165, 0)
+        signal in 11..30 -> Color.RED
+        signal in 0..10 -> Color.MAGENTA
+        else -> Color.GRAY
+    }
+
+    private fun getColorForGps(gpsNum: Int): Int = when {
+        gpsNum > 18 -> Color.GREEN
+        gpsNum in 15..18 -> Color.rgb(255, 165, 0)
+        gpsNum in 10..14 -> Color.RED
+        gpsNum in 0..9 -> Color.MAGENTA
+        else -> Color.GRAY
+    }
+
+    private fun getColorForCurrent(current: Double): Int = when {
+        current < 15 -> Color.GREEN
+        current < 20 -> Color.rgb(255, 165, 0)
+        current < 25 -> Color.RED
+        current >= 25 -> Color.MAGENTA
+        else -> Color.GRAY
+    }
+
+    private fun drawBatteryCharts(json: JSONObject) {
+        val trajectory = json.optJSONArray("trajectory") ?: return
+        if (trajectory.length() == 0) return
+
+        val cellSeries = mutableMapOf<Int, MutableList<Entry>>()  // cellVoltages[i]
+        val voltageSeries = mutableListOf<Entry>()
+        val percentSeries = mutableListOf<Entry>()
+        val deviationSeries = mutableListOf<Entry>()
+        val thresholdSeries = mutableListOf<Entry>()
+
+        for (i in 0 until trajectory.length()) {
+            val point = trajectory.getJSONObject(i)
+            val time = i.toFloat()
+
+            point.optDouble("voltage", -1.0).takeIf { it > 0 }?.let { voltage ->
+                voltageSeries.add(Entry(time, voltage.toFloat()))
+            }
+
+            point.optInt("batteryPct", -1).takeIf { it >= 0 }?.let { pct ->
+                percentSeries.add(Entry(time, (pct / 100.0f) * 5f)) // Normalizzato per scala visiva
+            }
+
+            point.optDouble("cellDeviation", -1.0).takeIf { it >= 0 }?.let { dev ->
+                deviationSeries.add(Entry(time, dev.toFloat()))
+                thresholdSeries.add(Entry(time, 0.07f))
+            }
+
+            val cells = point.optJSONArray("cellVoltages")
+            if (cells != null) {
+                for (c in 0 until cells.length()) {
+                    val v = cells.optDouble(c, -1.0)
+                    if (v > 0) {
+                        cellSeries.getOrPut(c) { mutableListOf() }.add(Entry(time, v.toFloat()))
+                    }
+                }
+            }
+        }
+
+        // === Voltage chart ===
+        val lineDataVoltage = LineData().apply {
+            val cellColors = listOf(
+                Color.parseColor("#FF5722"), // arancio scuro
+                Color.parseColor("#4CAF50"), // verde
+                Color.parseColor("#2196F3"), // blu
+                Color.parseColor("#9C27B0"), // viola
+                Color.parseColor("#FFC107"), // giallo scuro
+                Color.parseColor("#E91E63"), // rosa
+                Color.parseColor("#009688")  // verde acqua
+            )
+
+            cellSeries.forEach { (cellIndex, entries) ->
+                val color = cellColors[cellIndex % cellColors.size]
+                addDataSet(LineDataSet(entries, "Cella ${cellIndex + 1}").apply {
+                    setColor(color)
+                    lineWidth = 2f
+                    setDrawCircles(false)
+                })
+            }
+
+
+            addDataSet(LineDataSet(voltageSeries, "Totale").apply {
+                color = Color.BLACK
+                lineWidth = 2f
+                setDrawCircles(false)
+            })
+
+            addDataSet(LineDataSet(percentSeries, "% Batteria (scala)").apply {
+                color = Color.MAGENTA
+                lineWidth = 1.5f
+                setDrawCircles(false)
+                enableDashedLine(10f, 5f, 0f)
+            })
+        }
+
+        voltageChart.data = lineDataVoltage
+        voltageChart.description.text = "Tensione Celle + Totale + %"
+        voltageChart.invalidate()
+
+        // === Deviation chart ===
+        val lineDataDeviation = LineData().apply {
+            addDataSet(LineDataSet(deviationSeries, "Deviazione Celle").apply {
+                color = Color.RED
+                lineWidth = 2f
+                setDrawCircles(false)
+            })
+
+            addDataSet(LineDataSet(thresholdSeries, "Soglia 0.07V").apply {
+                color = Color.GRAY
+                lineWidth = 1f
+                enableDashedLine(5f, 5f, 0f)
+                setDrawCircles(false)
+            })
+        }
+
+        deviationChart.data = lineDataDeviation
+        deviationChart.description.text = "Deviazione tra celle"
+        deviationChart.invalidate()
     }
 
     private fun showUploadProgressDialog(): Pair<AlertDialog, Pair<TextView, ProgressBar>> {

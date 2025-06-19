@@ -7,8 +7,11 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import android.graphics.Color
 
-class HourlyWeatherAdapter(private val forecastList: List<HourlyForecast>) :
-    RecyclerView.Adapter<HourlyWeatherAdapter.ViewHolder>() {
+class HourlyWeatherAdapter(
+        private val forecastList: List<HourlyForecast>,
+        private val unit: String
+    ) : RecyclerView.Adapter<HourlyWeatherAdapter.ViewHolder>() {
+
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val timeTextView: TextView = view.findViewById(R.id.timeTextView)
@@ -25,14 +28,24 @@ class HourlyWeatherAdapter(private val forecastList: List<HourlyForecast>) :
         return ViewHolder(view)
     }
 
+    fun convertWindSpeed(kmh: Double): String {
+        return when (unit) {
+            "kt" -> String.format("%.1f", kmh / 1.852)
+            "ms" -> String.format("%.1f", kmh / 3.6)
+            else -> String.format("%.1f", kmh)
+        }
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val forecast = forecastList[position]
         holder.timeTextView.text = forecast.dt
         holder.tempTextView.text = "${forecast.temp}"
         holder.seaLevelTextView.text = "${forecast.pressure}"
         holder.cloudsTextView.text = "${forecast.clouds}"
-        holder.windTextView.text = "${forecast.windSpeed}"
-        holder.rainTextView.text = "${forecast.windGust}"
+        //holder.windTextView.text = "${forecast.windSpeed}"
+        //holder.rainTextView.text = "${forecast.windGust}"
+        holder.windTextView.text = convertWindSpeed(forecast.windSpeed.toDouble())
+        holder.rainTextView.text = convertWindSpeed(forecast.windGust.toDouble())
 
         // Colore per la temperatura
         when {

@@ -22,7 +22,9 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.firestore.FirebaseFirestore
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -110,6 +112,14 @@ class WeatherForecastActivity : AppCompatActivity() {
             }, 500)
         }
 
+        fun convertWindSpeed(kmh: Double, unit: String): String {
+            return when (unit) {
+                "kt" -> String.format("%.1f kt", kmh / 1.852)
+                "ms" -> String.format("%.1f m/s", kmh / 3.6)
+                else -> String.format("%.1f km/h", kmh)
+            }
+        }
+
 
         // Recupera i dati meteo
         MeteoManager.getMeteoData(lat, lon) { meteoData ->
@@ -120,10 +130,22 @@ class WeatherForecastActivity : AppCompatActivity() {
                     temperatureMinText.text = "Min: ${meteoData.temperature_min}"
                     temperatureMaxText.text = "Max: ${meteoData.temperature_max}°C"
 
+                    val uid = FirebaseAuth.getInstance().currentUser?.uid
+                    if (uid != null) {
+                        FirebaseFirestore.getInstance().collection("users").document(uid).get()
+                            .addOnSuccessListener { document ->
+                                val unit = document.getString("vento") ?: "kmh"
+                                windMinText.text = "Min: ${convertWindSpeed(meteoData.wind_speedmin.toDouble(), unit)}"
+                                windMeanText.text = "Med: ${convertWindSpeed(meteoData.wind_speedmean.toDouble(), unit)}"
+                                windMaxText.text = "Max: ${convertWindSpeed(meteoData.wind_speedmax.toDouble(), unit)}"
+                            }
+                    }
+
+
                     // Imposta vento
-                    windMinText.text = "Min: ${meteoData.wind_speedmin}"
-                    windMeanText.text = "Med: ${meteoData.wind_speedmean}"
-                    windMaxText.text = "Max: ${meteoData.wind_speedmax} km/h"
+                    //windMinText.text = "Min: ${meteoData.wind_speedmin}"
+                    //windMeanText.text = "Med: ${meteoData.wind_speedmean}"
+                    //windMaxText.text = "Max: ${meteoData.wind_speedmax} km/h"
 
                     // Imposta umidità
                     humidityText.text = "${meteoData.humidity}%"
@@ -188,6 +210,8 @@ class WeatherForecastActivity : AppCompatActivity() {
                 weatherProgressBar.visibility = View.GONE
 
             }, 1000)
+
+
         }
 
         // Recupera dati alba e tramonto
@@ -289,8 +313,6 @@ private fun getLocationName(activity: WeatherForecastActivity, lat: Double, lon:
             }
         }.start()
     }
-
-
 
 }
 

@@ -1062,6 +1062,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             "7K3" to "Matrice 4T",
             "8HH" to "Matrice 4D",
             "8HG" to "Matrice 4 TD",
+            "986" to "Mavic 4 Pro",
 
             "JD2" to "Dragonfish Lite",
             "JD3" to "Dragonfish Pro",
@@ -1378,6 +1379,15 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             if (userId != null) {
                 openChatWithPilot(userId)
             }
+        }
+
+        // Faccio chiudere tutte le infoWindow dopo un po'
+        mMap.setOnMarkerClickListener { marker ->
+            marker.showInfoWindow()
+            Handler(Looper.getMainLooper()).postDelayed({
+                marker.hideInfoWindow()
+            }, 4000)
+            true // blocca il comportamento di default
         }
 
         // Permette di fare un InfoWindow che gestisce gli a capo

@@ -94,6 +94,28 @@
                             android:layout_height="1dp"
                             android:background="@android:color/darker_gray"
                             android:layout_marginVertical="8dp" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Unità di misura del vento"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:paddingTop="16dp"
+                            android:paddingBottom="4dp" />
+
+                        <Spinner
+                            android:id="@+id/spinnerWindUnit"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/rounded_input"
+                            android:padding="8dp"/>
+
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@android:color/darker_gray"
+                            android:layout_marginVertical="8dp" />
 
 
                         <!-- Avatar del pilota -->

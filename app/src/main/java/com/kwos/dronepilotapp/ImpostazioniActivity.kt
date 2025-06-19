@@ -70,6 +70,7 @@ class ImpostazioniActivity : AppCompatActivity() {
     private val droneList = mutableListOf<Drone>()
     private lateinit var droneAdapter: DroneAdapter
     private lateinit var droneResultLauncher: ActivityResultLauncher<Intent>
+    private lateinit var spinnerWindUnit: Spinner
 
 
 
@@ -121,6 +122,7 @@ class ImpostazioniActivity : AppCompatActivity() {
         textWifiAwareStatus = findViewById(R.id.textWifiAwareStatus)
         textWifiBeaconStatus = findViewById(R.id.textWifiBeaconStatus)
 
+
         val user = auth.currentUser
         if (user != null) {
             textEmail.text = "Email: ${user.email ?: "Non disponibile"}"
@@ -147,10 +149,12 @@ class ImpostazioniActivity : AppCompatActivity() {
             val nuovoNome = editFullName.text.toString().trim()
             val haRadioPMR = checkboxPMR.isChecked
             val nuovaBio = editBio.text.toString().trim()
+            val windUnitSelected = spinnerWindUnit.selectedItem.toString()
 
             val updates = mapOf(
                 "fullName" to nuovoNome,
-                "radioPMR" to haRadioPMR
+                "radioPMR" to haRadioPMR,
+                "vento" to windUnitSelected
             )
 
             val uid = auth.currentUser?.uid
@@ -267,6 +271,25 @@ class ImpostazioniActivity : AppCompatActivity() {
         }
 
 
+        // SPINNER per Unità di misura del vento
+        spinnerWindUnit = findViewById(R.id.spinnerWindUnit)
+
+        val windUnits = listOf("kmh", "kt", "ms")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, windUnits)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerWindUnit.adapter = adapter
+
+        // Caricamento valore attuale da Firestore
+        user?.let {
+            db.collection("users").document(it.uid).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val currentUnit = document.getString("vento") ?: "kmh"
+                        val index = windUnits.indexOf(currentUnit)
+                        if (index >= 0) spinnerWindUnit.setSelection(index)
+                    }
+                }
+        }
 
 
     }

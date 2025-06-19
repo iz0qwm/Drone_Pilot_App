@@ -53,6 +53,17 @@
             android:layout_gravity="center"
             android:background="@drawable/rounded_button_blue" />
 
+        <Spinner
+            android:id="@+id/parameterSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="12dp"
+            android:spinnerMode="dropdown"
+            android:background="@drawable/rounded_button_blue"
+            android:padding="8dp"
+            android:textAlignment="center"/>
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/mapCard"
             android:layout_width="match_parent"
@@ -83,12 +94,89 @@
         </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <TextView
+            android:id="@+id/signalLegend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📶 Qualità Segnale:\n🟢 >50%   🟠 31–50%   🔴 11–30%   🟣 0–10%"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="center_horizontal"
+            />
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
+
+        <TextView
+            android:id="@+id/titleVoltageChart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📊 Andamento Tensione e Celle"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:textColor="#191970" />
+
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/voltageChart"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_marginTop="16dp"
+            />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
+
+        <TextView
+            android:id="@+id/titleDeviationChart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚠️ Deviazione Celle (Soglia 0.07V)"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:textColor="#B71C1C" />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/deviationChart"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_marginTop="16dp"
+            />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
+
+
         <TextView android:id="@+id/summaryModel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🚁 Drone: -" android:textSize="16sp" android:layout_marginTop="8dp" />
         <TextView android:id="@+id/summaryDuration" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⏱️ Durata: -" android:textSize="16sp" />
         <TextView android:id="@+id/summaryBattery" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔋 Batteria: -" android:textSize="16sp" />
         <TextView android:id="@+id/summaryDistance" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📏 Distanza: -" android:textSize="16sp" />
         <TextView android:id="@+id/summaryMaxSpeed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🚀 Velocità Max: -" android:textSize="16sp" />
         <TextView android:id="@+id/summaryMaxAltitude" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🗻 Altezza Max: -" android:textSize="16sp" />
+        <TextView
+            android:id="@+id/summarySerials"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔢 Seriali: -"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            />
+
 
         <Button
             android:id="@+id/sendToMapButton"
