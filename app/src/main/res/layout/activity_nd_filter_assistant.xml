@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Anteprima Camera -->
+    <SurfaceView
+        android:id="@+id/previewSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Overlay informazioni -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#AA000000"
+        android:padding="16dp"
+        android:layout_gravity="top">
+
+        <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <TextView
+            android:id="@+id/instructionsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Seleziona gli FPS del tuo drone\nSeleziona le condizioni del cielo\nGirati in modo da essere a 45° rispetto al Sole\nPosiziona il filtro suggerito davanti alla camera e vedi il risultato"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:paddingBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/fpsSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:popupBackground="#FFFFFF" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Condizioni del cielo:"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:paddingTop="8dp" />
+
+        <Spinner
+            android:id="@+id/skyConditionSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:popupBackground="#FFFFFF" />
+
+
+        <TextView
+            android:id="@+id/shutterValueText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Shutter ideale:"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:paddingTop="8dp" />
+
+        <TextView
+            android:id="@+id/isoValueText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ISO: fissi a 100"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/luminanceValueText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Luminanza: --"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/ndSuggestionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Suggerimento: --"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:paddingTop="4dp" />
+    </LinearLayout>
+</FrameLayout>

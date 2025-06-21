@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import com.kwos.dronepilotapp.data.LogMessageEntry
@@ -33,16 +34,20 @@ class BluetoothReceiver(
             result?.let {
                 val macAddress = it.device.address.uppercase(Locale.US)
 
-                // ATTENZIONE FUNZIONA SOLO CON I DRONETAG
-                val allowedPrefixes = listOf("D0:EA:26")
-
-                if (allowedPrefixes.none { macAddress.startsWith(it) }) {
-                    return
-                }
-
-
                 val scanRecord = it.scanRecord
                 val bytes = scanRecord?.bytes ?: return
+
+                // Supporta Dronetag (D0:EA:26) e TopView Pollicino (E6:43:76)
+                val containsOpenDroneID = bytes.contains(0x0D.toByte())
+                val allowedPrefixes = listOf("D0:EA:26", "E6:43:76")
+
+                if (allowedPrefixes.none { prefix -> macAddress.startsWith(prefix) }) {
+                    if (containsOpenDroneID) {
+                        Toast.makeText(context, "📡 Drone sconosciuto trovato: $macAddress", Toast.LENGTH_LONG).show()
+                        Log.d("DronePilotApp", "🚨 MAC sconosciuto con OpenDroneID: $macAddress")
+                    }
+                    return
+                }
 
                 val logMessageEntry = LogMessageEntry()
                 val timeNano = SystemClock.elapsedRealtimeNanos()

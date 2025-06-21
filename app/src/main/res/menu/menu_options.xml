@@ -19,5 +19,9 @@
         android:id="@+id/menu_drone_log"
         android:title="📁 Drone LogFiles"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_nd_filter"
+        android:title="🎥 Scelta filtro ND"
+        app:showAsAction="never"/>
 
 </menu>

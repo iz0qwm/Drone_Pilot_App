@@ -1154,6 +1154,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     startActivity(Intent(this, DroneLogActivity::class.java))
                     true
                 }
+                R.id.menu_nd_filter -> {
+                    startActivity(Intent(this, NDFilterAssistantActivity::class.java))
+                    true
+                }
 
                 else -> false
             }

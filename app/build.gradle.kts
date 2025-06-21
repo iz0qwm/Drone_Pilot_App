@@ -16,8 +16,8 @@ android {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 41
-        versionName = "2.3.5"
+        versionCode = 42
+        versionName = "2.3.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

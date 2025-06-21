@@ -17,6 +17,22 @@ Questa funzione ti consente di:
 - ✈️ Verificare il comportamento del drone (modello, tempo, altitudine)
 - 🛰️ Salvare la traiettoria su mappa e integrarla con altri dati
 
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/logdivolo_mappe.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">Mappe Segnale radio, GPS e Corrente utilizzata</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/logdivolo_batterie.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">Andamento batterie durante il volo</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/logdivolo_seriali.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">Numeri di serie</div>
+  </div>
+</div>
+
+
 ---
 
 ## 🛠️ Come si usa
