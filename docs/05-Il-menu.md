@@ -51,3 +51,7 @@ Si possono leggere le informazioni riguardanti l'App, il suo funzionamento e inf
 ## 💬 Group chat
 
 La pagina della **Group chat** viene descritta in un'altra sezione del manuale: [Group Chat](07-Group-Chat.md)
+
+## 📁 Drone LogFiles
+
+La pagina che spiega come Importare ed analizzare i **LogFiles DJI** viene descritta in un'altra sezione del manuale: [Drone LogFiles](drone-log-import.md)
