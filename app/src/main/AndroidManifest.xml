@@ -102,6 +102,9 @@
         <activity android:name=".NDFilterAssistantActivity">
             <!-- Puoi aggiungere eventuali intent-filter o altre configurazioni se necessarie -->
         </activity>
+        <activity android:name=".PreFlightChecklistActivity">
+            <!-- Puoi aggiungere eventuali intent-filter o altre configurazioni se necessarie -->
+        </activity>
 
         <activity android:name=".WebViewActivity" />
         <activity android:name=".WebViewWindyActivity" />

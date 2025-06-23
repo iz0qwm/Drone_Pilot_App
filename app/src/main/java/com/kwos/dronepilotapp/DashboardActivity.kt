@@ -124,6 +124,7 @@ import com.kwos.dronepilotapp.FlightZoneLayer
 
 // Per ascoltare il listener dei nuovi messaggi sulla GroupChat
 import com.google.firebase.database.ChildEventListener
+import com.google.firebase.firestore.FieldValue
 import kotlin.math.roundToInt
 
 // Per import spinner lista droni
@@ -215,6 +216,10 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var droneSpinner: Spinner
     private var droneList = listOf<String>()
     private var selectedDrone: String? = null
+
+    // Per la Checklist Pre volo
+    private val CHECKLIST_REQUEST_CODE = 1234
+    private lateinit var checklistLauncher: ActivityResultLauncher<Intent>
 
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
@@ -382,6 +387,16 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
+        // launcher per CheckList
+        checklistLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode == Activity.RESULT_OK) {
+                val safeUserName = userName ?: "Pilota Anonimo"
+                val safeDroneName = selectedDrone ?: "Drone Sconosciuto"
+                if (!safeUserName.isNullOrBlank() && !safeDroneName.isNullOrBlank()) {
+                    startFlight(safeUserName, safeDroneName)
+                }
+            }
+        }
 
         // INIZIO BROADCAST RECEIVER
         messageReceiver = object : BroadcastReceiver() {
@@ -581,26 +596,59 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     FirebaseFirestore.getInstance().collection("piloti").document(uid).set(pilotaAttivo)
                         .addOnSuccessListener {
-                            logDebug(TAG, "✅ Pilota online salvato")
-                            startFlight(safeUserName, safeDroneName)
+                            logDebug(TAG, "✅ Sono in Firebase: Pilota online salvato")
+
+                            // Leggiamo la variabile checklistEnabled dalla raccolta "users"
+                            FirebaseFirestore.getInstance().collection("users").document(uid)
+                                .get()
+                                .addOnSuccessListener { document ->
+                                    val checklistEnabled = document.getBoolean("checklistEnabled") ?: false
+
+                                    if (checklistEnabled) {
+                                        logDebug(TAG, "✅ Sono in Firebase: CheckList Enabled")
+                                        val intent = Intent(this, PreFlightChecklistActivity::class.java)
+                                        checklistLauncher.launch(intent)
+                                    } else {
+                                        logDebug(TAG, "🛫 Premuto Start Flight: $safeUserName - $safeDroneName")
+                                        startFlight(safeUserName, safeDroneName)
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    Toast.makeText(this, "Errore nel controllo delle impostazioni", Toast.LENGTH_SHORT).show()
+                                }
                         }
                         .addOnFailureListener {
                             Toast.makeText(this, "Errore nel salvataggio del pilota online", Toast.LENGTH_SHORT).show()
                         }
+
                 }
             }
 
 
         // ✅ Listener del pulsante "Start Flight"
         startFlightButton.setOnClickListener {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@setOnClickListener
             val safeUserName = userName ?: "Pilota Anonimo"
-            val safeDroneName = droneName ?: "Drone Sconosciuto"
+            val safeDroneName = selectedDrone ?: "Drone Sconosciuto"
 
-            logDebug(TAG, "🛫 Premuto Start Flight: $safeUserName - $safeDroneName")
-            startFlight(safeUserName, safeDroneName)
+            db.collection("users").document(uid).get()
+                .addOnSuccessListener { document ->
+                    val checklistEnabled = document.getBoolean("checklistEnabled") ?: false
+
+                    if (checklistEnabled) {
+                        // Apri l’activity per la checklist
+                        val intent = Intent(this, PreFlightChecklistActivity::class.java)
+                        checklistLauncher.launch(intent)
+                    } else {
+                        // Avvia direttamente il volo
+                        logDebug(TAG, "🛫 Premuto Start Flight: $safeUserName - $safeDroneName")
+                        startFlight(safeUserName, safeDroneName)
+                    }
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Errore nel controllo delle impostazioni", Toast.LENGTH_SHORT).show()
+                }
         }
-
-
 
 
         // Apertura News Dronezine
@@ -3067,9 +3115,51 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
         dronesRef.get().addOnSuccessListener { result ->
             val droneNames = result.documents.mapNotNull { it.getString("name") }
+
             val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, droneNames)
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             droneSpinner.adapter = adapter
+
+            val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+            val ultimoDrone = prefs.getString("ultimoDrone", null)
+
+            val defaultPosition = droneNames.indexOf(ultimoDrone).takeIf { it >= 0 }
+                ?: droneNames.lastIndex.takeIf { droneNames.isNotEmpty() }
+
+            if (defaultPosition != null) {
+                droneSpinner.setSelection(defaultPosition)
+                selectedDrone = droneNames[defaultPosition]
+
+                // 🔄 Salva comunque il nuovo drone come ultimo selezionato
+                prefs.edit().putString("ultimoDrone", selectedDrone).apply()
+            } else {
+                selectedDrone = null
+            }
+
+            droneSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                    selectedDrone = droneNames[position]
+                    prefs.edit().putString("ultimoDrone", selectedDrone).apply()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>) {
+                    selectedDrone = null
+                }
+            }
         }
     }
+
+
+    // Controlla se la Pre Flight Checklist è completa
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == CHECKLIST_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            val safeUserName = userName ?: "Pilota Anonimo"
+            val safeDroneName = selectedDrone ?: "Drone Sconosciuto"
+            startFlight(safeUserName, safeDroneName)
+        }
+    }
+
+
 }

@@ -49,6 +49,7 @@ class ImpostazioniActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private lateinit var checkboxPMR: CheckBox
+    private lateinit var checkboxChecklist: CheckBox
 
     private lateinit var switchDroneId: Switch
     private lateinit var textBluetoothStatus: TextView
@@ -115,6 +116,7 @@ class ImpostazioniActivity : AppCompatActivity() {
         editFullName = findViewById(R.id.editFullName)
         btnSalvaNome = findViewById(R.id.btnSalvaNome)
         checkboxPMR = findViewById(R.id.checkboxPMR)
+        checkboxChecklist = findViewById(R.id.checkboxChecklist)
         closeButton = findViewById(R.id.close_impostazioni_button)
 
         switchDroneId = findViewById(R.id.switchDroneId)
@@ -133,6 +135,8 @@ class ImpostazioniActivity : AppCompatActivity() {
                         editFullName.setText(fullName)
                         val radioPMR = document.getBoolean("radioPMR") ?: false
                         checkboxPMR.isChecked = radioPMR
+                        val checklistEnabled = document.getBoolean("checklistEnabled") ?: true
+                        checkboxChecklist.isChecked = checklistEnabled
                     }
                 }
                 .addOnFailureListener {
@@ -154,7 +158,8 @@ class ImpostazioniActivity : AppCompatActivity() {
             val updates = mapOf(
                 "fullName" to nuovoNome,
                 "radioPMR" to haRadioPMR,
-                "vento" to windUnitSelected
+                "vento" to windUnitSelected,
+                "checklistEnabled" to checkboxChecklist.isChecked
             )
 
             val uid = auth.currentUser?.uid

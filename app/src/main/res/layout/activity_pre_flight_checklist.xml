@@ -1,0 +1,165 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#225f9a">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#225f9a" >
+
+
+        <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+        <TextView
+            android:id="@+id/title_checklist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🛫 Pre-Flight Checklist"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:paddingTop="24dp"
+            android:paddingBottom="16dp" />
+
+        <!-- Documenti -->
+        <TextView
+            android:id="@+id/documenti"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sezione documenti"
+            android:textSize="16sp"
+            android:textColor="#FFFF00"
+            android:padding="8dp"/>
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
+
+        <CheckBox
+            android:id="@+id/cb_autorizzazioni"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📜 Copia del patentino (se necessario)" />
+        <CheckBox
+            android:id="@+id/cb_qrcode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔲 QRCode sul drone" />
+        <CheckBox
+            android:id="@+id/cb_assicurazione"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🛡️ Attestato dell'assicurazione contro terzi" />
+
+        <!-- Meteo -->
+        <TextView
+            android:id="@+id/meteo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sezione meteo, ambiente"
+            android:textSize="16sp"
+            android:textColor="#FFFF00"
+            android:padding="8dp"/>
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
+
+        <CheckBox
+            android:id="@+id/cb_meteo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🌦️ Controllare le condizioni meteo" />
+        <CheckBox
+            android:id="@+id/cb_ostacoli"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="👀 Ispezionare l'area di volo (ostacoli, persone, ecc.)" />
+
+        <!-- Pre on -->
+        <TextView
+            android:id="@+id/preon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Verifiche hardware"
+            android:textSize="16sp"
+            android:textColor="#FFFF00"
+            android:padding="8dp"/>
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
+
+        <CheckBox
+            android:id="@+id/cb_eliche"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔧 Controllare le eliche" />
+        <CheckBox
+            android:id="@+id/cb_batteria"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔋 Controllare il livello della batteria" />
+        <CheckBox
+            android:id="@+id/cb_gimbal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✅ Rimuovere il tappo del gimbal" />
+        <CheckBox
+            android:id="@+id/cb_gimbal_movimenti"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🎥 Assicurarsi che la gimbal si muova con fluidità" />
+
+        <!-- Pre arm -->
+        <TextView
+            android:id="@+id/prearm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Prima di armare i motori"
+            android:textSize="16sp"
+            android:textColor="#FFFF00"
+            android:padding="8dp"/>
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginVertical="8dp" />
+
+        <CheckBox
+            android:id="@+id/cb_gps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🛰️ Buon segnale GPS" />
+        <CheckBox
+            android:id="@+id/cb_rth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🏠 Imposta correttamente l'RTH per mancanza di segnale e batteria scarica" />
+
+
+        <Button
+            android:id="@+id/btn_conferma"
+            android:text="Inizia il volo"
+            android:layout_marginTop="24dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/button_text_color"
+            android:background="@drawable/rounded_button_blue" />
+
+    </LinearLayout>
+</ScrollView>
