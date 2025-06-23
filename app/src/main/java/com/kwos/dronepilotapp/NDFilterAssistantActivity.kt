@@ -49,14 +49,15 @@ class NDFilterAssistantActivity : AppCompatActivity() {
     private val fixedIso = 100
 
     private lateinit var imageReader: ImageReader
-    //private val readerWidth = 320
-    //private val readerHeight = 240
-    private val readerWidth = 160
-    private val readerHeight = 120
+    private val readerWidth = 320
+    private val readerHeight = 240
+    //private val readerWidth = 160
+    //private val readerHeight = 120
 
     private lateinit var skyConditionSpinner: Spinner
     private var skyConditionFactor: Double = 1.0
     private var ndOffset = 0
+    private val luminanceHistory = ArrayDeque<Double>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -172,12 +173,33 @@ class NDFilterAssistantActivity : AppCompatActivity() {
         imageReader = ImageReader.newInstance(readerWidth, readerHeight, ImageFormat.YUV_420_888, 2)
         imageReader.setOnImageAvailableListener({ reader ->
             val image = reader.acquireLatestImage() ?: return@setOnImageAvailableListener
-            val buffer = image.planes[0].buffer
-            val data = ByteArray(buffer.remaining())
-            buffer.get(data)
+
+            val yPlane = image.planes[0]
+            val buffer = yPlane.buffer
+            val rowStride = yPlane.rowStride
+            val pixelStride = yPlane.pixelStride
+
+            var totalY = 0L
+            var count = 0
+
+            for (row in 0 until image.height) {
+                val rowStart = row * rowStride
+                for (col in 0 until image.width) {
+                    val index = rowStart + col * pixelStride
+                    if (index < buffer.capacity()) {
+                        totalY += buffer.get(index).toInt() and 0xFF
+                        count++
+                    }
+                }
+            }
             image.close()
-            val avgY = data.map { it.toInt() and 0xFF }.average()
-            runOnUiThread { updateExposureFeedback(avgY) }
+            if (count > 0) {
+                val avgY = totalY.toDouble() / count
+                runOnUiThread { updateExposureFeedback(avgY) }
+            }
+
+
+
         }, backgroundHandler)
 
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
@@ -213,6 +235,7 @@ class NDFilterAssistantActivity : AppCompatActivity() {
                     captureSession = session
                     try {
                         session.setRepeatingRequest(previewRequestBuilder.build(), null, backgroundHandler)
+                        startThrottledPreview(session)
                     } catch (e: IllegalStateException) {
                         e.printStackTrace()
                     }
@@ -233,16 +256,21 @@ class NDFilterAssistantActivity : AppCompatActivity() {
                     e.printStackTrace()
                     return
                 }
-                backgroundHandler?.postDelayed(this, 125)
+                backgroundHandler?.postDelayed(this, 500)
             }
         })
     }
 
     private fun updateExposureFeedback(avgY: Double) {
-        val suggestion = ndSuggestionFromLuminance(avgY)
+        if (luminanceHistory.size >= 5) luminanceHistory.removeFirst()
+        luminanceHistory.addLast(avgY)
+        val smoothedY = luminanceHistory.average()
+
+        val suggestion = ndSuggestionFromLuminance(smoothedY)
         suggestionTextView.text = suggestion
-        luminanceValueText.text = "Luminanza: ${"%.2f".format(avgY)}"
+        luminanceValueText.text = "Luminanza: ${"%.2f".format(smoothedY)}"
     }
+
 
     private fun ndSuggestionFromLuminance(avgY: Double): String {
         val adjustedY = avgY / skyConditionFactor
@@ -267,11 +295,11 @@ class NDFilterAssistantActivity : AppCompatActivity() {
     }
 
 
-
     override fun onResume() {
         super.onResume()
         backgroundThread = HandlerThread("Camera2Background").also { it.start() }
         backgroundHandler = Handler(backgroundThread!!.looper)
+        //backgroundHandler?.post(refreshRequestRunnable)
     }
 
     override fun onPause() {
@@ -283,4 +311,20 @@ class NDFilterAssistantActivity : AppCompatActivity() {
         backgroundThread = null
         backgroundHandler = null
     }
+
+    private val refreshRequestRunnable = object : Runnable {
+        override fun run() {
+            if (::previewRequestBuilder.isInitialized && captureSession != null) {
+                try {
+                    previewRequestBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, currentExposureNs) // Reinserisce il tempo anche se è lo stesso
+                    captureSession?.setRepeatingRequest(previewRequestBuilder.build(), null, backgroundHandler)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            // Richiama se stesso ogni 5 secondi
+            backgroundHandler?.postDelayed(this, 5000)
+        }
+    }
+
 }
