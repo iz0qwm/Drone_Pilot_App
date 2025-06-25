@@ -57,7 +57,6 @@ Se noti che la luminanza rilevata diventa anomala:
 
 🛠️ _Questa funzione è in evoluzione: nelle prossime versioni considererà altri parametri tecnici per offrire un’assistenza ND ancora più professionale._
 
-
 ---
 
 ## 📋 Tabella riassuntiva dei filtri ND
