@@ -78,6 +78,7 @@ Se noti che la luminanza rilevata diventa anomala:
     <div style="margin-top: 8px;">🕶️ Con filtro davanti alla camera</div>
   </div>
 </div>
+
 ---
 
 🛠️ _Questa funzione è in evoluzione: nelle prossime versioni considererà altri parametri tecnici per offrire un’assistenza ND ancora più professionale._
