@@ -56,3 +56,43 @@ Se noti che la luminanza rilevata diventa anomala:
 ---
 
 🛠️ _Questa funzione è in evoluzione: nelle prossime versioni considererà altri parametri tecnici per offrire un’assistenza ND ancora più professionale._
+
+
+---
+
+## 📋 Tabella riassuntiva dei filtri ND
+
+| ☀️ Condizione di luce           | 🔢 Filtro ND consigliato | 🎯 Situazione tipica                       |
+|-------------------------------|--------------------------|-------------------------------------------|
+| Molto buio / Interni          | ND2 o nessun filtro      | Riprese al tramonto, interni o in ombra   |
+| Cielo coperto / alba / tramonto | ND4                     | Mattina presto o luce diffusa             |
+| Parzialmente soleggiato       | ND8                      | Luce naturale non diretta                 |
+| Sole pieno, luce intensa      | ND16                     | Mezzogiorno con cielo limpido             |
+| Sole forte + superfici riflettenti | ND32                | Mare, neve, paesaggi molto aperti         |
+| Estremamente luminoso (es. deserto, spiaggia) | ND64        | Massima luce estiva, a mezzogiorno        |
+
+📌 _Nota: La scelta dipende anche da ISO e shutter speed. Questa è solo una guida indicativa._
+
+---
+
+## 🎬 Esempi pratici
+
+- **Scenario 1**: voli al tramonto con luce calda e diffusa  
+  → 👉 ND4 o ND8
+
+- **Scenario 2**: riprese in una giornata nuvolosa ma luminosa  
+  → 👉 ND8
+
+- **Scenario 3**: video in spiaggia alle 13:00 con sole a picco  
+  → 👉 ND32 o ND64
+
+- **Scenario 4**: decolli da una zona d’ombra per poi salire verso il sole  
+  → 👉 ND16 in media, ma attenzione all’effetto *ghost*
+
+- **Scenario 5**: voli invernali su paesaggi innevati con cielo terso  
+  → 👉 ND32 o ND64 per evitare sovraesposizioni
+
+---
+
+🎯 _Ricorda: l’obiettivo è mantenere lo shutter vicino al doppio del frame rate (es. 1/60 per 30fps), per un effetto cinema fluido._
+
