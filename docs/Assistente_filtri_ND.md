@@ -20,6 +20,13 @@ All'interno della schermata **Scelta filtro ND** della Drone Pilot App:
 - l’app suggerisce il filtro ND più adatto: ND4, ND8, ND16, ND32 o ND64;
 - un **commento testuale e icona** spiegano il suggerimento (es. "🌞 ND32 necessario").
 
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/ND_filter_01.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Finestra principale</div>
+  </div>
+</div>
+
 ---
 
 ## ⚠️ Attenzione: l'effetto *ghost* della luminanza
@@ -57,7 +64,20 @@ Se noti che la luminanza rilevata diventa anomala:
 
 **Ricordati**, oltre ad installare il filtro sul drone, **di impostare la ripresa in Manuale**, g**li FPS come quelli selezionati durante la misura** e lo **shutter speed come quello suggerito in giallo**.
 
-
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/ND_filter_02.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">⛅ Condizioni del cielo</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/ND_filter_03.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 FPS di registrazione</div>
+  </div>
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/ND_filter_04.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">🕶️ Con filtro davanti alla camera</div>
+  </div>
+</div>
 ---
 
 🛠️ _Questa funzione è in evoluzione: nelle prossime versioni considererà altri parametri tecnici per offrire un’assistenza ND ancora più professionale._
