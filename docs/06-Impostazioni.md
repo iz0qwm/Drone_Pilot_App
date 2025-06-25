@@ -69,7 +69,8 @@ Questa sezione è pensata per aumentare la sicurezza e ridurre gli imprevisti in
 
 ## ✈️ Come accedere
 
-Dalla dashboard principale, puoi accedere alla **Preflight Checklist** selezionando l'apposita voce o icona 🛠️. Ti verrà mostrato un elenco di controlli da spuntare prima di procedere.
+Se l'hai abilitata nel menù ⚙️ Impostazioni, ti verrà richiesto di compilare la **Preflight Checklist** ogni qualvolta premerai il tasto **Inizia Volo** sulla dashboard principale . 
+Ti verrà mostrato un elenco di controlli da spuntare prima di procedere.
 
 ## 📋 Elenco controlli disponibili
 
@@ -78,7 +79,7 @@ Ecco i punti che vengono richiesti nella checklist:
 - ✅ **Verifica Gimbal** – Controlla che il gimbal sia fisicamente integro.
 - ✅ **Movimenti Gimbal** – Assicurati che si muova liberamente e senza ostacoli.
 - ✅ **QR Code drone** – Verifica che il QR code identificativo sia leggibile.
-- ✅ **Batteria drone** – Controlla il livello di carica e lo stato della batteria.
+- ✅ **Batteria drone** – Controlla il livello di carica e lo stato della batteria
 - ✅ **Condizioni Meteo** – Accertati che le condizioni atmosferiche siano favorevoli.
 - ✅ **Eliche** – Verifica che siano montate correttamente e non danneggiate.
 - ✅ **Segnale GPS** – Assicurati che il numero di satelliti sia sufficiente.
