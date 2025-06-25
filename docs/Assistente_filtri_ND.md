@@ -40,18 +40,23 @@ Se noti che la luminanza rilevata diventa anomala:
 
 ---
 
-## ✅ Consigli pratici
+## ✅ Procedura operativa
 
-- **Durante la misura tieni bene ferma la mano** per evitare oscillazioni.
+**Evita movimenti troppo rapidi tra aree molto buie e molto luminose**.
+**Durante la misura tieni bene ferma la mano** per evitare oscillazioni.
+
 - Punta la camera del telefono tra i 45° e i 90° rispetto alla posizione del Sole.
+- Scegli gli FPS con cui effettuerai la ripresa: _24, 25, 30, 50, 60_
+- Scegli le condizioni del cielo:_☀️ Sole pieno_,_⛅ Qualche nuvola_ o _☁️ Cielo coperto_
 - Leggi il valore del filtro che ti consiglia
-- Esci dalla finestra **Scelta del filtro ND**
-- Prendi il filtro
+- Esci dalla funzione **Scelta del filtro ND**
+- Prendi il filtro suggerito
 - Rientra nella finestra **Scelta del filtro ND** 
 - Riposiziona il telefono tra i 45° e i 90° rispetto alla posizione del Sole.
-- Posizione il filtro davanti alla camera e dovresti leggere: **Non è necessario alcun filtro o quello che hai va bene**
+- Posiziona il filtro davanti alla camera e dovresti leggere: _💡 Nessun filtro necessario o quello attuale va bene_
 
-- Evita movimenti troppo rapidi tra aree molto buie e molto luminose.
+**Ricordati**, oltre ad installare il filtro sul drone, **di impostare la ripresa in Manuale**, g**li FPS come quelli selezionati durante la misura** e lo **shutter speed come quello suggerito in giallo**.
+
 
 ---
 
