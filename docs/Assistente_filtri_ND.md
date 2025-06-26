@@ -13,16 +13,22 @@ Più è alto il numero del filtro (ND4, ND8, ND16…), **più luce viene bloccat
 ---
 
 ## 📸 Perché l’immagine sembra (o è) sovraesposta?
-Durante l'utilizzo dell'assistente alla scelta del filtro ND, l'immagine inquadrata può apparire molto luminosa o addirittura sovraesposta. 
-Questo comportamento non è un errore, ma una scelta intenzionale e utile per individuare il filtro corretto.
 
-🎯 Infatti, l'app utilizza parametri di esposizione fissi e controllati, simulando la situazione reale in cui si desidera mantenere un certo valore di shutter speed per ottenere un video fluido (tipicamente con la regola dei 180°, ovvero tempo di esposizione = 1 / (2 × FPS)).
+Durante l'utilizzo dell'assistente alla scelta del filtro ND, **l'immagine inquadrata può apparire molto luminosa o addirittura sovraesposta**. Questo comportamento non è un errore, ma una **scelta intenzionale e utile** per individuare il filtro corretto.
 
-🕶️ Il filtro ND ha proprio il compito di ridurre la quantità di luce che entra nell'obiettivo, senza modificare gli altri parametri di scatto (ISO e tempo di esposizione). Se non si usa alcun filtro ND, l’immagine risulterà inevitabilmente sovraesposta quando la scena è molto luminosa — come nelle riprese in pieno sole.
+🎯 Infatti, l'app utilizza parametri di esposizione **fissi e controllati**, simulando la situazione reale in cui si desidera mantenere un certo valore di shutter speed per ottenere un video fluido (tipicamente con la regola dei 180°, ovvero tempo di esposizione = 1 / (2 × FPS)).
 
-💡 Ecco perché l’assistente mostra volutamente l'immagine così com’è, senza “correggere” automaticamente l’esposizione: in questo modo puoi vedere con i tuoi occhi che è necessario un filtro per riportare la scena alla corretta luminosità.
+🕶️ **Il filtro ND ha proprio il compito di ridurre la quantità di luce** che entra nell'obiettivo, senza modificare gli altri parametri di scatto (ISO e tempo di esposizione). **Se non si usa alcun filtro ND, l’immagine risulterà inevitabilmente sovraesposta** quando la scena è molto luminosa — come nelle riprese in pieno sole.
 
-🔧 Nota pratica: Quando posizioni il filtro ND suggerito davanti alla fotocamera dello smartphone, l’immagine dovrebbe tornare visivamente bilanciata. Se resta ancora troppo chiara, potrebbe essere necessario un filtro di intensità maggiore. Se invece diventa troppo scura, valuta un ND più leggero.
+💡 Ecco perché l’assistente mostra volutamente l'immagine così com’è, **senza “correggere” automaticamente l’esposizione**: in questo modo puoi vedere con i tuoi occhi che è necessario un filtro per riportare la scena alla corretta luminosità.
+
+---
+
+### 🔧 Nota pratica
+
+Quando posizioni il filtro ND suggerito davanti alla fotocamera dello smartphone, **l’immagine dovrebbe tornare visivamente bilanciata**.  
+Se resta ancora troppo chiara, potrebbe essere necessario un filtro di intensità maggiore.  
+Se invece diventa troppo scura, valuta un ND più leggero.
 
 ---
 
