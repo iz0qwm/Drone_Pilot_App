@@ -1,0 +1,219 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#191970"
+    android:fitsSystemWindows="true">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aggiungi Documento"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#f4f4f4"
+                android:gravity="center"
+                android:padding="10dp" />
+
+            <EditText
+                android:id="@+id/editTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Titolo del documento"
+                android:background="@drawable/rounded_input"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tipo documento"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"/>
+
+
+            <EditText
+                android:id="@+id/editType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Tipo (es. Assicurazione)"
+                android:background="@drawable/rounded_input"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="N. Polizza o Identificativo"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"/>
+
+
+            <EditText
+                android:id="@+id/editPolicyNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="N. Polizza o Identificativo"
+                android:background="@drawable/rounded_input"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="N. Tessera (se esiste)"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
+                android:id="@+id/editTesseraNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="N. Tessera (se esiste)"
+                android:background="@drawable/rounded_input"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Scadenza"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
+                android:id="@+id/editExpiryDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Data di scadenza (gg-MM-aaaa)"
+                android:background="@drawable/rounded_input"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Link rinnovo"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"/>
+
+            <!-- Modalità modifica -->
+            <EditText
+                android:id="@+id/editRenewalUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Link per il rinnovo (opzionale)"
+                android:background="@drawable/rounded_input"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textColorHint="#888"
+                android:layout_marginTop="8dp"
+                android:visibility="visible" />
+
+            <!-- Modalità lettura -->
+            <TextView
+                android:id="@+id/textRenewalUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#00BFFF"
+                android:textSize="14sp"
+                android:paddingTop="8dp"
+                android:autoLink="web"
+                android:visibility="gone" />
+
+
+            <Button
+                android:id="@+id/btnCaricaFile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📎 Carica file"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_green"
+                android:textAllCaps="false"
+                android:layout_marginTop="12dp" />
+
+            <ImageView
+                android:id="@+id/previewFile"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/pdfDownloadLink"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📄 Scarica il documento originale"
+                android:textColor="#00BFFF"
+                android:textSize="16sp"
+                android:paddingTop="8dp"
+                android:visibility="gone"
+                android:autoLink="web" />
+
+            <Button
+                android:id="@+id/btnSalvaDocumento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="💾 Salva Documento"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue"
+                android:textAllCaps="false"
+                android:layout_marginTop="12dp" />
+
+            <Button
+                android:id="@+id/btnDeleteDocumento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🗑️ Elimina documento"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_red"
+                android:textAllCaps="false"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btnChiudiDocumento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="❌ Chiudi"
+                android:textColor="@color/button_text_color"
+                android:background="@drawable/rounded_button_blue"
+                android:textAllCaps="false"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

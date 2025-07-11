@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/couponLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#191970"
+    android:padding="24dp"
+    android:gravity="center_horizontal">
+
+    <!-- Spazio iniziale -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp" />
+
+    <!-- Titolo -->
+    <TextView
+        android:id="@+id/title"
+        android:text="🎁 Sconto Dronezine"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="16dp"
+        android:paddingHorizontal="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- Descrizione -->
+    <TextView
+        android:id="@+id/description"
+        android:text="2€ di sconto per Libri, Riviste, Manuali e Assicurazione su https://www.dronezine.it/"
+        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="24dp"
+        android:paddingHorizontal="8dp"
+        android:autoLink="web"
+        android:linksClickable="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- Label codice -->
+    <TextView
+        android:text="Codice coupon:"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- Codice -->
+    <TextView
+        android:id="@+id/couponCode"
+        android:text="TSDRFM2E"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:padding="8dp"
+        android:background="@drawable/coupon_background"
+        android:textColor="#F44336"
+        android:layout_marginBottom="24dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- Checkbox per disattivare -->
+    <CheckBox
+        android:id="@+id/checkboxNoMore"
+        android:text="Non mostrare più questo messaggio"
+        android:textColor="#FFFFFF"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- Pulsante -->
+    <Button
+        android:id="@+id/buttonOk"
+        android:text="Chiudi"
+        android:layout_marginTop="24dp"
+        android:textColor="@color/button_text_color"
+        android:background="@drawable/rounded_button_blue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>

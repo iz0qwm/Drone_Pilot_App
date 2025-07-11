@@ -16,8 +16,8 @@ android {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 43
-        versionName = "2.3.7"
+        versionCode = 44
+        versionName = "2.3.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -117,7 +117,9 @@ dependencies {
     // Grafico reti WiFi
     //implementation (name = "MPAndroidChart-v3.1.0", ext = "aar")
     implementation(files("libs/MPAndroidChart-v3.1.0.aar"))
-
+    //per leggere il PDF
+    //implementation("com.tom_roush:pdfbox-android:2.0.27.0")
+    implementation(files("libs/pdfbox-android-2.0.27.0.aar"))
 
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)

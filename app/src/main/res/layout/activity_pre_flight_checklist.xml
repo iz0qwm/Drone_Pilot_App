@@ -77,6 +77,13 @@
             android:layout_marginVertical="8dp" />
 
         <CheckBox
+            android:id="@+id/cb_zonevolo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🗺️ Controlla se il volo è consentito nella zona scelta e qual è l'altezza massima prevista in categoria Open"
+            />
+
+        <CheckBox
             android:id="@+id/cb_meteo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

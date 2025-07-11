@@ -66,6 +66,7 @@ class PreFlightChecklistActivity : AppCompatActivity() {
             findViewById(R.id.cb_autorizzazioni),
             findViewById(R.id.cb_assicurazione),
             findViewById(R.id.cb_ostacoli),
+            findViewById(R.id.cb_zonevolo),
             findViewById(R.id.cb_rth)
         )
 

@@ -23,5 +23,9 @@
         android:id="@+id/menu_nd_filter"
         android:title="🎥 Scelta filtro ND"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/menu_quiz"
+        android:title="📚 Test patentino"
+        app:showAsAction="never"/>
 
 </menu>

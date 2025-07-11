@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center"
+    android:background="#fdf6e3">
+    <!-- SPAZIO VUOTO PER ABBASSARE DI POCO !-->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp" />
+
+
+    <ImageView
+        android:id="@+id/alertIcon"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:src="@drawable/ic_document_alert"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:id="@+id/alertText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📅 Documento in scadenza"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginBottom="24dp" />
+
+    <CheckBox
+        android:id="@+id/ackCheckbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="✅ Non mostrare più questo avviso fino alla prossima soglia (30, 15, 5 giorni)"
+        android:textColor="#444444"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/okButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="✅ Ok"
+        android:backgroundTint="#888888"
+        android:textColor="#FFFFFF"
+        android:textAllCaps="false"
+        android:background="@drawable/rounded_button_yellow"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/openDocsButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📁 Vai ai miei documenti"
+        android:backgroundTint="#005BAC"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/rounded_button_blue"
+        android:layout_marginHorizontal="14dp"
+        android:textAllCaps="false" />
+</LinearLayout>

@@ -53,7 +53,6 @@ import kotlinx.coroutines.*
 import androidx.activity.OnBackPressedCallback
 import android.app.AlertDialog
 import android.content.res.Resources
-import android.view.MotionEvent
 import android.widget.ImageView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.io.File
@@ -65,7 +64,6 @@ import androidx.annotation.RequiresPermission
 // per il padding
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.firebase.database.DataSnapshot
@@ -92,9 +90,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
-import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
-import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -120,16 +116,15 @@ import java.util.Calendar
 
 
 // Per i layers su google maps
-import com.kwos.dronepilotapp.FlightZoneLayer
 
 // Per ascoltare il listener dei nuovi messaggi sulla GroupChat
 import com.google.firebase.database.ChildEventListener
-import com.google.firebase.firestore.FieldValue
-import kotlin.math.roundToInt
 
 // Per import spinner lista droni
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.kwos.dronepilotapp.QuizHomeActivity
+import java.text.SimpleDateFormat
 
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -221,6 +216,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private val CHECKLIST_REQUEST_CODE = 1234
     private lateinit var checklistLauncher: ActivityResultLauncher<Intent>
 
+    // Pressione OK per scadenza documenti
+    private var alertAlreadyShownThisSession = false
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -517,6 +514,21 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             // faccio logout
             logout()
+        }
+
+
+        // Controllo presenza Coupon
+        val promoPrefs = getSharedPreferences("promo_prefs", MODE_PRIVATE)
+        val showCoupon = promoPrefs.getBoolean("showDronezineCoupon", true)
+
+        if (showCoupon) {
+            Firebase.firestore.collection("coupons").document("dronezine").get()
+                .addOnSuccessListener { document ->
+                    val active = document.getBoolean("active") ?: false
+                    if (active) {
+                        startActivity(Intent(this, CouponActivity::class.java))
+                    }
+                }
         }
 
 
@@ -1044,6 +1056,106 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     /// INIZIO FUNZIONI
 
+
+    // Controllo scadenza documenti
+    private fun checkDocumentExpirations() {
+        val TAG = "DocExpiryCheck"
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val alertThresholds = listOf(5, 15, 30, 60)
+        val today = Calendar.getInstance()
+
+        Log.d(TAG, "🔍 Inizio controllo scadenze documenti")
+
+        FirebaseFirestore.getInstance()
+            .collection("pilotProfiles").document(uid)
+            .collection("documents")
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val expiryStr = document.getString("expiryDate") ?: continue
+                    val title = document.getString("title") ?: "Documento"
+                    val docId = document.id
+
+                    try {
+                        val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+                        val expiryDate = sdf.parse(expiryStr)
+                        if (expiryDate == null) {
+                            Log.d(TAG, "⛔️ Data non parsabile per $title ($expiryStr)")
+                            continue
+                        }
+
+                        val millisPerDay = 1000 * 60 * 60 * 24
+                        val diffDays = ((expiryDate.time - today.timeInMillis + millisPerDay / 2) / millisPerDay).toInt()
+                        Log.d(TAG, "📆 Documento $title → $diffDays giorni alla scadenza")
+
+                        val threshold = alertThresholds.find { diffDays <= it } ?: continue
+                        Log.d(TAG, "📄 $title entra nella soglia $threshold")
+
+                        val acknowledged = document.getBoolean("acknowledgedExpiryAlert") ?: false
+                        val lastAckDays = document.getLong("lastAcknowledgedDays")?.toInt() ?: Int.MIN_VALUE
+
+                        if (acknowledged && threshold < lastAckDays) {
+                            Log.d(TAG, "🔁 Reset acknowledgment (da $lastAckDays a $threshold giorni)")
+
+                            val docRef = FirebaseFirestore.getInstance()
+                                .collection("pilotProfiles").document(uid)
+                                .collection("documents").document(docId)
+
+                            docRef.update(
+                                mapOf(
+                                    "acknowledgedExpiryAlert" to false,
+                                    "lastAcknowledgedThreshold" to null
+                                )
+                            ).addOnSuccessListener {
+                                Log.d(TAG, "✅ Reset completato. Mostro alert per $title")
+                                if (!alertAlreadyShownThisSession) {
+                                    alertAlreadyShownThisSession = true
+                                    showDocumentExpiryAlert(docId, expiryStr, title)
+                                }
+                                getSharedPreferences("prefs", MODE_PRIVATE)
+                                    .edit().putBoolean("hasExpiringDocs", true).apply()
+                            }
+                            break
+                        }
+
+                        if (!acknowledged) {
+                            Log.d(TAG, "⚠️ Documento $title non acknowledged: mostro alert")
+
+                            if (!alertAlreadyShownThisSession) {
+                                alertAlreadyShownThisSession = true
+                                showDocumentExpiryAlert(docId, expiryStr, title)
+                            }
+
+                            getSharedPreferences("prefs", MODE_PRIVATE)
+                                .edit().putBoolean("hasExpiringDocs", true).apply()
+                            break
+                        }
+
+                    } catch (e: Exception) {
+                        Log.e(TAG, "❌ Errore parsing data per $title: ${e.message}")
+                    }
+                }
+            }
+    }
+
+
+
+
+
+
+
+
+    private fun showDocumentExpiryAlert(documentId: String, expiryDate: String, title: String) {
+        val intent = Intent(this, DocumentoAlertActivity::class.java).apply {
+            putExtra("documentId", documentId)
+            putExtra("expiryDate", expiryDate)
+            putExtra("documentTitle", title)
+        }
+        startActivity(intent)
+    }
+
+
+
     // Traiettorie di diverso colore per voli droni
     private fun getColorFromHue(hue: Float): Int {
         val hsv = floatArrayOf(hue, 1f, 1f)
@@ -1172,6 +1284,17 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val popupMenu = PopupMenu(this, view)
         popupMenu.menuInflater.inflate(R.menu.menu_options, popupMenu.menu)
 
+        // Controllo scadenza documenti
+        // Controlla se c'è un documento in scadenza segnalato nei preferences
+        val hasExpiring = getSharedPreferences("prefs", MODE_PRIVATE)
+            .getBoolean("hasExpiringDocs", false)
+
+        if (hasExpiring) {
+            val itemImpostazioni = popupMenu.menu.findItem(R.id.menu_impostazioni)
+            itemImpostazioni?.title = "⚙️ Impostazioni ✳️"
+        }
+
+
         // 🔄 Cambia il titolo della voce Group Chat se ci sono nuovi messaggi
         if (nuovoMessaggioGruppoPresente) {
             val groupChatItem = popupMenu.menu.findItem(R.id.menu_group_chat)
@@ -1204,6 +1327,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
                 R.id.menu_nd_filter -> {
                     startActivity(Intent(this, NDFilterAssistantActivity::class.java))
+                    true
+                }
+                R.id.menu_quiz -> {
+                    val intent = Intent(this, QuizHomeActivity::class.java)
+                    startActivity(intent)
                     true
                 }
 
@@ -2383,6 +2511,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         //
         val user = FirebaseAuth.getInstance().currentUser
         leggiLogin()
+        checkDocumentExpirations()
+
 
         auth.currentUser?.getIdToken(true)?.addOnCompleteListener { task ->
             if (task.isSuccessful) {

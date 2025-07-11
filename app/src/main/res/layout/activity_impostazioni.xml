@@ -108,6 +108,21 @@
                             android:layout_height="1dp"
                             android:background="@android:color/darker_gray"
                             android:layout_marginVertical="8dp" />
+
+                        <CheckBox
+                            android:id="@+id/checkboxCoupon"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Visualizza i coupon al login"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginBottom="8dp" />
+
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@android:color/darker_gray"
+                            android:layout_marginVertical="8dp" />
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -205,6 +220,50 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="➕ Aggiungi drone"
+                            android:textAllCaps="false"
+                            android:layout_marginBottom="24dp"
+                            android:textColor="@color/button_text_color"
+                            android:background="@drawable/rounded_button_blue" />
+
+                        <!-- Sezione documenti -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="16dp"
+                            android:paddingBottom="4dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="I miei documenti"
+                                    android:textSize="16sp"
+                                    android:textColor="#FFFFFF" />
+
+                                <TextView
+                                    android:id="@+id/textAlertDocumento"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="  (Uno in scadenza)"
+                                    android:textSize="14sp"
+                                    android:textColor="#FF4444"
+                                    android:visibility="gone" />
+                        </LinearLayout>
+
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerDocumenti"
+                            android:layout_width="match_parent"
+                            android:layout_height="150dp"
+                            android:background="@android:color/white"
+                            android:layout_marginBottom="8dp" />
+
+                        <Button
+                            android:id="@+id/btnAggiungiDocumento"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="➕ Aggiungi documento"
                             android:textAllCaps="false"
                             android:layout_marginBottom="24dp"
                             android:textColor="@color/button_text_color"

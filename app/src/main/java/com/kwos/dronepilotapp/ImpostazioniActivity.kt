@@ -23,6 +23,7 @@ import android.util.Log
 import com.kwos.dronepilotapp.data.AircraftObject
 import com.kwos.dronepilotapp.droneid.OpenDroneIdDataManager
 import android.app.Activity
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.net.Uri
 import android.provider.MediaStore
@@ -38,7 +39,8 @@ import com.kwos.dronepilotapp.DroneAdapter
 import com.kwos.dronepilotapp.models.Drone
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-
+import com.kwos.dronepilotapp.DocumentiAdapter
+import com.kwos.dronepilotapp.models.Documento
 
 class ImpostazioniActivity : AppCompatActivity() {
 
@@ -73,6 +75,16 @@ class ImpostazioniActivity : AppCompatActivity() {
     private lateinit var droneResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var spinnerWindUnit: Spinner
 
+    // Coupon
+    private lateinit var checkboxCoupon: CheckBox
+    private lateinit var promoPrefs: SharedPreferences
+
+    // per la lista dei documenti
+    private lateinit var recyclerDocumenti: RecyclerView
+    private lateinit var btnAggiungiDocumento: Button
+    private val documentiList = mutableListOf<Documento>()
+    private lateinit var documentiAdapter: DocumentiAdapter
+    private lateinit var documentoResultLauncher: ActivityResultLauncher<Intent>
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -123,6 +135,7 @@ class ImpostazioniActivity : AppCompatActivity() {
         textBluetoothStatus = findViewById(R.id.textBluetoothStatus)
         textWifiAwareStatus = findViewById(R.id.textWifiAwareStatus)
         textWifiBeaconStatus = findViewById(R.id.textWifiBeaconStatus)
+        checkboxCoupon = findViewById(R.id.checkboxCoupon)
 
 
         val user = auth.currentUser
@@ -162,6 +175,11 @@ class ImpostazioniActivity : AppCompatActivity() {
                 "checklistEnabled" to checkboxChecklist.isChecked
             )
 
+            // Salva preferenza coupon
+            promoPrefs.edit()
+                .putBoolean("showDronezineCoupon", checkboxCoupon.isChecked)
+                .apply()
+
             val uid = auth.currentUser?.uid
 
             if (nuovoNome.isNotEmpty() && uid != null) {
@@ -200,9 +218,15 @@ class ImpostazioniActivity : AppCompatActivity() {
         textWifiAwareStatus.text = "WiFi Aware: " + if (hasWifiAware) "supportato ✅" else "non supportato ❌"
         textWifiBeaconStatus.text = "WiFi Beacon: " + if (hasWifiBeacon) "supportato ✅" else "non supportato ❌"
 
+        // Preferenze droneID
         val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
         val isDroneIdEnabled = prefs.getBoolean("droneIdEnabled", false)
         switchDroneId.isChecked = isDroneIdEnabled
+        // Preferenze Coupon
+        promoPrefs = getSharedPreferences("promo_prefs", MODE_PRIVATE)
+        val showCoupon = promoPrefs.getBoolean("showDronezineCoupon", true)
+        checkboxCoupon.isChecked = showCoupon
+
 
         switchDroneId.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("droneIdEnabled", isChecked).apply()
@@ -214,6 +238,8 @@ class ImpostazioniActivity : AppCompatActivity() {
         imageAvatar = findViewById(R.id.imageAvatar)
         // per la bio
         editBio = findViewById(R.id.editBio)
+
+
         // Per la lista dei droni
         recyclerDroni = findViewById(R.id.recyclerDroni)
         btnAggiungiDrone = findViewById(R.id.btnAggiungiDrone)
@@ -239,6 +265,37 @@ class ImpostazioniActivity : AppCompatActivity() {
             }
         }
 
+
+        // Per la lista dei documenti
+        recyclerDocumenti = findViewById(R.id.recyclerDocumenti)
+        btnAggiungiDocumento = findViewById(R.id.btnAggiungiDocumento)
+
+        documentiAdapter = DocumentiAdapter(documentiList) { documento ->
+            val intent = Intent(this, DocumentoDettaglioActivity::class.java).apply {
+                putExtra("documentId", documento.id)
+                putExtra("title", documento.title)
+                putExtra("type", documento.type)
+                putExtra("expiryDate", documento.expiryDate)
+                putExtra("fileUrl", documento.fileUrl)
+            }
+            documentoResultLauncher.launch(intent)
+        }
+
+        recyclerDocumenti.layoutManager = LinearLayoutManager(this)
+        recyclerDocumenti.adapter = documentiAdapter
+
+        documentoResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode == Activity.RESULT_OK) {
+                aggiornaListaDocumenti()
+            }
+        }
+
+        btnAggiungiDocumento.setOnClickListener {
+            val intent = Intent(this, DocumentoDettaglioActivity::class.java)
+            documentoResultLauncher.launch(intent)
+        }
+
+        aggiornaListaDocumenti()
 
 
 
@@ -294,6 +351,17 @@ class ImpostazioniActivity : AppCompatActivity() {
                         if (index >= 0) spinnerWindUnit.setSelection(index)
                     }
                 }
+        }
+
+        // Controllo scadenza dei documenti
+        //val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val hasExpiringDocs = prefs.getBoolean("hasExpiringDocs", false)
+
+        if (hasExpiringDocs) {
+            val alertDoc = findViewById<TextView>(R.id.textAlertDocumento)
+            alertDoc.visibility = View.VISIBLE
+            // Reset del flag (opzionale se vuoi che sparisca la scritta alla prossima volta)
+            prefs.edit().putBoolean("hasExpiringDocs", false).apply()
         }
 
 
@@ -424,6 +492,26 @@ class ImpostazioniActivity : AppCompatActivity() {
             }
     }
 
+    private fun aggiornaListaDocumenti() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("pilotProfiles").document(uid)
+            .collection("documents")
+            .get()
+            .addOnSuccessListener { result ->
+                documentiList.clear()
+                for (document in result) {
+                    val doc = Documento(
+                        id = document.id,
+                        title = document.getString("title") ?: "",
+                        type = document.getString("type") ?: "",
+                        expiryDate = document.getString("expiryDate") ?: "",
+                        fileUrl = document.getString("fileUrl") ?: ""
+                    )
+                    documentiList.add(doc)
+                }
+                documentiAdapter.notifyDataSetChanged()
+            }
+    }
 
 
 }

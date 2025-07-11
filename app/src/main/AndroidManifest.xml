@@ -105,6 +105,9 @@
         <activity android:name=".PreFlightChecklistActivity">
             <!-- Puoi aggiungere eventuali intent-filter o altre configurazioni se necessarie -->
         </activity>
+        <activity android:name=".CouponActivity"
+            android:theme="@style/CouponDialogTheme"/>
+
 
         <activity android:name=".WebViewActivity" />
         <activity android:name=".WebViewWindyActivity" />
@@ -112,6 +115,12 @@
         <activity android:name=".SpotDetailsActivity" />
         <activity android:name=".AddDroneActivity" />
         <activity android:name=".SchedaPilotaActivity" />
+        <activity android:name=".DocumentoDettaglioActivity"/>
+        <activity android:name=".DocumentoAlertActivity"/>
+        <activity android:name=".QuizHomeActivity" />
+        <activity android:name=".QuizActivity" />
+        <activity android:name=".QuizResultActivity" />
+
 
         <activity
             android:name=".ARSpotViewerActivity"

@@ -43,7 +43,7 @@ class BluetoothReceiver(
 
                 if (allowedPrefixes.none { prefix -> macAddress.startsWith(prefix) }) {
                     if (containsOpenDroneID) {
-                        Toast.makeText(context, "📡 Drone sconosciuto trovato: $macAddress", Toast.LENGTH_LONG).show()
+                        //Toast.makeText(context, "📡 Drone sconosciuto trovato: $macAddress", Toast.LENGTH_LONG).show()
                         Log.d("DronePilotApp", "🚨 MAC sconosciuto con OpenDroneID: $macAddress")
                     }
                     return
