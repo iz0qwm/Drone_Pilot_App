@@ -95,3 +95,27 @@ Ovviamente lo smartphone sarà sempre con voi durante il volo, quindi se lui non
 Il **Total Electron Count** invece, è un metodo, molto più avanzato e preciso rispetto al generico **Indice Kp**, noto a tutti i dronisti, per determinare gli errori di precisione nel rilevamento della posizione a causa di forti tempeste solari e geomagnetiche.<br>
 Per maggiori informazioni potete consultare il sito di [IONORING](http://ionos.ingv.it/ionoring/ionoring.htm) o [INGV](https://www.ingv.it/ricerca/seminari/archivio-seminari/3352-osservazione-e-studio-delle-scintillazioni-ionosferiche)
 
+## 📶 Analisi della congestione WiFi
+
+Una funzione molto utile disponibile solo su Android è l’analisi della **congestione delle reti WiFi** nelle bande **2.4GHz** e **5GHz**.
+
+🔍 In questo modo è possibile visualizzare quante reti sono presenti attorno a te e valutare se vi è un alto rischio di **interferenze radio** che potrebbero compromettere il collegamento tra il radiocomando e il drone.
+
+💡 Utile soprattutto se utilizzi un drone che comunica in 2.4GHz o 5GHz e vuoi evitare interferenze durante il volo.
+
+---
+
+## 🧭 Monitor magnetico
+
+Grazie al **sensore magnetico** presente nel telefono, è possibile monitorare la **presenza di disturbi elettromagnetici** che possono influenzare il funzionamento della bussola del drone.
+
+📈 L’app mostra in tempo reale il valore del campo magnetico rilevato (in microtesla) e ti avvisa se ci sono **anomalie** dovute a interferenze ambientali (tralicci, antenne, strutture in metallo, ecc.).
+
+⚠️ Una bussola disturbata può causare **problemi di orientamento** e traiettorie errate. Meglio controllare prima di decollare!
+
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/monitor_magnetico_wifi.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">📱 Android</div>
+  </div>
+</div>

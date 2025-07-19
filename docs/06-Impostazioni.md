@@ -120,3 +120,47 @@ L’obiettivo è evitare dimenticanze e garantire ogni volta un volo:
 
 ---
 
+# 📂 Gestione documenti
+
+Puoi archiviare in app i tuoi documenti importanti legati al volo, come:
+
+- 📄 Patentino A1/A3, A2, STS
+- 🛡️ Assicurazione del drone
+- 📝 Altri certificati utili
+
+Per ogni documento puoi specificare **una data di scadenza**, così l'app potrà aiutarti a non dimenticare i rinnovi.
+L'App saprà riconoscere i PDF delle assicurazioni Coverdrone e Dronezine, compilando automaticamente i dati.
+Anche i patentini A1/A3 e A2 saranno in parte riconosciuti automaticamente se inviati in formato PDF.
+
+<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+  <div style="text-align: center;">
+    <img src="https://www.kwos.org/appoggio/droni/dronepilotapp/wiki/gestione_documenti.jpeg" alt="Dashboard principale" width="360">
+    <div style="margin-top: 8px;">Lista</div>
+  </div>
+</div>
+
+---
+
+## 🔔 Notifiche di scadenza
+
+Quando un documento si avvicina alla scadenza, riceverai un **avviso** direttamente in app:
+
+- ⏰ 60 giorni prima
+- ⏳ 30 giorni prima
+- ⚠️ 15 giorni prima
+- 🚨 5 giorni prima
+
+Inoltre, se hai inserito la tua email corretta al momento della registrazione, riceverai anche un **promemoria via email**.
+
+✅ Puoi anche decidere di **non essere più avvisato** per quel documento, spuntando la voce “Non avvisarmi più per questa scadenza”.
+
+---
+
+## 📍 Avvisi visivi
+
+Se hai un documento in scadenza:
+
+- comparirà un **asterisco** accanto alla voce **Impostazioni** nel menu principale
+- nella sezione **I miei documenti** comparirà la scritta rossa **“Uno in scadenza”**
+
+Questo ti aiuta ad avere sempre tutto sotto controllo prima di decollare.
