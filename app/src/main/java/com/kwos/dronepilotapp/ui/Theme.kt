@@ -1,6 +1,5 @@
-package com.kwos.dronepilotapp.ui.theme
+package com.kwos.dronepilotapp.ui
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

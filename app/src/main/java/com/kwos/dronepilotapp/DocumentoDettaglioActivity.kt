@@ -264,74 +264,97 @@ class DocumentoDettaglioActivity : AppCompatActivity() {
 
         if (requestCode == PICK_FILE_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.data != null) {
             fileUri = data.data
+            val mimeType = contentResolver.getType(fileUri!!) ?: ""
 
-            PDFBoxResourceLoader.init(applicationContext)
+            // Mostra anteprima se è immagine
+            if (mimeType.startsWith("image/")) {
+                previewFile.setImageURI(fileUri)
+                previewFile.visibility = View.VISIBLE
+                Toast.makeText(this, "✅ Immagine caricata. Compila i dati manualmente.", Toast.LENGTH_SHORT).show()
+                return
+            }
 
-            val inputStream = contentResolver.openInputStream(fileUri!!)
-            val document = PDDocument.load(inputStream)
-            val stripper = PDFTextStripper()
-            val text = stripper.getText(document)
-            document.close()
+            // Se è PDF, procedi con il parsing
+            if (mimeType == "application/pdf") {
+                try {
+                    PDFBoxResourceLoader.init(applicationContext)
 
-            // Mostra anteprima (se immagine)
-            previewFile.setImageURI(fileUri)
+                    val inputStream = contentResolver.openInputStream(fileUri!!)
+                    val document = PDDocument.load(inputStream)
+                    val stripper = PDFTextStripper()
+                    val text = stripper.getText(document)
+                    document.close()
 
-            // Parser unificato
-            when {
-                text.contains("Polizza Collettiva") -> {
-                    val polizza = Regex("Polizza Collettiva n\\.?(\\d+)").find(text)?.groupValues?.get(1)
-                    val tessera = Regex("N\\.\\s*TESSERA\\s*([A-Z0-9]+)").find(text)?.groupValues?.get(1)
-                    val scadenza = Regex("Scadenza.*?(\\d{2}-\\d{2}-\\d{4})").find(text)?.groupValues?.get(1)
+                    // Mostra anteprima simbolica (puoi anche aggiungere un'icona)
+                    previewFile.setImageResource(R.drawable.ic_pdf_placeholder) // opzionale
+                    previewFile.visibility = View.VISIBLE
 
-                    editTitle.setText("Assicurazione DronEzine")
-                    editType.setText("assicurazione")
-                    editExpiryDate.setText(scadenza ?: "")
-                    editPolicyNumber.setText(polizza ?: "")
-                    editTesseraNumber.setText(tessera ?: "")
-                    editRenewalUrl.setText("https://www.dronezine.it/istruzioni-per-il-rinnovo-delle-opzioni-plus/")
+                    // Parser unificato (esattamente come nel tuo codice)
+                    when {
+                        text.contains("Polizza Collettiva") -> {
+                            val polizza = Regex("Polizza Collettiva n\\.?(\\d+)").find(text)?.groupValues?.get(1)
+                            val tessera = Regex("N\\.\\s*TESSERA\\s*([A-Z0-9]+)").find(text)?.groupValues?.get(1)
+                            val scadenza = Regex("Scadenza.*?(\\d{2}-\\d{2}-\\d{4})").find(text)?.groupValues?.get(1)
+
+                            editTitle.setText("Assicurazione DronEzine")
+                            editType.setText("assicurazione")
+                            editExpiryDate.setText(scadenza ?: "")
+                            editPolicyNumber.setText(polizza ?: "")
+                            editTesseraNumber.setText(tessera ?: "")
+                            editRenewalUrl.setText("https://www.dronezine.it/istruzioni-per-il-rinnovo-delle-opzioni-plus/")
+                        }
+
+                        text.contains("Coverdrone", ignoreCase = true) || text.contains("PARTE 1 N. polizza") -> {
+                            val polizza = Regex("N\\. polizza\\s+([A-Z0-9]+)").find(text)?.groupValues?.get(1)
+                            val rangeRegex = Regex("da\\s+(\\d{2}/\\d{2}/\\d{4})\\s*(?:\\r?\\n)?\\s*a\\s+(\\d{2}/\\d{2}/\\d{4})", RegexOption.IGNORE_CASE)
+                            val scadenza = rangeRegex.find(text)?.groupValues?.get(2)?.replace("/", "-")
+
+                            editTitle.setText("Assicurazione Coverdrone")
+                            editType.setText("assicurazione")
+                            editExpiryDate.setText(scadenza ?: "")
+                            editPolicyNumber.setText(polizza ?: "")
+                            editTesseraNumber.setText("")
+                            editRenewalUrl.setText("https://www.coverdrone.com/it/my-account/")
+                        }
+
+                        text.contains("REMOTE PILOT", ignoreCase = true)
+                                || text.contains("REMOTE PILOT CERTIFICATE", ignoreCase = true)
+                                || text.contains("PROOF OF COMPLETION", ignoreCase = true)
+                                || text.contains("Numero di registrazione", ignoreCase = true)
+                                || text.contains("Identification number", ignoreCase = true) -> {
+
+                            val idRegex = Regex("[A-Z]{2,}-[A-Z]{2,}-\\w+")
+                            val identificativo = idRegex.find(text)?.value ?: ""
+
+                            val dataRegex = Regex("(\\d{1,2})[./-](\\d{1,2})[./-](\\d{4})")
+                            val dataMatch = dataRegex.findAll(text).map { it.value }.toList()
+                            val dataScadenza = (dataMatch.getOrNull(1) ?: dataMatch.getOrNull(0))
+                                ?.replace(".", "-")?.replace("/", "-")
+
+                            editTitle.setText("Attestato UAS")
+                            editType.setText("patentino")
+                            editPolicyNumber.setText(identificativo)
+                            editExpiryDate.setText(dataScadenza ?: "")
+                            editTesseraNumber.setText("")
+                            editRenewalUrl.setText("")
+                        }
+
+                        else -> {
+                            Toast.makeText(this, "⚠️ Documento PDF non riconosciuto", Toast.LENGTH_LONG).show()
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    Toast.makeText(this, "⚠️ Errore nella lettura del file PDF. Il file potrebbe essere danneggiato o non compatibile.", Toast.LENGTH_LONG).show()
+                    previewFile.setImageResource(R.drawable.ic_pdf_error) // placeholder opzionale
+                    previewFile.visibility = View.VISIBLE
                 }
-
-                text.contains("Coverdrone", ignoreCase = true) || text.contains("PARTE 1 N. polizza") -> {
-                    val polizza = Regex("N\\. polizza\\s+([A-Z0-9]+)").find(text)?.groupValues?.get(1)
-                    val rangeRegex = Regex("da\\s+(\\d{2}/\\d{2}/\\d{4})\\s*(?:\\r?\\n)?\\s*a\\s+(\\d{2}/\\d{2}/\\d{4})", RegexOption.IGNORE_CASE)
-                    val scadenza = rangeRegex.find(text)?.groupValues?.get(2)?.replace("/", "-")
-
-                    editTitle.setText("Assicurazione Coverdrone")
-                    editType.setText("assicurazione")
-                    editExpiryDate.setText(scadenza ?: "")
-                    editPolicyNumber.setText(polizza ?: "")
-                    editTesseraNumber.setText("")
-                    editRenewalUrl.setText("https://www.coverdrone.com/it/my-account/")
-                }
-
-                text.contains("REMOTE PILOT", ignoreCase = true)
-                        || text.contains("REMOTE PILOT CERTIFICATE", ignoreCase = true)
-                        || text.contains("PROOF OF COMPLETION", ignoreCase = true)
-                        || text.contains("Numero di registrazione", ignoreCase = true)
-                        || text.contains("Identification number", ignoreCase = true) -> {
-
-                    val idRegex = Regex("[A-Z]{2,}-[A-Z]{2,}-\\w+")
-                    val identificativo = idRegex.find(text)?.value ?: ""
-
-                    val dataRegex = Regex("(\\d{1,2})[./-](\\d{1,2})[./-](\\d{4})")
-                    val dataMatch = dataRegex.findAll(text).map { it.value }.toList()
-                    val dataScadenza = (dataMatch.getOrNull(1) ?: dataMatch.getOrNull(0))
-                        ?.replace(".", "-")?.replace("/", "-")
-
-                    editTitle.setText("Attestato UAS")
-                    editType.setText("patentino")
-                    editPolicyNumber.setText(identificativo)
-                    editExpiryDate.setText(dataScadenza ?: "")
-                    editTesseraNumber.setText("")
-                    editRenewalUrl.setText("")
-                }
-
-                else -> {
-                    Toast.makeText(this, "⚠️ Documento non riconosciuto", Toast.LENGTH_LONG).show()
-                }
+            } else {
+                Toast.makeText(this, "❌ Tipo di file non supportato. Usa un'immagine o un PDF.", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
 
 
 

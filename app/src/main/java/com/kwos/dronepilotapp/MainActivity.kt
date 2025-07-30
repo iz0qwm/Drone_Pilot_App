@@ -86,6 +86,28 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+
+
+        // Avviso nuova versione
+        val currentVersion = BuildConfig.VERSION_NAME
+        val prefsversion = getSharedPreferences("DronePilotAppPrefs", MODE_PRIVATE)
+
+        // DEBUG: forza reset
+        //prefsversion.edit().remove("last_shown_version").apply()
+
+        val lastShownVersion = prefsversion.getString("last_shown_version", null)
+
+        Log.d(TAG, "🚀 Versione attuale: $currentVersion - Ultima mostrata: $lastShownVersion")
+
+        if (lastShownVersion != currentVersion) {
+            Log.d(TAG, "🟢 Mostro novità per la versione $currentVersion")
+            mostraNovitaVersione(currentVersion)
+            prefsversion.edit().putString("last_shown_version", currentVersion).apply()
+        } else {
+            Log.d(TAG, "🔄 Nessuna novità da mostrare (già mostrata)")
+        }
+
+        //
         // Abilita l'invio dei crash su Firebase console
         //FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
         //FirebaseCrashlytics.getInstance().setCustomKey("app_version", BuildConfig.VERSION_NAME)
@@ -344,8 +366,37 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-
     }
+
+    private fun mostraNovitaVersione(versione: String) {
+        val resId = when (versione) {
+            "2.3.9" -> R.string.version_notes_239
+            else -> null
+        }
+
+        if (resId == null) {
+            Log.d(TAG, "📭 Nessun changelog definito per questa versione")
+            return
+        }
+
+        // Prende il testo e sostituisce i ritorni a capo se non venissero interpretati
+        val novita = getString(resId).replace("\\n", "\n")
+
+        val spannableMessage = SpannableString(novita)
+        spannableMessage.setSpan(
+            ForegroundColorSpan(ContextCompat.getColor(this, android.R.color.black)),
+            0,
+            spannableMessage.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+            .setTitle("Novità della versione $versione")
+            .setMessage(spannableMessage)
+            .setPositiveButton("Chiudi", null)
+            .show()
+    }
+
 
 
     private fun savePasswordToKeystore(password: String) {
@@ -832,6 +883,8 @@ fun getApiKey(keyName: String, context: Context): String? {
         null
     }
 }
+
+
 
 fun checkForUpdate(context: Context) {
     val TAG = "DronePilotApp"

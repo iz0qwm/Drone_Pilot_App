@@ -1185,7 +1185,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             "5678B" to "Autel",
             "1748F" to "Autel",
             "1748C" to "Autel",
-            "1596"  to "Dronetag"
+            "1596"  to "Dronetag",
+            "2106"  to "TopView Pollicino"
         )
 
         modelMap = mapOf(
@@ -1206,6 +1207,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             "4QW" to "Avata",
             "4QZ" to "Mavic 3 Cine",
             "4XF" to "Mini 3 Pro",
+            "5FJ" to "Mavic 3 Thermal",
             "5YH" to "Mini 3",
             "574" to "Agras T40",
             "6BU" to "Agras T50",
@@ -1334,7 +1336,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                     startActivity(intent)
                     true
                 }
-
+                R.id.misuratore_distanze -> {
+                    val intent = Intent(this, ImageDistanceActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
                 else -> false
             }
         }
@@ -2292,7 +2298,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             .addOnSuccessListener { documents ->
                 if (documents.isEmpty) {
                     logDebug(TAG, "❌ stopFlight: Nessun documento trovato per il nome: $cleanedUserName")
-                    Toast.makeText(this, "stopFlight: Nessuna posizione trovata per $cleanedUserName", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this, "stopFlight: Nessuna posizione trovata per $cleanedUserName", Toast.LENGTH_SHORT).show()
                 } else {
                     for (document in documents) {
                         logDebug(TAG, "✅ stopFlight: Trovato documento: ${document.id} - ${document.data}")
@@ -3199,6 +3205,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             findViewById<View>(R.id.chatLabelOff)?.visibility = View.GONE
             findViewById<View>(R.id.new_message_text)?.visibility = View.GONE
             findViewById<View>(R.id.new_message_icon)?.visibility = View.GONE
+            findViewById<View>(R.id.ar_view_button)?.visibility = View.GONE
             // Espandi la mappa
             val heightInDp = 650
             val scale = resources.displayMetrics.density
@@ -3233,6 +3240,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             findViewById<View>(R.id.chatLabelOff)?.visibility = View.VISIBLE
             findViewById<View>(R.id.new_message_text)?.visibility = View.VISIBLE
             findViewById<View>(R.id.new_message_icon)?.visibility = View.VISIBLE
+            findViewById<View>(R.id.ar_view_button)?.visibility = View.VISIBLE
         }
 
         isFullscreen = !isFullscreen

@@ -1,4 +1,4 @@
-package com.kwos.dronepilotapp.ui.theme
+package com.kwos.dronepilotapp.ui
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

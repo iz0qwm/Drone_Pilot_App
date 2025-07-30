@@ -18,5 +18,10 @@
     <color name="colorPrimary">#2196F3</color> <!-- blu acceso -->
     <color name="light_gray">#888888</color> <!-- grigio chiaro per "Annulla" -->
     <color name="midnight_blue">#191970</color>
-
+    <color name="light_blue">#CCEEFF</color>
+    <color name="light_green">#D9FFCC</color>
+    <color name="light_orange">#FFE0CC</color>
+    <color name="light_red">#FFCCCC</color>
+    <color name="light_yellow">#FFFFCC</color>
+    <color name="light_purple">#E0E0EB</color>
 </resources>

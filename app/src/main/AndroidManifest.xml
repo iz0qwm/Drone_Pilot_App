@@ -120,7 +120,9 @@
         <activity android:name=".QuizHomeActivity" />
         <activity android:name=".QuizActivity" />
         <activity android:name=".QuizResultActivity" />
-
+        <activity android:name=".ImageDistanceActivity" />
+        <activity android:name=".MapImageDistanceActivityActivity" />
+        <activity android:name=".InfoImageDistanceActivity" />
 
         <activity
             android:name=".ARSpotViewerActivity"

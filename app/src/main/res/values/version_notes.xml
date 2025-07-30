@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="version_notes_239">
+- VERSIONE 2.3.9 -\n
+✅ Risolto bug nella schermata di login su alcuni dispositivi\n
+✨ Aggiunta la nuova funzione Misura Distanze (icona in alto a destra)\n
+🛰️ Migliorata la stabilità nella visualizzazione dei droni vicini\n
+💬 I messaggi della Group Chat sono ora collegati con il gruppo Telegram ufficiale
+    </string>
+</resources>

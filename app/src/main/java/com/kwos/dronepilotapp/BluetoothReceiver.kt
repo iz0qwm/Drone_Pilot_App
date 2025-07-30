@@ -37,17 +37,29 @@ class BluetoothReceiver(
                 val scanRecord = it.scanRecord
                 val bytes = scanRecord?.bytes ?: return
 
-                // Supporta Dronetag (D0:EA:26) e TopView Pollicino (E6:43:76)
+                // Supporta Dronetag (D0:EA:26 o 58:B8:58 o 3E:E5:4D) e TopView Pollicino (E6:43:76)
                 val containsOpenDroneID = bytes.contains(0x0D.toByte())
-                val allowedPrefixes = listOf("D0:EA:26", "E6:43:76")
+                val allowedPrefixes = listOf("D0:EA:26", "E6:43:76", "58:B8:58", "3E:E5:4D")
 
+                // Versione più larga
+                // Se non contiene OpenDroneID, scarta subito
+                if (!containsOpenDroneID) return
+
+                // Se contiene OpenDroneID ma il MAC è sconosciuto, mostra un log ma NON uscire
                 if (allowedPrefixes.none { prefix -> macAddress.startsWith(prefix) }) {
-                    if (containsOpenDroneID) {
-                        //Toast.makeText(context, "📡 Drone sconosciuto trovato: $macAddress", Toast.LENGTH_LONG).show()
-                        Log.d("DronePilotApp", "🚨 MAC sconosciuto con OpenDroneID: $macAddress")
-                    }
-                    return
+                    Log.d("DronePilotApp", "📡 Segnale BLE ricevuto da dispositivo $macAddress con OpenDroneID valido")
+                    // Puoi anche loggare i bytes se vuoi: Log.d("DronePilotApp", dumpBytes(bytes))
                 }
+                //
+
+                // Versione più stretta
+                //if (allowedPrefixes.none { prefix -> macAddress.startsWith(prefix) }) {
+                //    if (containsOpenDroneID) {
+                //        //Toast.makeText(context, "📡 Drone sconosciuto trovato: $macAddress", Toast.LENGTH_LONG).show()
+                //        Log.d("DronePilotApp", "🚨 MAC sconosciuto con OpenDroneID: $macAddress")
+                //    }
+                //    return
+                //}
 
                 val logMessageEntry = LogMessageEntry()
                 val timeNano = SystemClock.elapsedRealtimeNanos()

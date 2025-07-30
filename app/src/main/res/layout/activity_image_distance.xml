@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- Titolo -->
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lines="2"
+            android:hint="@string/titolo_hint"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="30dp" />
+
+        <Spinner
+            android:id="@+id/spinnerFOV"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:background="@color/light_red"/>
+
+        <EditText
+            android:id="@+id/editFOV"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/fov_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="fov"
+            android:textSize="16sp"
+            android:background="@color/light_red"/>
+
+        <EditText
+            android:id="@+id/editLargStimFumom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/column_width_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="column_width"
+            android:textSize="16sp"
+            android:background="@color/light_yellow"/>
+
+        <EditText
+            android:id="@+id/editLargAppFumoPx"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/apparent_width_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="apparent_width"
+            android:textSize="16sp"
+            android:background="@color/light_yellow"/>
+
+        <EditText
+            android:id="@+id/editCameraResolutionPx"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/camera_resolution_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="camera_resolution"
+            android:textSize="16sp"
+            android:background="@color/light_gray" />
+
+        <EditText
+            android:id="@+id/editgimbalPitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/gimbal_pitch_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="gimbalPitch"
+            android:textSize="16sp"
+            android:background="@color/light_blue" />
+
+        <EditText
+            android:id="@+id/editrelativeAltitude"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/relative_altitude_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="relativeAltitude"
+            android:textSize="16sp"
+            android:background="@color/light_blue" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <EditText
+                android:id="@+id/editLat1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:hint="@string/drone1_lat_hint"
+                android:inputType="numberDecimal"
+                android:autofillHints="latitude"
+                android:textSize="16sp"
+                android:background="@color/light_blue" />
+
+            <ImageView
+                android:id="@+id/iconSelectImage1"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/colonna_fumo"
+                android:contentDescription="@string/icon_Select_Image1"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/editLon1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/drone1_lon_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="longitude"
+            android:textSize="16sp"
+            android:background="@color/light_blue" />
+
+        <EditText
+            android:id="@+id/editHeading1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/drone1_heading_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="heading"
+            android:textSize="16sp"
+            android:background="@color/light_blue" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <EditText
+                android:id="@+id/editLat2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:hint="@string/drone2_lat_hint"
+                android:inputType="numberDecimal"
+                android:autofillHints="latitude"
+                android:textSize="16sp"
+                android:background="@color/light_orange" />
+
+            <ImageView
+                android:id="@+id/iconSelectImage2"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/colonna_fumo"
+                android:contentDescription="@string/icon_Select_Image1"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
+
+
+        <EditText
+            android:id="@+id/editLon2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/drone2_lon_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="longitude"
+            android:textSize="16sp"
+            android:background="@color/light_orange"/>
+
+        <EditText
+            android:id="@+id/editHeading2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/drone2_heading_hint"
+            android:inputType="numberDecimal"
+            android:autofillHints="heading"
+            android:textSize="16sp"
+            android:background="@color/light_orange"/>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/algorithmSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/use_two_drones" />
+
+        <Button
+            android:id="@+id/btnCalcola"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📐 Calcola distanza"
+            android:background="@drawable/rounded_button_green"
+            android:textColor="@color/button_text_color"
+            android:textAllCaps="false"
+            android:layout_marginTop="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp">
+
+            <Button
+                android:id="@+id/btnShowMap"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" 🗺️ Mostra su Mappa "
+                android:background="@drawable/rounded_button_yellow"
+                android:textColor="@color/button_text_color"
+                android:textAllCaps="false"
+                android:layout_margin="12dp"/>
+
+            <Button
+                android:id="@+id/btnInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" ℹ️ Istruzioni "
+                android:background="@drawable/rounded_button_blue"
+                android:textColor="@color/button_text_color"
+                android:textAllCaps="false"
+                android:layout_margin="12dp"/>
+
+        </LinearLayout>
+
+
+        <Button
+            android:id="@+id/btnClose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="❌ Chiudi"
+            android:background="@drawable/rounded_button_blue"
+            android:textColor="@color/button_text_color"
+            android:textAllCaps="false"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp" />
+
+
+        <TextView
+            android:id="@+id/textResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/text_result"
+            android:textSize="16sp"
+            android:padding="10dp" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.github.chrisbanes.photoview.PhotoView
+                android:id="@+id/imagePreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="center"
+                android:adjustViewBounds="true"/>
+
+            <com.kwos.dronepilotapp.ui.DrawView
+                android:id="@+id/drawView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+        </FrameLayout>
+
+
+    </LinearLayout>
+</ScrollView>

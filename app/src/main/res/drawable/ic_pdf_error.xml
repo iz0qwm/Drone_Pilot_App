@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- PDF File -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M6,2h9l5,5v15a2,2 0 0,1 -2,2H6a2,2 0 0,1 -2,-2V4a2,2 0 0,1 2,-2zM14,3.5V8h4.5L14,3.5z" />
+    <!-- Cerchio X -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16.5,14.5a4,4 0 1,0 0.01,0z" />
+    <path
+        android:fillColor="#D32F2F"
+        android:strokeWidth="1"
+        android:pathData="M15.1,13.4l-1.7,1.7 1.7,1.7 -1.1,1.1 -1.7,-1.7 -1.7,1.7 -1.1,-1.1 1.7,-1.7 -1.7,-1.7 1.1,-1.1 1.7,1.7 1.7,-1.7 1.1,1.1z" />
+</vector>

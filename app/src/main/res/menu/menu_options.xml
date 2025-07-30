@@ -27,5 +27,8 @@
         android:id="@+id/menu_quiz"
         android:title="📚 Test patentino"
         app:showAsAction="never"/>
-
+    <item
+        android:id="@+id/misuratore_distanze"
+        android:title="📏 Misura distanze"
+        app:showAsAction="never"/>
 </menu>

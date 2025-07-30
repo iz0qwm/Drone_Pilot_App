@@ -37,5 +37,36 @@
 
     <string name="unknown">Unknown</string>
 
+    <!-- Stringhe per i campi di input -->
+    <string name="fov_hint">FOV obiettivo (gradi)</string>
+    <string name="column_width_hint">Larghezza stimata colonna di fumo (m)</string>
+    <string name="camera_resolution_hint">Risoluzione orizzontale camera (pixel)</string>
+    <string name="apparent_width_hint">Larghezza apparente colonna di fumo (pixel)</string>
+    <string name="drone1_lat_hint">Latitudine Drone 1</string>
+    <string name="drone1_lon_hint">Longitudine Drone 1</string>
+    <string name="drone1_heading_hint">Heading Drone 1 (gradi)</string>
+    <string name="drone2_lat_hint">Latitudine Drone 2</string>
+    <string name="drone2_lon_hint">Longitudine Drone 2</string>
+    <string name="drone2_heading_hint">Heading Drone 2 (gradi)</string>
+    <string name="gimbal_pitch_hint">Gimbal Pitch</string>
+    <string name="relative_altitude_hint">Relative Altitude</string>
+
+    <!-- Stringhe per i titoli Colonne di fumo -->
+    <string name="titolo_hint">Stima della distanza colonne di fumo</string>
+    <string name="titolo_mappa_hint">Mappa</string>
+    <string name="titolo_istruzioni_hint">Istruzioni</string>
+
+    <!-- Testo per lo switch Colonne di Fumo -->
+    <string name="use_two_drones">Switch algoritmo - Usa due droni</string>
+
+    <!-- Testo per i pulsanti Colonne di fumo -->
+    <string name="button_calculate">Calcola</string>
+    <string name="button_show_map">Mostra Mappa</string>
+    <string name="button_info">Istruzioni</string>
+    <string name="icon_Select_Image1">Seleziona immagine Drone 1</string>
+    <string name="icon_Select_Image2">Seleziona immagine Drone 2</string>
+
+    <!-- Testo per il risultato Colonne di Fumo -->
+    <string name="text_result">Risultato</string>
 </resources>
 

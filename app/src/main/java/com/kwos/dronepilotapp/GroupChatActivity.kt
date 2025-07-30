@@ -111,42 +111,59 @@ class GroupChatActivity : AppCompatActivity() {
         }
 
         val text = messageInput.text.toString().trim()
-        if (text.isEmpty() || user == null) return
+        if (text.isEmpty()) return
 
-        val message = mapOf(
-            "text" to text,
-            "senderId" to user.uid,
-            "senderName" to user.displayName,
-            "timestamp" to System.currentTimeMillis() // Usa il timestamp come Long per evitare problemi con il server
-        )
+        // 🔽 Legge il nome dal Firestore
+        FirebaseFirestore.getInstance().collection("users").document(user.uid)
+            .get()
+            .addOnSuccessListener { document ->
+                val fullName = document.getString("fullName") ?: "Utente"
 
-        messagesRef.push().setValue(message).addOnSuccessListener {
-            messageInput.text.clear()
-        }.addOnFailureListener {
-            Toast.makeText(this, "Errore nell'invio", Toast.LENGTH_SHORT).show()
-        }
+                val message = mapOf(
+                    "text" to text,
+                    "senderId" to user.uid,
+                    "senderName" to fullName,
+                    "timestamp" to System.currentTimeMillis()
+                )
+
+                messagesRef.push().setValue(message).addOnSuccessListener {
+                    messageInput.text.clear()
+                }.addOnFailureListener {
+                    Toast.makeText(this, "Errore nell'invio", Toast.LENGTH_SHORT).show()
+                }
+            }
     }
+
 
     private fun listenForMessages() {
         messagesRef.orderByChild("timestamp").addChildEventListener(object : ChildEventListener {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                 val msg = snapshot.getValue(Message::class.java)
                 if (msg != null) {
-                    getUserFullName(msg.senderId) { fullName ->
-                        msg.senderName = fullName ?: "Utente sconosciuto"
+                    // Se è un utente Telegram, mantieni il nome già incluso
+                    if (msg.senderId.startsWith("telegram_")) {
                         messagesList.add(msg)
                         messagesList.sortBy { it.timestamp }
                         messagesAdapter.notifyItemInserted(messagesList.size - 1)
                         recyclerView.scrollToPosition(messagesList.size - 1)
+                    } else {
+                        getUserFullName(msg.senderId) { fullName ->
+                            msg.senderName = fullName ?: "Utente sconosciuto"
+                            messagesList.add(msg)
+                            messagesList.sortBy { it.timestamp }
+                            messagesAdapter.notifyItemInserted(messagesList.size - 1)
+                            recyclerView.scrollToPosition(messagesList.size - 1)
+                        }
                     }
                 }
+
             }
 
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
             override fun onChildRemoved(snapshot: DataSnapshot) {}
             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
             override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@GroupChatActivity, "Errore nel caricamento messaggi", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@GroupChatActivity, "Non ci sono messaggi da cancellare", Toast.LENGTH_SHORT).show()
             }
         })
     }

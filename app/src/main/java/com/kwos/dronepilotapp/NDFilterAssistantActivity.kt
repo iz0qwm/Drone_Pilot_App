@@ -306,6 +306,9 @@ class NDFilterAssistantActivity : AppCompatActivity() {
         super.onPause()
         captureSession?.close()
         cameraDevice?.close()
+        if (::imageReader.isInitialized) {
+            imageReader.close()
+        }
         imageReader.close()
         backgroundThread?.quitSafely()
         backgroundThread = null

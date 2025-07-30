@@ -59,4 +59,14 @@
         <item name="android:windowMinWidthMinor">80%</item>
     </style>
 
+    <style name="WhiteEdit" parent="Widget.AppCompat.EditText">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/rounded_input</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorHint">#CCCCCC</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
 </resources>
