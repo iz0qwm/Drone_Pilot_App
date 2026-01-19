@@ -91,6 +91,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.view.LayoutInflater
+import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -126,6 +127,14 @@ import com.google.firebase.ktx.Firebase
 import com.kwos.dronepilotapp.QuizHomeActivity
 import java.text.SimpleDateFormat
 
+// Per tema HUD CRPC
+import android.view.ContextThemeWrapper
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
+
+// Per il Wear OS
+import com.kwos.dronepilotapp.wear.WearMessageSender
 
 class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -219,6 +228,45 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     // Pressione OK per scadenza documenti
     private var alertAlreadyShownThisSession = false
 
+    // --- CRPC: stato marker + ring ---
+    private val crpcMarkers = mutableMapOf<String, Marker>()            // receiverId -> Marker
+    private val crpcLastLatLng = mutableMapOf<String, LatLng>()         // per centrare ring
+    private var crpcRingCircle: com.google.android.gms.maps.model.Circle? = null
+    private var crpcRingAnimator: ValueAnimator? = null
+    private var lastCrpcAlertTs: Long = 0L
+    private var crpcReceiversListener: ListenerRegistration? = null
+    private var crpcAlertsListener: ListenerRegistration? = null
+    // Blink marker CRPC
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val crpcBlinkRunnables = mutableMapOf<String, Runnable>()
+    private val crpcBlinkOn = mutableMapOf<String, Boolean>()  // stato toggle per ogni receiverId
+    // Mini HUD CRPC
+    private lateinit var crpcHud: View
+    private lateinit var hudBandFreq: TextView
+    private lateinit var hudLabel: TextView
+    private lateinit var hudRssi: TextView
+    private lateinit var hudDistance: TextView
+    // --- CRPC DF marker (drone sulla punta del settore) ---
+    private var crpcDfMarker: Marker? = null
+    private var crpcDfIcon: BitmapDescriptor? = null
+
+
+    // Ultimo alert noto per ciascun receiver
+    data class CrpcAlertInfo(
+        val band: String?,
+        val freqMhz: Double?,
+        val label: String?,
+        val rssiDbm: Double?,
+        val radiusM: Double?,
+        val tsIso: String?,
+        val bearingDeg: Double?,         // NEW
+        val dfConfidence: Double?        // NEW (0..1)
+    )
+
+    private val lastAlertByReceiverId = mutableMapOf<String, CrpcAlertInfo>()
+    private var hudAutoHideRunnable: Runnable? = null
+
+
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -261,6 +309,24 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         // Nasconde la Action Bar
         supportActionBar?.hide()
         // FINE PADDING
+
+        //
+        // Gestione HUD Ricevitore CRPC
+        //
+        val root = findViewById<ViewGroup>(android.R.id.content) // contenitore della Activity
+
+        // 1) Crea un inflater con tema Material SOLO per l’HUD
+        val compatCtx = ContextThemeWrapper(this, R.style.AppCompatSafeDialogOverlay)
+        val themedInflater = LayoutInflater.from(compatCtx)
+
+        // 2) Infla l'HUD SENZA attach, così ottieni la view e poi la aggiungi
+        val hudView = themedInflater.inflate(R.layout.hud_crpc, root, false)
+        root.addView(hudView)
+
+        // 3) Usa le view dall'HUD
+        val hudRoot = hudView.findViewById<View>(R.id.crpcHud)
+        val btnClose = hudView.findViewById<ImageButton>(R.id.crpcHudClose)
+        btnClose.setOnClickListener { hideCrpcHud() }
 
 
         //
@@ -434,10 +500,18 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         val chatUsersText = findViewById<TextView>(R.id.chatUsersText)
         val driLed = findViewById<ImageView>(R.id.driLed)
         val dronezineButton = findViewById<ImageButton>(R.id.dronezineButton)
-        val dflightButton = findViewById<ImageButton>(R.id.dflightButton)
+        //val dflightButton = findViewById<ImageButton>(R.id.dflightButton)
+        val droneSkyCheckButton = findViewById<ImageButton>(R.id.dflightButton)
         val voiceBtn = findViewById<Button>(R.id.voiceZoneButton)
         val layersButton = findViewById<ImageButton>(R.id.layersButton)
         val mapCard = findViewById<MaterialCardView>(R.id.mapCard)
+        crpcHud = findViewById(R.id.crpcHud)
+        hudBandFreq = findViewById(R.id.crpcHudBandFreq)
+        hudLabel = findViewById(R.id.crpcHudLabel)
+        hudRssi = findViewById(R.id.crpcHudRssi)
+        hudDistance = findViewById(R.id.crpcHudDistance)
+        findViewById<ImageButton>(R.id.crpcHudClose).setOnClickListener { hideCrpcHud() }
+
 
         // Mettiamo stopFlight a 0
         stopFlightButton.isEnabled = false // all'inizio
@@ -670,8 +744,17 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         // Apertura News d-flight
-        dflightButton.setOnClickListener {
+        /* dflightButton.setOnClickListener {
             val url = "https://www.d-flight.it/web-app/"
+            val customTabsIntent = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .setToolbarColor(ContextCompat.getColor(this, R.color.midnight_blue))
+                .build()
+            customTabsIntent.launchUrl(this, Uri.parse(url))
+        } */
+
+        droneSkyCheckButton.setOnClickListener {
+            val url = "https://droneskycheck-d0136.web.app/"
             val customTabsIntent = CustomTabsIntent.Builder()
                 .setShowTitle(true)
                 .setToolbarColor(ContextCompat.getColor(this, R.color.midnight_blue))
@@ -1056,6 +1139,354 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     /// INIZIO FUNZIONI
 
+    //
+    // - Inizio CRPC Ricevitore di droni
+    //
+
+    private fun ensureCrpcDfIconLoaded(onReady: (BitmapDescriptor) -> Unit) {
+        val cached = crpcDfIcon
+        if (cached != null) { onReady(cached); return }
+
+        val iconUrl = "https://www.kwos.org/appoggio/droni/dronepilotapp/drone_icon.png"
+        val density = resources.displayMetrics.density
+        val sizeInPx = (32 * density).toInt()
+
+        Glide.with(this@DashboardActivity)
+            .asBitmap()
+            .load(iconUrl)
+            .override(sizeInPx, sizeInPx)
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    crpcDfIcon = BitmapDescriptorFactory.fromBitmap(resource)
+                    onReady(crpcDfIcon!!)
+                }
+                override fun onLoadCleared(placeholder: Drawable?) {}
+            })
+    }
+
+    private fun bitmapDescriptorFromVector(drawableId: Int): com.google.android.gms.maps.model.BitmapDescriptor {
+        val drawable = ContextCompat.getDrawable(this, drawableId)!!
+        val w = drawable.intrinsicWidth
+        val h = drawable.intrinsicHeight
+        val bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bm)
+        drawable.setBounds(0, 0, w, h)
+        drawable.draw(canvas)
+        return com.google.android.gms.maps.model.BitmapDescriptorFactory.fromBitmap(bm)
+    }
+
+    private fun listenCrpcReceivers() {
+        crpcReceiversListener?.remove()
+        crpcReceiversListener = FirebaseFirestore.getInstance()
+            .collection("crpc_receivers")
+            .whereEqualTo("online", true)
+            .addSnapshotListener { snap, err ->
+                if (err != null || snap == null) return@addSnapshotListener
+
+                for (doc in snap.documents) {
+                    val id = doc.id
+                    val lat = doc.getDouble("lat") ?: continue
+                    val lon = doc.getDouble("lon") ?: continue
+                    val fixOk = doc.getBoolean("fix_ok") ?: false
+                    val pos = LatLng(lat, lon)
+                    crpcLastLatLng[id] = pos
+
+                    val title = "CRPC ${id}"
+                    val snippet = if (fixOk) "GPS: FIX OK" else "GPS: no fix"
+
+                    val existing = crpcMarkers[id]
+                    if (existing == null) {
+                        val marker = mMap.addMarker(
+                            MarkerOptions()
+                                .position(pos)
+                                .title(title)
+                                .snippet(snippet)
+                                .icon(bitmapDescriptorFromVector(R.drawable.ic_crpc_antenna)) // <-- tua drawable
+                        )
+                        marker?.tag = "CRPC:$id" // <-- importantissimo: ci serve per riconoscere il click
+                        if (marker != null) crpcMarkers[id] = marker
+                    } else {
+                        existing.position = pos
+                        existing.title = title
+                        existing.snippet = snippet
+                    }
+                }
+            }
+    }
+
+    private fun listenCrpcAlerts() {
+        crpcAlertsListener?.remove()
+        // se vuoi filtrare per un receiver specifico, aggiungi .whereEqualTo("receiverId", "crpc-01")
+        crpcAlertsListener = FirebaseFirestore.getInstance()
+            .collection("crpc_alerts")
+            .orderBy("ts_iso", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(1)
+            .addSnapshotListener { snap, err ->
+                if (err != null || snap == null || snap.isEmpty) return@addSnapshotListener
+                val doc = snap.documents.first()
+
+                val receiverId = doc.getString("receiverId") ?: return@addSnapshotListener
+                val radiusM   = (doc.getDouble("radius_m") ?: 0.0)
+                val colorHex  = doc.getString("color") ?: "#f2cb05"
+                val pos       = crpcLastLatLng[receiverId] ?: return@addSnapshotListener
+
+                // anti-duplicato
+                val tsIso = doc.getString("ts_iso") ?: ""
+                val tsKey = tsIso.hashCode().toLong()
+                if (tsKey == lastCrpcAlertTs) return@addSnapshotListener
+                lastCrpcAlertTs = tsKey
+
+                // NEW: bearing/confidence
+                val bearingDeg = doc.getDouble("bearing_deg")    // es. 348.2
+                val dfConf     = doc.getDouble("df_confidence")  // es. 0.847
+
+                // Mostra ring pulsante (come prima)
+                showCrpcRing(pos, radiusM, colorHex)
+
+                // NEW: disegna il settore se abbiamo un bearing valido
+                if (bearingDeg != null) {
+                    val sweepDeg = confidenceToSweep(dfConf)
+                    // Piccola salvaguardia sul raggio, per garantire visibilità
+                    val r = if (radiusM < 150.0) 150.0 else radiusM
+                    drawSector(pos, r, bearingDeg, sweepDeg, colorHex)
+                    showCrpcDfMarker(pos, r , bearingDeg)
+                }
+
+
+
+                // Salva info per HUD (aggiornato con bearing/conf)
+                val info = CrpcAlertInfo(
+                    band     = doc.getString("band"),
+                    freqMhz  = doc.getDouble("freq_mhz"),
+                    label    = doc.getString("label"),
+                    rssiDbm  = doc.getDouble("rssi_dbm"),
+                    radiusM  = doc.getDouble("radius_m"),
+                    tsIso    = tsIso,
+                    bearingDeg = bearingDeg,
+                    dfConfidence = dfConf
+                )
+                lastAlertByReceiverId[receiverId] = info
+
+                // Blink come prima
+                startCrpcBlink(receiverId = receiverId, periodMs = 450L, ttlMs = 7000L)
+            }
+
+    }
+
+    private fun showCrpcDfMarker(center: LatLng, radiusM: Double, bearingDeg: Double) {
+        // Garantisce un raggio minimo per visibilità (stessa logica del settore)
+        val r = if (radiusM < 150.0) 150.0 else radiusM
+        val end = computeOffset(center, r, bearingDeg)
+
+        ensureCrpcDfIconLoaded { icon ->
+            // Crea/aggiorna marker piatto ruotato verso il bearing
+            if (crpcDfMarker == null) {
+                crpcDfMarker = mMap.addMarker(
+                    MarkerOptions()
+                        .position(end)
+                        .title("Direzione segnale")
+                        .snippet("Bearing: ${String.format("%.0f°", ((bearingDeg%360)+360)%360)}")
+                        .icon(icon)
+                        .anchor(0.5f, 0.5f)
+                        .flat(true)
+                        .rotation(((bearingDeg + 360) % 360).toFloat())
+                        .zIndex(2f)
+                )
+            } else {
+                crpcDfMarker!!.position = end
+                crpcDfMarker!!.rotation = (((bearingDeg % 360) + 360) % 360).toFloat()
+            }
+            // opzionale: piccolo “nudge” per rendere evidente l’aggiornamento
+            // crpcDfMarker!!.showInfoWindow()
+        }
+    }
+
+
+    private fun showCrpcHud(receiverId: String, ttlMs: Long = 8000L) {
+        Log.d("DronePilotApp", "CRPC showCrpcHud() → receiverId=$receiverId, info=${lastAlertByReceiverId[receiverId]}")
+        val info = lastAlertByReceiverId[receiverId]
+
+        // Band/Freq
+        val band = info?.band ?: "—"
+        val f = info?.freqMhz?.let { String.format("%.3f MHz", it) } ?: "—"
+        hudBandFreq.text = "Band: $band • Freq: $f"
+
+        // Etichetta + NEW: DF su seconda riga
+        val dfText = buildString {
+            val b = info?.bearingDeg
+            val c = info?.dfConfidence
+            if (b != null) {
+                append("DF: ${String.format("%.0f°", ((b % 360) + 360) % 360)}")
+                if (c != null) append("  (${String.format("%.0f%%", (c*100.0))})")
+            } else {
+                append("DF: —")
+            }
+        }
+        hudLabel.text = "Label: ${info?.label ?: "—"}\n$dfText"
+
+        val rssi = info?.rssiDbm?.let { String.format("%.0f dBm", it) } ?: "—"
+        hudRssi.text = "RSSI: $rssi"
+
+        val dist = info?.radiusM?.let {
+            if (it >= 1000) String.format("%.1f km", it/1000.0) else String.format("%.0f m", it)
+        } ?: "—"
+        hudDistance.text = "Distanza stimata: $dist"
+
+        crpcHud.visibility = View.VISIBLE
+        hudAutoHideRunnable?.let { crpcHud.removeCallbacks(it) }
+        hudAutoHideRunnable = Runnable { hideCrpcHud() }
+        crpcHud.postDelayed(hudAutoHideRunnable!!, ttlMs)
+        Log.d("DronePilotApp", "CRPC Mostro HUD per $receiverId con info=${lastAlertByReceiverId[receiverId]}")
+    }
+
+
+
+    private fun showCrpcRing(center: LatLng, radiusMeters: Double, colorHex: String) {
+        // chiudi precedente
+        crpcRingCircle?.remove()
+        crpcRingAnimator?.cancel()
+
+        val argb = Color.parseColor(colorHex)
+        crpcRingCircle = mMap.addCircle(
+            com.google.android.gms.maps.model.CircleOptions()
+                .center(center)
+                .radius(radiusMeters)
+                .strokeColor(argb)
+                .strokeWidth(8f)
+                .fillColor(Color.TRANSPARENT)
+                .zIndex(0f)
+        )
+
+        // animazione "pulse" (raggio 0.9x → 1.05x)
+        crpcRingAnimator = ValueAnimator.ofFloat(0.9f, 1.05f).apply {
+            duration = 1400L
+            repeatMode = ValueAnimator.REVERSE
+            repeatCount = ValueAnimator.INFINITE
+            addUpdateListener {
+                val k = it.animatedValue as Float
+                crpcRingCircle?.radius = radiusMeters * k
+                // leggero “blink” sullo stroke
+                val a = (180 + (it.animatedFraction * 60)).toInt().coerceIn(0, 255)
+                val r = Color.red(argb)
+                val g = Color.green(argb)
+                val b = Color.blue(argb)
+                crpcRingCircle?.strokeColor = Color.argb(a, r, g, b)
+            }
+            start()
+        }
+    }
+
+    private var crpcSector: com.google.android.gms.maps.model.Polygon? = null
+
+    private fun confidenceToSweep(conf: Double?): Double {
+        // conf ∈ [0,1] → sweep ∈ [12°, 60°]; più conf, settore più stretto
+        val c = (conf ?: 0.0).coerceIn(0.0, 1.0)
+        return 12.0 + (1.0 - c) * 48.0
+    }
+
+    private fun computeOffset(start: LatLng, distanceMeters: Double, bearingDeg: Double): LatLng {
+        val R = 6371000.0
+        val δ = distanceMeters / R
+        val θ = Math.toRadians(((bearingDeg % 360) + 360) % 360.0)
+        val φ1 = Math.toRadians(start.latitude)
+        val λ1 = Math.toRadians(start.longitude)
+
+        val sinφ1 = Math.sin(φ1)
+        val cosφ1 = Math.cos(φ1)
+        val sinδ = Math.sin(δ)
+        val cosδ = Math.cos(δ)
+        val sinθ = Math.sin(θ)
+        val cosθ = Math.cos(θ)
+
+        val sinφ2 = sinφ1 * cosδ + cosφ1 * sinδ * cosθ
+        val φ2 = Math.asin(sinφ2)
+        val y = sinθ * sinδ * cosφ1
+        val x = cosδ - sinφ1 * sinφ2
+        val λ2 = λ1 + Math.atan2(y, x)
+
+        return LatLng(Math.toDegrees(φ2), Math.toDegrees(λ2))
+    }
+
+    private fun drawSector(center: LatLng, radiusM: Double, bearingDeg: Double, sweepDeg: Double, colorHex: String) {
+        crpcSector?.remove()
+        val steps = 60
+        val points = mutableListOf<LatLng>()
+        val start = bearingDeg - sweepDeg / 2.0
+        val end   = bearingDeg + sweepDeg / 2.0
+        points.add(center)
+        for (i in 0..steps) {
+            val brg = Math.toRadians(start + (end - start) * i / steps)
+            val d = radiusM / 6371000.0 // raggio terrestre
+            val lat1 = Math.toRadians(center.latitude)
+            val lon1 = Math.toRadians(center.longitude)
+            val lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(brg))
+            val lon2 = lon1 + Math.atan2(Math.sin(brg) * Math.sin(d) * Math.cos(lat1),
+                Math.cos(d) - Math.sin(lat1) * Math.sin(lat2))
+            points.add(LatLng(Math.toDegrees(lat2), Math.toDegrees(lon2)))
+        }
+        val argb = Color.parseColor(colorHex)
+        crpcSector = mMap.addPolygon(
+            com.google.android.gms.maps.model.PolygonOptions()
+                .addAll(points)
+                .strokeColor(argb)
+                .strokeWidth(6f)
+                .fillColor(Color.argb(40, Color.red(argb), Color.green(argb), Color.blue(argb)))
+                .zIndex(1f)
+        )
+    }
+
+    private fun startCrpcBlink(receiverId: String, periodMs: Long = 450L, ttlMs: Long = 6000L) {
+        // Se esiste già, riparti da zero
+        stopCrpcBlink(receiverId, restoreNormalIcon = false)
+
+        val marker = crpcMarkers[receiverId] ?: return
+        crpcBlinkOn[receiverId] = false
+
+        val runnable = object : Runnable {
+            override fun run() {
+                val on = !(crpcBlinkOn[receiverId] ?: false)
+                crpcBlinkOn[receiverId] = on
+                val iconRes = if (on) R.drawable.ic_crpc_antenna_alert else R.drawable.ic_crpc_antenna
+                marker.setIcon(bitmapDescriptorFromVector(iconRes))
+                mainHandler.postDelayed(this, periodMs)
+            }
+        }
+        crpcBlinkRunnables[receiverId] = runnable
+        mainHandler.post(runnable)
+
+        // Stop automatico dopo TTL
+        mainHandler.postDelayed({ stopCrpcBlink(receiverId) }, ttlMs)
+    }
+
+    private fun stopCrpcBlink(receiverId: String, restoreNormalIcon: Boolean = true) {
+        crpcBlinkRunnables.remove(receiverId)?.let { mainHandler.removeCallbacks(it) }
+        crpcBlinkOn.remove(receiverId)
+        if (restoreNormalIcon) {
+            crpcMarkers[receiverId]?.setIcon(bitmapDescriptorFromVector(R.drawable.ic_crpc_antenna))
+        }
+    }
+
+    // Per sicurezza: ferma tutti i blink (es. in onDestroy)
+    private fun stopAllCrpcBlinks() {
+        crpcBlinkRunnables.values.forEach { mainHandler.removeCallbacks(it) }
+        crpcBlinkRunnables.clear()
+        crpcBlinkOn.clear()
+        // ripristina icone normali
+        crpcMarkers.values.forEach { it.setIcon(bitmapDescriptorFromVector(R.drawable.ic_crpc_antenna)) }
+    }
+
+    private fun hideCrpcHud() {
+        crpcHud.visibility = View.GONE
+        hudAutoHideRunnable?.let { crpcHud.removeCallbacks(it) }
+        hudAutoHideRunnable = null
+    }
+
+
+    //
+    // -- Fine Ricevitore di Droni
+    //
+
+
 
     // Controllo scadenza documenti
     private fun checkDocumentExpirations() {
@@ -1139,12 +1570,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-
-
-
-
-
-
     private fun showDocumentExpiryAlert(documentId: String, expiryDate: String, title: String) {
         val intent = Intent(this, DocumentoAlertActivity::class.java).apply {
             putExtra("documentId", documentId)
@@ -1220,6 +1645,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             "3YT" to "Air 2S",
             "8ZP" to "Mini 2",
             "895" to "Air 3S",
+            "9DE" to "Mini 5 Pro",
             "7FV" to "Matrice 4E",
             "7K3" to "Matrice 4T",
             "8HH" to "Matrice 4D",
@@ -1231,6 +1657,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             "JD1" to "Dragonfish Std",
             "EV2" to "EVO II V3",
             "EV3" to "EVO Max",
+            "EV5" to "EVO Lite",
             "V4A" to "Autel Alpha",
 
             "A34" to "Beacon"
@@ -1532,19 +1959,6 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 tag = "search"  // 👈 Aggiungiamo un tag per riconoscerlo
             }
 
-            // Se tocco il Marker lo rimuovo
-            mMap.setOnMarkerClickListener { marker ->
-                if (marker.tag == "search") {
-                    marker.remove()
-                    searchMarker = null
-                    Toast.makeText(this, "📍 Zona cercata rimossa", Toast.LENGTH_SHORT).show()
-                    true  // evento gestito
-                } else {
-                    false  // altri marker possono avere comportamento default
-                }
-            }
-
-
             // 🔄 Sposta la mappa (opzionale, se vuoi animare)
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 8f))
 
@@ -1553,28 +1967,80 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                 val textView = findViewById<TextView>(R.id.lowerLimitTextView)
                 textView.text = "Open Category fino a: $lowerLimit m"
                 textView.visibility = View.VISIBLE
-                textView.setTextColor(getColor(R.color.red))
+                textView.setTextColor(getColor(R.color.white))
 
                 Toast.makeText(this, "Open Category fino a: $lowerLimit m", Toast.LENGTH_LONG).show()
+
+                // 👉 INVIO A WEAR
+                WearMessageSender.send(
+                    this,
+                    "/status",
+                    "Open fino a ${lowerLimit} m"
+                )
+
+                Wearable.getNodeClient(this).connectedNodes
+                    .addOnSuccessListener { nodes ->
+                        nodes.forEach {
+                            Log.d(
+                                "DronePilotApp",
+                                "Node id=${it.id}, name=${it.displayName}, isNearby=${it.isNearby}"
+                            )
+                        }
+                    }
+
             }
         }
+
+        // ✅ Unico listener marker (più robusto)
+        mMap.setOnMarkerClickListener { marker ->
+            val tag = marker.tag as? String
+            Log.d("DronePilotApp", "MarkerClick → title=${marker.title} tag=$tag")
+
+            when {
+                // Marker "ricerca" → rimuovi
+                tag == "search" -> {
+                    marker.remove()
+                    searchMarker = null
+                    Toast.makeText(this, "📍 Zona cercata rimossa", Toast.LENGTH_SHORT).show()
+                    true
+                }
+
+                // ⛳️ Marker CRPC → HUD
+                tag?.startsWith("CRPC:") == true -> {
+                    val id = tag.removePrefix("CRPC:")
+                    marker.hideInfoWindow()          // evita la card "CRPC crpc-01 / GPS..."
+                    showCrpcHud(id, 8000L)           // questa versione logga
+                    true
+                }
+
+                // Altri marker (piloti, droni…) → InfoWindow auto-hide
+                else -> {
+                    marker.showInfoWindow()
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        try { marker.hideInfoWindow() } catch (_: Exception) {}
+                    }, 4000)
+                    true
+                }
+            }
+        }
+
+
 
         // Info windows
         mMap.setOnInfoWindowClickListener { marker ->
-            val userId = marker.tag as? String
-            if (userId != null) {
-                openChatWithPilot(userId)
+            val id = marker.tag as? String
+            if (id != null && pilotMarkers.containsKey(id)) {   // ✅ solo piloti
+                openChatWithPilot(id)
             }
         }
+        //mMap.setOnInfoWindowClickListener { marker ->
+        //    val userId = marker.tag as? String
+        //    if (userId != null) {
+        //        openChatWithPilot(userId)
+        //    }
+        //}
 
-        // Faccio chiudere tutte le infoWindow dopo un po'
-        mMap.setOnMarkerClickListener { marker ->
-            marker.showInfoWindow()
-            Handler(Looper.getMainLooper()).postDelayed({
-                marker.hideInfoWindow()
-            }, 4000)
-            true // blocca il comportamento di default
-        }
+
 
         // Permette di fare un InfoWindow che gestisce gli a capo
         // Infowindow con bordi smussati
@@ -1632,6 +2098,8 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             loadPilots()
             listenForChatAvailability()
             loadDrones()
+            listenCrpcReceivers()
+            listenCrpcAlerts()
             // Layer Flight Zone
             flightZoneLayer = FlightZoneLayer(this, googleMap)
             // Layer Meteo
@@ -2720,7 +3188,7 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
                             findViewById<TextView>(R.id.lowerLimitTextView)?.apply {
                                 text = "Open Category fino a: $lowerLimit m"
                                 visibility = View.VISIBLE
-                                setTextColor(getColor(R.color.red))
+                                setTextColor(getColor(R.color.white))
                             }
                         }
                     }
@@ -2951,7 +3419,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             assistant.shutdown()
         }
 
+        stopAllCrpcBlinks()
+        crpcSector?.remove(); crpcSector = null
+        crpcDfMarker?.remove(); crpcDfMarker = null
         logout()
+
     }
 
     //

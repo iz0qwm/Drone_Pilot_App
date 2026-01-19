@@ -7,4 +7,25 @@
 🛰️ Migliorata la stabilità nella visualizzazione dei droni vicini\n
 💬 I messaggi della Group Chat sono ora collegati con il gruppo Telegram ufficiale
     </string>
+    <string name="version_notes_240">
+- VERSIONE 2.4.0 -\n
+✅ Risolto bug di droni fantasma in modalità ricevitore Remote ID\n
+🛰️ Integrata la presenza dei ricevitori di droni per espansioni future\n
+✨ Inserito riconoscimento del Mavic 4\n
+
+    </string>
+    <string name="version_notes_241">
+- VERSIONE 2.4.1 -\n
+🛰️ Inserito bearing per ricevitore CRPC
+✅ Risolto bug per invio emails\n
+    </string>
+    <string name="version_notes_242">
+- VERSIONE 2.4.2 -\n
+🛰️ I droni ricevuti su App arrivano su Drone Sky Check\n
+✨ Inserito bottone per Drone Sky Check\n
+    </string>
+    <string name="version_notes_243">
+- VERSIONE 2.4.3 -\n
+✅ Risolto bug per invio dati Remote ID droni DJI\n
+    </string>
 </resources>

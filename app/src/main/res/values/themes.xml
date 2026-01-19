@@ -19,14 +19,30 @@
 
     <!-- Stile personalizzato per i dialoghi -->
     <style name="CustomAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:textColorPrimary">?android:attr/textColorPrimary</item>
-        <item name="android:background">?android:attr/colorBackground</item>
+        <item name="android:textColorPrimary">#000000</item>
+        <item name="android:textColorSecondary">#333333</item>
+        <item name="android:windowTitleStyle">@style/AppAlertDialogTitle</item>
+        <item name="android:background">@android:color/white</item>
     </style>
 
-    <!-- Tema neutro per dialoghi Material, per evitare il conflitto con AppCompat -->
-    <style name="MaterialSafeDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog">
-        <!-- Nessun item: usiamo solo l'overlay sicuro -->
+    <style name="AppAlertDialogTitle" parent="@style/TextAppearance.AppCompat.Large">
+        <item name="android:textColor">#000000</item>
     </style>
+
+    <style name="AppDialogTitleAppearance" parent="@style/TextAppearance.AppCompat.Large">
+        <item name="android:textColor">#000000</item>
+    </style>
+
+    <style name="TransparentDialog" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.35</item>
+    </style>
+
+
+    <style name="AppCompatSafeDialogOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
 </resources>
 

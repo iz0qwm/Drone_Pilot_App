@@ -171,15 +171,15 @@ class WeatherGpsActivity : AppCompatActivity() {
                         val statusColor: Int
 
                         when {
-                            tecMean < 125 -> {
+                            tecMean < 50 -> {
                                 statusText = "CONDIZIONI DI CALMA"
                                 statusColor = Color.rgb(19, 117, 13) // VERDE SCURO
                             }
-                            tecMean >= 125 && tecMean < 175 -> {
+                            tecMean >= 50 && tecMean < 80 -> {
                                 statusText = "ATTIVITA' MODERATA"
                                 statusColor = Color.rgb(255, 165, 0) // Arancio
                             }
-                            tecMean >= 175 -> {
+                            tecMean >= 80 -> {
                                 statusText = "ATTIVITA' ELEVATA!!\n" +
                                         "Possibili problemi nel calcolare la\n" +
                                         "posizione precisa"

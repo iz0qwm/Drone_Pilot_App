@@ -37,9 +37,9 @@ class BluetoothReceiver(
                 val scanRecord = it.scanRecord
                 val bytes = scanRecord?.bytes ?: return
 
-                // Supporta Dronetag (D0:EA:26 o 58:B8:58 o 3E:E5:4D) e TopView Pollicino (E6:43:76)
+                // Supporta Dronetag (D0:EA:26 o 58:B8:58 o 3E:E5:4D) e TopView Pollicino (E6:43:76 o "F6:BD:6D")
                 val containsOpenDroneID = bytes.contains(0x0D.toByte())
-                val allowedPrefixes = listOf("D0:EA:26", "E6:43:76", "58:B8:58", "3E:E5:4D")
+                val allowedPrefixes = listOf("D0:EA:26", "E6:43:76", "F6:BD:6D", "58:B8:58", "3E:E5:4D")
 
                 // Versione più larga
                 // Se non contiene OpenDroneID, scarta subito

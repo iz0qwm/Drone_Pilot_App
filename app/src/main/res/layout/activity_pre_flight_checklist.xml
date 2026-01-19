@@ -48,16 +48,19 @@
             android:id="@+id/cb_autorizzazioni"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="📜 Copia del patentino (se necessario)" />
         <CheckBox
             android:id="@+id/cb_qrcode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🔲 QRCode sul drone" />
         <CheckBox
             android:id="@+id/cb_assicurazione"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🛡️ Attestato dell'assicurazione contro terzi" />
 
         <!-- Meteo -->
@@ -80,6 +83,7 @@
             android:id="@+id/cb_zonevolo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🗺️ Controlla se il volo è consentito nella zona scelta e qual è l'altezza massima prevista in categoria Open"
             />
 
@@ -87,11 +91,13 @@
             android:id="@+id/cb_meteo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🌦️ Controllare le condizioni meteo" />
         <CheckBox
             android:id="@+id/cb_ostacoli"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="👀 Ispezionare l'area di volo (ostacoli, persone, ecc.)" />
 
         <!-- Pre on -->
@@ -114,21 +120,25 @@
             android:id="@+id/cb_eliche"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🔧 Controllare le eliche" />
         <CheckBox
             android:id="@+id/cb_batteria"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🔋 Controllare il livello della batteria" />
         <CheckBox
             android:id="@+id/cb_gimbal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="✅ Rimuovere il tappo del gimbal" />
         <CheckBox
             android:id="@+id/cb_gimbal_movimenti"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🎥 Assicurarsi che la gimbal si muova con fluidità" />
 
         <!-- Pre arm -->
@@ -151,11 +161,13 @@
             android:id="@+id/cb_gps"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🛰️ Buon segnale GPS" />
         <CheckBox
             android:id="@+id/cb_rth"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:text="🏠 Imposta correttamente l'RTH per mancanza di segnale e batteria scarica" />
 
 

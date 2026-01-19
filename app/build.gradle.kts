@@ -16,8 +16,8 @@ android {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 45
-        versionName = "2.3.9"
+        versionCode = 49
+        versionName = "2.4.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -138,7 +138,9 @@ dependencies {
     implementation("org.json:json:20210307")
     implementation ("com.github.bumptech.glide:glide:4.15.1")
     kapt("com.github.bumptech.glide:compiler:4.15.1")
-
+    //implementation ("com.google.android.material:material:1.12.0")
+    // WearOS
+    implementation("com.google.android.gms:play-services-wearable:18.2.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

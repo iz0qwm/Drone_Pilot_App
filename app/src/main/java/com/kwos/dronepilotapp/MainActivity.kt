@@ -70,9 +70,13 @@ import android.provider.Settings
 import android.view.ViewGroup
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+
 
 import com.google.android.material.snackbar.Snackbar
+
+import android.view.ContextThemeWrapper
+import android.widget.LinearLayout
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -225,6 +229,11 @@ class MainActivity : AppCompatActivity() {
         //    checkForUpdate(this)
         //}
 
+        // 👇 Log utili per capire a quale progetto stai puntando da Android
+        val opts = FirebaseApp.getInstance().options
+        Log.d("DRONEPILOTAPP", "FIREBASE_CFG projectId=${opts.projectId}, appId=${opts.applicationId}, dbUrl=${opts.databaseUrl}, storage=${opts.storageBucket}")
+        //Toast.makeText(this, "Proj: ${opts.projectId}", Toast.LENGTH_LONG).show()
+
 
         // Controlla e richiedi i permessi di geolocalizzazione
         if (!checkLocationPermission()) {
@@ -296,7 +305,9 @@ class MainActivity : AppCompatActivity() {
                     loginUser(savedEmail, savedPassword)
                 } else {
                     logDebug(TAG, "setOnClickListener: La password non è salvata")
-                    MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+                    androidx.appcompat.app.AlertDialog.Builder(
+                        android.view.ContextThemeWrapper(this, R.style.CustomAlertDialogTheme)
+                    )
 
                         .setTitle("Attenzione")
                         .setMessage("Inserisci la password")
@@ -315,7 +326,9 @@ class MainActivity : AppCompatActivity() {
                 val password = passwordField.text.toString().trim()
 
                 if (email.isEmpty() || password.isEmpty()) {
-                    MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+                    androidx.appcompat.app.AlertDialog.Builder(
+                        android.view.ContextThemeWrapper(this, R.style.CustomAlertDialogTheme)
+                    )
 
                         .setTitle("Attenzione")
                         .setMessage("Inserisci email e password")
@@ -370,7 +383,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun mostraNovitaVersione(versione: String) {
         val resId = when (versione) {
-            "2.3.9" -> R.string.version_notes_239
+            "2.4.3" -> R.string.version_notes_243
             else -> null
         }
 
@@ -390,7 +403,9 @@ class MainActivity : AppCompatActivity() {
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
 
-        MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+        androidx.appcompat.app.AlertDialog.Builder(
+             android.view.ContextThemeWrapper(this, R.style.CustomAlertDialogTheme)
+        )
             .setTitle("Novità della versione $versione")
             .setMessage(spannableMessage)
             .setPositiveButton("Chiudi", null)
@@ -631,7 +646,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showProgressDialog(message: String): androidx.appcompat.app.AlertDialog {
-        val builder = MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+        //val builder = androidx.appcompat.app.AlertDialog.Builder(
+        //    android.view.ContextThemeWrapper(this, R.style.CustomAlertDialogTheme)
+        //)
+        val builder = AlertDialog.Builder(
+            ContextThemeWrapper(this, R.style.TransparentDialog)  // ⬅️ qui
+        )
 
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.progress_dialog, null)
@@ -825,41 +845,105 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+
+// IMPORTA se non c’è già:
+// import com.google.android.material.dialog.MaterialAlertDialogBuilder
+
     private fun showResetPasswordDialog() {
-        val builder = MaterialAlertDialogBuilder(this, R.style.MaterialSafeDialogTheme)
+        // Container custom come già hai
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 50, 50, 20)
+        }
 
-        builder.setTitle("Reimposta password")
+        val titleView = TextView(this).apply {
+            text = "Reimposta password"
+            setTextAppearance(R.style.AppDialogTitleAppearance)
+            setTextColor(Color.BLACK) // forza il colore dopo lo style
+        }
+        container.addView(titleView)
 
-        val input = EditText(this)
-        input.inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-        input.hint = "Inserisci la tua email"
-        input.setPadding(50, 40, 50, 40)
+        val input = EditText(ContextThemeWrapper(this, R.style.CustomAlertDialogTheme)).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            hint = "Inserisci la tua email"
+            setTextColor(Color.BLACK)
+            setHintTextColor(Color.parseColor("#666666"))
+            setBackgroundResource(R.drawable.rounded_input)   // ⬅️ sfondo pieno, niente underline
+            setPadding(24, 20, 24, 20)
+        }
+        val lp = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { setMargins(0, 16, 0, 8) }
+        container.addView(input, lp)
 
-        builder.setView(input)
 
-        builder.setPositiveButton("Invia") { dialog, _ ->
-            val email = input.text.toString().trim()
-            if (email.isEmpty()) {
-                Toast.makeText(this, "Inserisci un indirizzo email", Toast.LENGTH_SHORT).show()
-            } else {
+        // ⬇️ FORZA l’overlay Material del dialogo
+        // DOPO (AppCompat - usa il tema dell'app)
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this) // usa il tuo alertDialogTheme (vedi punto 2)
+
+            .setView(container)
+            .setPositiveButton("Invia", null)
+            .setNegativeButton("Annulla") { dialog, _ -> dialog.dismiss() }
+
+        val dlg = builder.create()
+        dlg.setOnShowListener {
+            val positive = dlg.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            positive.setOnClickListener {
+                val email = input.text.toString().trim().lowercase()
+
+                // Validazione minima lato client (solo formato)
+                if (email.isEmpty()) {
+                    Toast.makeText(this, "Inserisci un indirizzo email", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val isFormatOk = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                if (!isFormatOk) {
+                    Toast.makeText(this, "Formato email non valido", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                // Evita doppi tap
+                positive.isEnabled = false
+
+                // 🔐 No enumeration: inviamo sempre e mostriamo messaggio neutro
                 FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Toast.makeText(this, "Email inviata! Controlla la tua casella di posta.", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(this, "Errore: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
-                        }
+                    .addOnCompleteListener {
+                        Toast.makeText(
+                            this,
+                            "Se esiste un account per questa email, riceverai le istruzioni per reimpostare la password.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        dlg.dismiss() // chiudi SEMPRE il dialog alla fine
+                    }
+                    .addOnFailureListener { e ->
+                        // Possibile rete assente o altro: messaggio neutro per non “leakare” info
+                        Log.e("Auth", "reset email failed", e)
+                        Toast.makeText(
+                            this,
+                            "Se esiste un account per questa email, riceverai le istruzioni per reimpostare la password.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        dlg.dismiss()
+                    }
+                    .addOnCompleteListener {
+                        // Re-enable solo se per qualche motivo non hai chiuso
+                        positive.isEnabled = true
                     }
             }
-            dialog.dismiss()
         }
 
-        builder.setNegativeButton("Annulla") { dialog, _ ->
-            dialog.cancel()
-        }
+        // Evita forzature di background che possono “sporcare” il tema
+        // dlg.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))  // <- rimuovi o commenta
+        dlg.show()
 
-        builder.show()
+        dlg.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+        dlg.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.BLACK)
     }
+
+
+
+
 
 
 }
@@ -944,7 +1028,9 @@ fun checkForUpdate(context: Context) {
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                         )
 
-                        val dialog = MaterialAlertDialogBuilder(context)
+                        val dialog = androidx.appcompat.app.AlertDialog.Builder(
+                            android.view.ContextThemeWrapper(context, R.style.CustomAlertDialogTheme)
+                        )
                             .setTitle("Aggiornamento disponibile")
                             .setMessage(spannableMessage)
                             .setPositiveButton("Scarica") { _, _ ->

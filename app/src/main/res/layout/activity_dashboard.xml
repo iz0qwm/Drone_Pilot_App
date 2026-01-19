@@ -477,9 +477,9 @@
                         android:id="@+id/dflightButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_dflight"
+                        android:src="@drawable/ic_droneskycheck"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Apri d-flight"
+                        android:contentDescription="Apri Drone Sky check"
                         android:padding="8dp" />
 
                     <!-- Pulsante Logout che occupa tutto lo spazio rimanente -->

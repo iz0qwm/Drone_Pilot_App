@@ -133,17 +133,26 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<Button>(R.id.importLogButton).setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
-                type = "text/plain"
+                // Accetta più MIME, perché alcuni provider non usano text/plain
+                type = "*/*"
+                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
+                    "text/plain",
+                    "application/octet-stream"
+                ))
+                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
             }
             startActivityForResult(intent, 1234)
         }
 
 
+
         // Spinner per cambio parametri analizzati
         parameterSpinner = findViewById(R.id.parameterSpinner)
         val parameterOptions = listOf("Segnale Radio", "Satelliti GPS", "Corrente")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, parameterOptions)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val adapter = ArrayAdapter(this, R.layout.spinner_item_white, parameterOptions)
+        adapter.setDropDownViewResource(R.layout.spinner_item_white)
         parameterSpinner.adapter = adapter
 
         parameterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -197,13 +206,19 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 1234 && resultCode == Activity.RESULT_OK) {
             data?.data?.also { uri ->
+                // conserva il permesso di lettura per riaprire il file anche in seguito
+                try {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: SecurityException) { /* alcuni provider non lo richiedono */ }
+
                 var fileName = "file selezionato"
                 contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                     if (cursor.moveToFirst()) {
                         val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                        if (nameIndex != -1) {
-                            fileName = cursor.getString(nameIndex)
-                        }
+                        if (nameIndex != -1) fileName = cursor.getString(nameIndex)
                     }
                 }
                 fileInfoTextView.text = "📄 Hai selezionato: $fileName"
@@ -212,29 +227,49 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun uploadLogFile(uri: Uri) {
-        val inputStream = contentResolver.openInputStream(uri) ?: return
-        val fileBytes = inputStream.readBytes()
 
+    private fun uploadLogFile(uri: Uri) {
+        // 1) Leggi nome file
         var fileName = "log.txt"
         contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             if (cursor.moveToFirst()) {
-                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (nameIndex != -1) {
-                    fileName = cursor.getString(nameIndex)
-                }
+                val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (idx != -1) fileName = cursor.getString(idx)
             }
         }
 
-        val requestBody = MultipartBody.Builder()
+        // 2) Consenti solo .txt
+        if (!fileName.lowercase(Locale.ROOT).endsWith(".txt")) {
+            runOnUiThread {
+                fileInfoTextView.text = "❌ File non valido: seleziona un DJI FlightRecord .txt"
+                Toast.makeText(this, "Seleziona un file .txt (DJIFlightRecord_....txt)", Toast.LENGTH_LONG).show()
+            }
+            return
+        }
+
+        // 3) Apri stream e MIME "robusto"
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: run {
+            runOnUiThread { fileInfoTextView.text = "❌ Impossibile leggere il file" }
+            return
+        }
+        val detectedMime = contentResolver.getType(uri) ?: "application/octet-stream"
+        val mediaType = (if (detectedMime.contains("text")) "text/plain" else "application/octet-stream")
+            .toMediaTypeOrNull()
+
+        // 4) Multipart come prima, ma con MIME dinamico
+        val multipart = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
-            .addFormDataPart("logfile", fileName, RequestBody.create("text/plain".toMediaTypeOrNull(), fileBytes))
+            .addFormDataPart(
+                /* field name del server */ "logfile",
+                /* filename */ fileName,
+                /* content */ RequestBody.create(mediaType, bytes)
+            )
             .build()
 
         val request = Request.Builder()
             .url("http://91.99.186.16:5555/upload")
             .addHeader("X-API-KEY", "RaDa0707")
-            .post(requestBody)
+            .post(multipart)
             .build()
 
         runOnUiThread {
@@ -243,7 +278,12 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Thread {
             try {
-                val client = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).writeTimeout(30, TimeUnit.SECONDS).build()
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(15, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .build()
+
                 val response = client.newCall(request).execute()
                 val bodyString = response.body?.string()
 
@@ -293,8 +333,13 @@ class DroneLogActivity : AppCompatActivity(), OnMapReadyCallback {
                         drawBatteryCharts(json)
 
                         fileInfoTextView.text = "✅ Log interpretato con successo!"
+                        drawTrajectory(json, parameterSpinner.selectedItem.toString())
+                        drawBatteryCharts(json)
                     } else {
+                        // Mostra codice + corpo per capire subito l’errore server
                         fileInfoTextView.text = "❌ Errore upload: ${response.code}"
+                        android.util.Log.e("DroneLogActivity", "Upload fallito: HTTP ${response.code} body: $bodyString")
+                        Toast.makeText(this, "Server: ${response.code}", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {

@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Drone Pilot App"
 include(":app")
- 
+
