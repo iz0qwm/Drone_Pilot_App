@@ -114,6 +114,7 @@ import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.util.Calendar
+import com.android.volley.toolbox.JsonObjectRequest
 
 
 // Per i layers su google maps
@@ -2228,20 +2229,46 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     // Utility per Layer Meteo
     //
     private fun getLatestRainTimestamp() {
-        val url = "https://tilecache.rainviewer.com/api/maps.json"
+        val url = "https://api.rainviewer.com/public/weather-maps.json"
         val requestQueue = Volley.newRequestQueue(this)
 
-        val jsonArrayRequest = JsonArrayRequest(Request.Method.GET, url, null,
+        val request = JsonObjectRequest(
+            Request.Method.GET, url, null,
             { response ->
-                val lastTimestamp = response.getString(response.length() - 1)
-                rainTimestamp = lastTimestamp
+                try {
+                    val radar = response.optJSONObject("radar")
+                    val pastArray = radar?.optJSONArray("past")
+
+                    if (pastArray == null || pastArray.length() == 0) {
+                        Log.w("RainViewer", "⚠️ Nessun frame radar disponibile")
+                        rainTimestamp = null
+                        return@JsonObjectRequest
+                    }
+
+                    val lastFrame = pastArray.getJSONObject(pastArray.length() - 1)
+                    val timestamp = lastFrame.getLong("time")
+                    val path = lastFrame.getString("path")
+
+                    rainTimestamp = timestamp.toString()
+
+                    Log.d(
+                        "RainViewer",
+                        "🌧️ Ultimo frame radar: time=$timestamp path=$path"
+                    )
+
+                } catch (e: Exception) {
+                    Log.e("RainViewer", "Errore parsing RainViewer", e)
+                    rainTimestamp = null
+                }
             },
             { error ->
-                Log.e("RainViewer", "Errore nel caricamento: ${error.message}")
-            })
+                Log.e("RainViewer", "Errore rete RainViewer: ${error.message}")
+            }
+        )
 
-        requestQueue.add(jsonArrayRequest)
+        requestQueue.add(request)
     }
+
     //
     //
     //

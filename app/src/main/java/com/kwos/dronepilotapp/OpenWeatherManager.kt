@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 object OpenWeatherManager {
-    private const val API_KEY = "1b4656e0d2c4084cb53766425375c83c" // Sostituisci con la tua API key di OpenWeather
+    private const val API_KEY = "a731aea1a28eb47fc65b320835c07b5f" // Sostituisci con la tua API key di OpenWeather
     private const val BASE_URL = "https://api.openweathermap.org/data/3.0/onecall"
 
     fun getHourlyWeather(lat: Double, lon: Double, callback: (List<HourlyForecast>?) -> Unit) {
