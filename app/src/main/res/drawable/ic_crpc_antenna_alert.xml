@@ -1,0 +1,35 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="36dp"
+    android:height="36dp"
+    android:viewportWidth="36"
+    android:viewportHeight="36">
+
+    <!-- alone esterno (alert) -->
+    <path
+        android:fillColor="#33FF5722"
+        android:pathData="M18,0
+                          A18,18 0 1,1 17.999,0z" />
+
+    <!-- cerchio di base -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M18,2
+                          A16,16 0 1,1 17.999,2z" />
+
+    <!-- palo antenna -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17,8 h2 v14 h-2 z" />
+
+    <!-- radiali -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,22 l-6,6 h2 l4,-4 l4,4 h2 l-6,-6 z" />
+
+    <!-- puntino in cima (più acceso) -->
+    <path
+        android:fillColor="#FFFF00"
+        android:pathData="M18,6
+                          a2,2 0 1,1 -0.001,0 z" />
+
+</vector>
