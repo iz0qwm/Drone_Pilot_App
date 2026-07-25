@@ -15,9 +15,9 @@ android {
     defaultConfig {
         applicationId = "com.kwos.dronepilotapp"
         minSdk = 30
-        targetSdk = 35
-        versionCode = 52
-        versionName = "2.4.6"
+        targetSdk = 36
+        versionCode = 53
+        versionName = "2.4.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

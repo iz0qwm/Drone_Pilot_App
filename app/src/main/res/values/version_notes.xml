@@ -37,4 +37,8 @@
 - VERSIONE 2.4.6 -\n
 ✅ Risolti bug su OpenWeather\n
     </string>
+    <string name="version_notes_247">
+- VERSIONE 2.4.7 -\n
+✅ Aggiornamento per versione nuova di Android\n
+    </string>
 </resources>

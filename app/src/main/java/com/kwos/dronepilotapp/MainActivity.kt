@@ -383,7 +383,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun mostraNovitaVersione(versione: String) {
         val resId = when (versione) {
-            "2.4.6" -> R.string.version_notes_246
+            "2.4.7" -> R.string.version_notes_247
             else -> null
         }
 

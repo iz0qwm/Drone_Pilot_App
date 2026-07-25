@@ -1,2 +1,17 @@
 /build
 /app/src/main/java/com/kwos/dronepilotapp/WeatherLayerManager.kt
+
+# Kotlin / Android Studio
+.kotlin/
+.idea/
+*.iml
+local.properties
+
+# Build outputs
+/build/
+/app/build/
+*.apk
+*.aab
+
+# Logs
+*.log
